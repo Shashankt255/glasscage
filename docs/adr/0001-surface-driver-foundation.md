@@ -35,4 +35,10 @@ abstractions — `Surface`, `Driver`, `SurfaceKind`, `Observation`, `Action`,
 - **Negative / accepted:** the package is intentionally not yet consumed by the run
   pipeline ("unused" until the wiring PR). This is deliberate and documented, not debt.
 - **Follow-up (not this PR):** wire `ChatDriver` into `engine.run()` behind a shim;
-  migrate the seven `.send()` call sites incrementally.
+  migrate the `.send()` call sites incrementally.
+
+> **Correction (ADR 0002).** "Seven" is the number of *modules* containing a `.send(`
+> reference, not call sites; the true count is **24 call sites across 7 modules**. The
+> wiring follow-up was executed by [ADR 0002](0002-engine-surface-wiring.md), which also
+> established that the call-site migration is unnecessary: `Observation` and
+> `ChatResponse` agree on every attribute any caller reads.

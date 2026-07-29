@@ -1,7 +1,8 @@
 # `glasscage.targets` — multi-surface application model
 
 Additive Phase 1 foundation. Defines the drivable-surface contract that discovery and
-driver PRs build on. Not yet consumed by the run pipeline.
+driver PRs build on. Since [ADR 0002](adr/0002-engine-surface-wiring.md) the run
+pipeline can optionally drive a CHAT surface; the default path is unchanged.
 
 ## Concepts
 - **`SurfaceKind`** — `CHAT, REST, GRAPHQL, FUNCTION, MCP_TOOL, RAG, VECTOR_DB`. Only
@@ -9,12 +10,152 @@ driver PRs build on. Not yet consumed by the run pipeline.
 - **`Surface`** — a drivable thing: `id`, `kind`, `locator`, optional `io_schema`, a
   bound `Driver`. `surface.drive(action)` delegates to the driver.
 - **`Driver`** (Protocol) — exercises a surface: `drive(surface, action) -> Observation`.
+- **`Action`** — base request descriptor. Subtypes carry kind-specific data:
+  | Action | Fields | Serves | Status |
+  |---|---|---|---|
+  | `PromptAction` | `prompt` | `CHAT` | Implemented |
+  | `HttpAction` | `method`, `path`, `query`, `headers`, `body` | `REST`, later `GRAPHQL` | Experimental — no driver yet |
+  | `ToolCallAction` | `name`, `arguments` | `MCP_TOOL`, `FUNCTION` | Experimental — no driver yet |
+
+  `HttpAction` mirrors what discovery emits for a REST candidate (`{"method", "path"}`
+  locator plus `io_schema`), so both halves of the pipeline agree by construction. It
+  expresses **one request** and nothing more — authentication belongs to `AuthContext`;
+  timeouts, retries, redirects, pagination and content negotiation belong to the driver.
+  See [ADR 0007](adr/0007-action-model-generalisation.md).
 - **`Observation`** — uniform interaction record; fields mirror `target.ChatResponse`
   (`text`, `ok`, `latency_ms`, `error`, `trace`) plus optional
   `request/response/status/custody_hash` for non-chat drivers.
-- **`ApplicationTarget`** — container of surfaces sharing an `AuthContext` and optional
-  `audit.Scope`. Pure data; performs no I/O.
+
+  **Chain of custody** ([ADR 0008](adr/0008-driver-side-custody.md)): a driven observation
+  carries the `request` that produced it and a `custody_hash` of
+  `audit.sha256(request, response)` — the same helper and argument order the engine uses
+  for `Finding.evidence_hash`. The two coexist by design: the finding hash is computed at
+  the engine layer before redaction, the observation hash at the transport boundary, and
+  neither is derived from the other. A transport failure still carries custody — what was
+  sent is evidence regardless of outcome — but `Observation.failure()` does not, because
+  no request occurred. **The driver hashes; it does not record:** `exchanges` and the
+  audit chain remain the target's responsibility, so nothing is double-counted.
+- **`ApplicationTarget`** — container of surfaces (and of discovered, unbound
+  `SurfaceCandidate`s) sharing an `AuthContext` and optional `audit.Scope`. Pure data;
+  performs no I/O.
 - **`ChatSurface` / `ChatDriver`** — adapt an existing `HTTPChatTarget` to the model.
+- **`SurfaceTarget`** (`compat.py`) — presents a bound Surface through the `send(prompt)`
+  contract the run pipeline expects, delegating every other attribute to the origin
+  target. `chat_surfaces_of()` resolves a Surface or ApplicationTarget to the CHAT
+  surfaces to drive; `chat_surface_of()` is the first of them.
+
+### Resolution contract
+See [ADR 0009](adr/0009-surface-resolution-contract.md).
+
+- `chat_surfaces_of(source)` returns **every** drivable CHAT surface. Non-CHAT surfaces
+  are excluded; anything else is refused with `ConfigError`.
+- Order is **registration order** — the sequence the operator added surfaces in — and is
+  deliberately **not** sorted. This differs from `discovery`, which sorts candidates by
+  id because a document has no inherent order; a registration list does, and it is the
+  operator's.
+- Duplicate ids collapse **first-wins**, preserving order. Defensive: `add_surface` is
+  already idempotent by id, so duplicates arise only from constructing
+  `ApplicationTarget(surfaces=[...])` directly.
+- `chat_surface_of(source)` is exactly `chat_surfaces_of(source)[0]` and holds no logic
+  of its own — every `ConfigError` originates in the plural form, so the two cannot
+  drift. An application with several CHAT surfaces yields the first; ambiguity is not
+  refused, because multi-surface execution is a later change.
+- **Resolution does not validate ownership.** Declared ownership and governance are
+  checked per surface when a `SurfaceTarget` is constructed (ADR 0005); resolution raises
+  `ConfigError` and never `TargetError`.
+
+## Surface discovery
+`discovery.py` enumerates drivable candidates from an interface definition. Status:
+**Experimental**, read-only. See [ADR 0003](adr/0003-surface-discovery.md).
+
+| Entry point | Input | Emits |
+|---|---|---|
+| `discover_openapi(spec)` | OpenAPI document | one `REST` candidate per `paths` → HTTP method, `locator={"method","path"}`, `io_schema` from `parameters`/`requestBody`, `source="openapi"` |
+| `discover_mcp(manifest)` | MCP `tools/list` manifest | one `MCP_TOOL` candidate per tool, `locator=<tool name>`, `io_schema` from `inputSchema`, `source="mcp"` |
+| `discover(data)` | either | auto-detects: `paths` → OpenAPI, `tools` → MCP |
+
+From the CLI, `--discover SPEC` runs the same enumeration standalone — no target, no
+assessment — printing a table and writing `<out>_surfaces.md` / `<out>_surfaces.json`.
+`discovery.to_markdown()` and `discovery.to_json()` render the inventory and are the
+same renderers the CLI uses. See [COMMAND_REFERENCE](COMMAND_REFERENCE.md).
+
+`ApplicationTarget.add_candidate()` registers a candidate (idempotent by id) and
+`candidates_of(kind)` filters them. Candidate ids are `rest:<method>:<path>` and
+`mcp_tool:<name>`; output is deduplicated and sorted, so the same document always yields
+the same candidates in the same order.
+
+**Candidates are never bound to a Driver and are never driven.** A driven surface must be
+bound to the target supplied to the engine (see below), so promotion waits on per-surface
+attribution. A candidate is a proposal carrying provenance, not a surface.
+
+This complements `schema.ingest` rather than replacing it: `schema.py` flattens
+operations into capability records for schema-confirmed blast radius and drops the path,
+method and parameters; discovery keeps exactly those. `schema.py` is unchanged.
+
+**Limitations (deliberate):** `$ref` is not resolved — unresolved refs pass through into
+`io_schema` verbatim; webhooks, callbacks and server-variable expansion are out of scope;
+only `paths` → HTTP methods are enumerated. Empty documents yield an empty list;
+malformed documents raise `ConfigError`; nothing is ever invented.
+
+## Driving a surface from the engine
+`Engine(target, surface=...)` routes probe, recon and attacker traffic through the bound
+surface instead of calling the target directly. Status: **Implemented** (CHAT only).
+
+- `surface=` accepts a `Surface` or an `ApplicationTarget` (its first CHAT surface is
+  used). Omit it and the pipeline behaves exactly as before.
+- The `target` argument is still required. Ownership is **declared and governed**
+  ([ADR 0005](adr/0005-declared-and-governed-ownership.md)):
+  - every driver declares the target it drives as `.target`; one that declares nothing is
+    refused with `TargetError`, because attribution that cannot be verified is treated as
+    failed attribution;
+  - the **driven** target is authoritative for attribution — capability tier and
+    reproduction steps follow it, not the supplied target;
+  - a driven target *different* from the supplied one is allowed, which is what makes
+    future non-chat drivers possible — **provided** it is governed by the supplied
+    target's operational controls. Where the supplied target sets `scope`, `rate` or
+    `audit`, the driven target must present the same objects, or the run is refused
+    before any traffic. Probing a target that never received the scope allowlist would
+    test a host the operator never authorised.
+  - The report header still names the supplied target (the assessment subject);
+    per-finding provenance comes from `surface_id` and the reproduction steps.
+  - Chain of custody and `--har` remain scoped to the supplied target. Driver-side
+    custody is a later change.
+- Probes receive an `Observation` rather than a `ChatResponse`. This needs no probe
+  change — the two agree on every field any caller reads (`ok`, `text`, `error`, `trace`,
+  `latency_ms`), and `Observation.raw` is an additive alias for `response` so plugin
+  probes written against `ChatResponse.raw` keep working. See ADR 0002.
+- Resolution failures (non-CHAT surface, no CHAT surface registered, wrong type) raise
+  `ConfigError`. Everything raised here is a `GlasscageError`.
+
+### Probe applicability
+Probes declare which surface kinds they can drive via `Probe.surface_kinds`, defaulting
+to `(SurfaceKind.CHAT,)`. See [ADR 0006](adr/0006-probe-surface-applicability.md).
+
+- The engine resolves the driven kind from the driven surface, defaulting to `CHAT` when
+  no surface is bound.
+- A probe that does not declare the driven kind is **never invoked** and yields one
+  `NOT ASSESSABLE` finding naming the driven kind and the kinds it does drive — the same
+  outcome shape an unmet `min_tier` produces.
+- Applicability is checked **before** capability tier: being unable to drive a surface at
+  all is more fundamental than lacking a capability on it.
+- Set membership, not an ordinal like `min_tier` — surface kinds have no ordering.
+- Probes that declare nothing are read as chat-applicable, so existing plugins are
+  unaffected.
+
+### Finding attribution
+Findings produced by target interaction on a surface-driven run carry
+`Finding.surface_id`, the id of the driven `Surface`. See
+[ADR 0004](adr/0004-attribution-before-binding.md).
+
+- **Attributed:** probe-loop findings, tier-gated `NOT ASSESSABLE` findings, and
+  `--adaptive` / `--genetic` attacker findings.
+- **Never attributed:** MCP-manifest findings (configuration review) and architecture
+  answers (questionnaire). They are not observations on a surface, so tagging them would
+  fabricate provenance.
+- On a run without `surface=`, every `surface_id` is `""` and nothing else changes.
+- Chain of custody, HAR export and reproduction steps still read the supplied target, not
+  the surface. Moving those is a later, separate change.
+- No CLI flag yet; this is a Python-API capability until a discovery PR lands.
 
 ## Example
 ```python
@@ -28,5 +169,7 @@ assert obs.ok  # Observation mirrors the underlying ChatResponse
 ```
 
 ## Layering rule
-`targets/` may import `audit` and `tal` only. It must **not** import `engine`, `probes`,
-or `aakg`; a test (`tests/test_targets_foundation.py`) enforces this at source level.
+`targets/` may import `audit`, `tal` and `errors` only. It must **not** import `engine`,
+`probes`, or `aakg`; a test (`tests/test_targets_foundation.py`) enforces this at source
+level. (`errors` is a dependency-free leaf module; `compat.py` imports it so failures at
+the engine boundary raise the project's typed hierarchy rather than bare built-ins.)

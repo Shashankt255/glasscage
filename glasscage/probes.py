@@ -26,6 +26,7 @@ import re
 from .models import Finding, ReconResult, Severity, Status
 from .target import HTTPChatTarget
 from .tal import Tier as _Tier
+from .targets.surface import SurfaceKind as _SurfaceKind
 
 # Canaries: unique, harmless tokens so a "success" is unambiguous and greppable.
 CANARY_INJECT = "GLSSCG-INJECT-OK"
@@ -93,6 +94,11 @@ class Probe:
     atlas_id: str = ""
     dimension: str = "informational"
     min_tier = _Tier.L0            # Stage A: minimum target capability tier
+    # ADR 0006: which surface kinds this probe can drive. Set membership, not an
+    # ordinal like min_tier, because surface kinds have no ordering. Every built-in
+    # probe is prompt-shaped - it sends a prompt and reads free text - so CHAT is the
+    # correct default for all of them.
+    surface_kinds: tuple = (_SurfaceKind.CHAT,)
     references: list[str] = []
 
     def run(self, target: HTTPChatTarget, recon: ReconResult) -> list[Finding]:

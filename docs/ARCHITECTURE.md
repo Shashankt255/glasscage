@@ -84,3 +84,9 @@ See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for how these affect contribution.
 
 ## Phase 1 foundation
 See [`docs/targets.md`](targets.md) and [ADR 0001](adr/0001-surface-driver-foundation.md) for the additive Surface/Driver model introduced in Phase 1.
+
+[ADR 0002](adr/0002-engine-surface-wiring.md) wires it into the engine: `Engine(target,
+surface=...)` routes probe/recon/attacker traffic through a bound CHAT surface via the
+`targets.SurfaceTarget` shim. Probes are unmodified — `Observation` and `ChatResponse`
+agree on every field any caller reads. Omitting `surface=` reproduces the previous
+behaviour exactly, and identity/custody/reproduction still read the target.

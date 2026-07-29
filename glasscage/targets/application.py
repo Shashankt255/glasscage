@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .surface import Surface, SurfaceKind
+from .surface import Surface, SurfaceCandidate, SurfaceKind
 
 
 @dataclass
@@ -47,6 +47,9 @@ class ApplicationTarget:
     auth: AuthContext = field(default_factory=AuthContext)
     surfaces: list[Surface] = field(default_factory=list)
     scope: Optional[object] = None  # audit.Scope-compatible; optional
+    # Discovered but unbound (see `discovery`). Appended last so positional construction
+    # of the four pre-existing fields is unaffected.
+    candidates: list[SurfaceCandidate] = field(default_factory=list)
 
     def add_surface(self, surface: Surface) -> Surface:
         """Register a surface (idempotent by surface id) and return it."""
@@ -57,3 +60,17 @@ class ApplicationTarget:
     def surfaces_of(self, kind: SurfaceKind) -> list[Surface]:
         """All registered surfaces of a given kind, in registration order."""
         return [s for s in self.surfaces if s.kind == kind]
+
+    def add_candidate(self, candidate: SurfaceCandidate) -> SurfaceCandidate:
+        """Register a discovered candidate (idempotent by id) and return it.
+
+        A candidate is a proposal, not a surface: it carries no Driver and is never
+        driven. Promotion to a bound Surface is a separate, explicit decision.
+        """
+        if not any(c.id == candidate.id for c in self.candidates):
+            self.candidates.append(candidate)
+        return candidate
+
+    def candidates_of(self, kind: SurfaceKind) -> list[SurfaceCandidate]:
+        """All registered candidates of a given kind, in registration order."""
+        return [c for c in self.candidates if c.kind == kind]

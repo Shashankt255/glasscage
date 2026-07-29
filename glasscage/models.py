@@ -113,6 +113,11 @@ class Finding:
     nist_id: str = ""
     raw_output: str = ""
     turns: list[dict] = field(default_factory=list)  # multi-turn evidence trail
+    # ADR 0004: id of the Surface this finding was observed on. Empty unless the run was
+    # surface-driven. Configuration-review (MCP manifest) and questionnaire
+    # (architecture) findings are never attributed to a surface - they are not
+    # observations on one.
+    surface_id: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)

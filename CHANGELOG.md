@@ -3,6 +3,133 @@
 All notable changes. Versions prior to 1.0.0rc1 were internal stage-build milestones
 during development; the first public release candidate is **1.0.0rc1**.
 
+## [Unreleased] — Engine surface wiring (Phase 1)
+Plumbing only. No new probe, detector, graph node/edge type, attack technique, or scoring.
+### Added
+- `targets/compat.py`: `SurfaceTarget` presents a bound `Surface` through the `send(prompt)`
+  contract and delegates every other attribute to the origin target; `chat_surface_of()`
+  resolves a `Surface`/`ApplicationTarget` to the CHAT surface to drive.
+- `Engine(..., surface=...)`: optional, keyword-defaulted, appended last. Routes probe,
+  recon and attacker traffic through the bound surface.
+- Evidence-attribution guard: a surface bound to a target other than the supplied one is
+  refused with `TargetError` before any traffic, so evidence, HAR export, replay and
+  reproduction steps can never cite a system that was not probed. Drivers expose the
+  target they drive via an additive read-only `ChatDriver.target`.
+- `Observation.raw`: additive read-only alias for `response`, preserving plugin probes
+  written against `ChatResponse.raw`. A property, not a field — serialization unchanged.
+- `docs/adr/0002-engine-surface-wiring.md`.
+- `targets/discovery.py`: read-only surface discovery (**Experimental**). `discover_openapi`
+  / `discover_mcp` / `discover` emit `SurfaceCandidate` records preserving the locator,
+  HTTP method and I/O schema that `schema.ingest` discards; `ApplicationTarget` gains an
+  idempotent candidate registry (`add_candidate` / `candidates_of`). Candidates are never
+  bound to a Driver and no pipeline code consumes them yet — binding waits on per-surface
+  attribution. Deterministic ids (`rest:<method>:<path>`, `mcp_tool:<name>`), sorted and
+  deduplicated output; malformed input raises `ConfigError` and nothing is ever invented.
+  `schema.py` is unmodified and its output is asserted unchanged.
+- `docs/adr/0003-surface-discovery.md`.
+- `Finding.surface_id` (additive, defaulted `""`): runtime findings record the id of the
+  `Surface` they were observed on when a run is surface-driven. Probe-loop, tier-gated and
+  `--adaptive`/`--genetic` findings are attributed; MCP-manifest (configuration review) and
+  architecture (questionnaire) findings never are, because they are not observations on a
+  surface. Empty on the default path. Custody, HAR and reproduction still read the supplied
+  target. Graph serialization, SARIF, replay bundles and reproduction steps are unaffected.
+- **Plural surface resolution** (`targets/compat.py`): `chat_surfaces_of()` returns every
+  drivable CHAT surface in **registration order** (deliberately not id-sorted, unlike
+  `discovery`), deduplicated first-wins. `chat_surface_of()` is now a one-line wrapper
+  returning the first result, with byte-identical behaviour and identical exception types
+  and messages. All refusals originate in the plural form, so the two cannot drift.
+  Resolution performs no ownership validation — that remains per-surface at
+  `SurfaceTarget` construction (ADR 0005). Closes Phase 1 Review risk N2 (the silent
+  `surfaces_of(CHAT)[0]` selection) and gives multi-surface iteration a defined input.
+- `docs/adr/0009-surface-resolution-contract.md`.
+- **Driver-side chain of custody** (`targets/chat.py`): a driven `Observation` now carries
+  the `request` that produced it and a `custody_hash` of `audit.sha256(request, response)`,
+  reusing the same helper and argument order the engine uses for `Finding.evidence_hash`.
+  Retires a field declared in ADR 0001 and never populated, closing the last
+  evidence-integrity gap named in the Phase 1 Foundation Review before any non-chat driver
+  exists. The driver hashes but does **not** record — `exchanges` and the audit chain stay
+  with the target, so entry counts are unchanged. Transport failures carry custody;
+  `Observation.failure()` does not. No model change, and no serialization, reporting, AAKG
+  or CLI impact: observations are transient and never persisted.
+- `docs/adr/0008-driver-side-custody.md`.
+- **Action model generalisation** (`targets/driver.py`, **Experimental**): `HttpAction`
+  (`method`, `path`, `query`, `headers`, `body`) and `ToolCallAction` (`name`,
+  `arguments`) added as additive `Action` subclasses, giving REST/GraphQL and MCP/function
+  drivers a request descriptor to implement against. `Action`, `PromptAction`,
+  `Observation` and the `Driver` protocol are unchanged; `ChatDriver` is unchanged and
+  still refuses a non-`PromptAction` with `Observation.failure`. Pure data records — no
+  validation, no driver logic, no I/O. Nothing constructs them yet.
+- `docs/adr/0007-action-model-generalisation.md`.
+- **Probe surface applicability** (`probes.py`, `engine.py`): `Probe.surface_kinds`
+  (default `(SurfaceKind.CHAT,)`) declares which surface kinds a probe can drive, and the
+  engine refuses to run a probe against a kind it does not declare — emitting
+  `NOT ASSESSABLE` rather than a meaningless verdict, exactly as it already does for an
+  unmet `min_tier`. Applicability is checked before tier. All 21 built-in probes are
+  prompt-shaped and inherit the CHAT default unedited, so every current run is unchanged.
+  Probes that declare nothing are read as chat-applicable, preserving existing plugins.
+  Prevents a whole class of invalid findings before the first non-chat driver exists.
+- `docs/adr/0006-probe-surface-applicability.md`.
+- **Declared and governed ownership** (`targets/compat.py`, `targets/driver.py`): the
+  attribution guard generalises from object identity to declared ownership, unblocking
+  future non-chat drivers. Every driver must declare the target it drives (`Driver.target`,
+  additive protocol member); the driven target becomes authoritative for attribution, so
+  capability tier and reproduction steps follow what was probed; and a driven target other
+  than the supplied one is allowed only when governed by the same `scope`, `rate` and
+  `audit` objects — otherwise the run is refused with `TargetError` before any traffic.
+  Closes a scope-allowlist and rate-limiter bypass that relaxing attribution alone would
+  have opened. Two engine reads (capability tier, reproduction) now use the resolved probe
+  target; on the default path that is the supplied target, so behaviour is unchanged.
+- `docs/adr/0005-declared-and-governed-ownership.md`; partially supersedes ADR 0002's
+  "one authoritative target" clause.
+- `docs/adr/0004-attribution-before-binding.md`: records the sequencing decision —
+  attribution precedes binding, which cannot be built while `ChatDriver` is the only driver
+  and discovery emits no CHAT candidates.
+- `--discover SPEC` (**Experimental**): standalone CLI mode that enumerates the drivable
+  surface inventory from an OpenAPI document or MCP manifest, prints an ASCII table and
+  writes `<out>_surfaces.md` / `<out>_surfaces.json`. Constructs no target, sends no
+  probe, produces no report, and binds nothing. Backed by additive
+  `discovery.to_markdown()` / `discovery.to_json()` renderers, following the renderer
+  convention already used by `benchmark`, `adapter_validation`, `orchestrator` and
+  `validation`. This gives surface discovery its first user-facing consumer.
+### Changed
+- ADR 0001's "seven `.send()` call sites" corrected to 24 call sites across 7 modules.
+### Unchanged (by design)
+- Probes, agent probes, recon, mutation, genetic, CLI, AAKG, reporting, scoring, and every
+  existing test. No `.send()` call site was migrated — `Observation` and `ChatResponse`
+  agree on every field any caller reads, so probes needed no change.
+- `Engine(target).run()` without `surface=` is behaviourally identical; identity, custody
+  and reproduction still read the target.
+### Tests
+- 350 passing (+145). Surface resolution (+14): plural resolution, registration ordering
+  proven not id-sorted, first-wins dedup, singular equivalence, verbatim message parity
+  across both forms, and resolution/ownership separation.
+- Driver custody (+12): population and hash correctness, transport
+  failures vs `Observation.failure`, determinism, no double-recording (audit entries and
+  `exchanges` unchanged, chain still verifies), and `evidence_hash`/AAKG non-perturbation.
+- Action model (+13): construction and defaults, per-instance mutable
+  defaults, the frozen contract's field sets unchanged, ChatDriver's existing rejection of
+  non-prompt actions, and deterministic equality/repr.
+- Probe applicability (+14): declared default, gating without
+  invocation or traffic, applicability-before-tier ordering, plugin backward
+  compatibility, and unchanged CHAT-path behaviour.
+- Declared/governed ownership (+15, 2 updated): declaration required,
+  governance verified per control, attribution follows the driven target, refusals typed
+  and pre-traffic. The two updated tests asserted ADR 0002's superseded identity rule.
+- Surface attribution (+12): runtime tagging including tier-gated and
+  attacker findings, config-review and questionnaire findings left untagged, legacy
+  invariance, serialization, and graph/SARIF/reproduction non-perturbation.
+- Surface inventory (+14): renderer shape and purity, per-kind locator
+  rendering, ASCII-only output, honest empty rendering, and the standalone CLI mode
+  (no target, no assessment, byte-identical artifacts across runs).
+- Discovery (+21): OpenAPI/MCP enumeration, deterministic and sorted
+  ids, duplicate collapse, empty-vs-malformed handling, candidate registry, no-network and
+  never-bound guarantees, and `schema.ingest` non-regression.
+- Surface wiring (+30): positive routing verification via a counting driver (traffic through
+  `Driver.drive` equals traffic reaching the target), report/AAKG/summary equivalence
+  between the driven and direct paths, `set_seed` and capability-tier forwarding,
+  structural typing, adaptive and genetic paths, legacy invariance, evidence-attribution
+  refusal, plugin `.raw` compatibility, and typed refusal of unsupported inputs.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added

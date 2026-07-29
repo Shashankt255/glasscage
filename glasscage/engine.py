@@ -50,7 +50,7 @@ class Engine:
                  schema_tools=None, adaptive=False, adaptive_budget=8,
                  architecture_answers=None, genetic=False, genetic_budget=40,
                  build_chains=True, trials=1, seed=None, use_aakg=True,
-                 store_raw=False):
+                 store_raw=False, surface=None):
         self.target = target
         self.probes = selected_probes if selected_probes is not None else probes_mod.all_probes()
         self.mcp_manifest = mcp_manifest
@@ -68,9 +68,25 @@ class Engine:
         self.seed = seed
         self.use_aakg = use_aakg
         self.store_raw = store_raw
+        # ADR 0002: optional Surface/ApplicationTarget to route probe traffic through.
+        # None keeps the pre-existing single-target path exactly as it was.
+        self.surface = surface
+
+    def _probe_target(self):
+        """The object probes talk to: the target itself, or a shim over a Surface.
+
+        Capability tier and reproduction read this object (ADR 0005), so they follow the
+        driven target. The report header and custody keep reading `self.target`, so
+        `name`, `url`, `method` and `capabilities` are sourced exactly as before.
+        """
+        if self.surface is None:
+            return self.target
+        from .targets.compat import SurfaceTarget, chat_surface_of
+        return SurfaceTarget(chat_surface_of(self.surface), origin=self.target)
 
     def run(self) -> dict:
-        recon: ReconResult = recon_mod.run_recon(self.target)
+        probe_target = self._probe_target()
+        recon: ReconResult = recon_mod.run_recon(probe_target)
         if self.schema_tools:
             recon.schema_tools = self.schema_tools
 
@@ -78,13 +94,37 @@ class Engine:
         adaptive_success = False
         # Stage A: determine the target's capability tier (default L0).
         from .tal import TargetCapabilities, Tier
-        caps = getattr(self.target, "capabilities", None) or TargetCapabilities()
+        # ADR 0005: the tier describes the target actually driven, not the one supplied.
+        caps = getattr(probe_target, "capabilities", None) or TargetCapabilities()
         target_tier = caps.tier
         from .stats import TrialRunner
         runner = TrialRunner(trials=self.trials, seed=self.seed)
+        # ADR 0006: which surface kind is actually being driven. Legacy runs drive a
+        # single chat endpoint, so CHAT is the default when no surface is bound.
+        from .targets.surface import SurfaceKind
+        _driven_surface = getattr(probe_target, "surface", None)
+        driven_kind = _driven_surface.kind if _driven_surface is not None else SurfaceKind.CHAT
 
         if recon.reachable:
             for probe in self.probes:
+                # ADR 0006: applicability is checked BEFORE capability tier - being
+                # unable to drive a surface at all is more fundamental than lacking a
+                # capability on it. Probes that declare nothing are read as CHAT-only,
+                # so third-party plugins keep working.
+                kinds = getattr(probe, "surface_kinds", (SurfaceKind.CHAT,))
+                if driven_kind not in kinds:
+                    na = Finding(
+                        probe_name=probe.name, title=(
+                            f"NOT ASSESSABLE on a {driven_kind.value} surface: probe "
+                            f"drives {', '.join(k.value for k in kinds)}"),
+                        owasp_id=probe.owasp_id, category=probe.category,
+                        status=Status.NOT_ASSESSABLE, severity=Severity.INFO,
+                        confidence=0.0, dimension="informational",
+                        assessed_tier=target_tier.name,
+                        required_tier=getattr(probe, "min_tier", Tier.L0).name,
+                        prompt="(surface-gated)", response_excerpt="")
+                    findings.append(na)
+                    continue
                 required = getattr(probe, "min_tier", Tier.L0)
                 if target_tier < required:
                     # Stage A: honest NOT ASSESSABLE instead of an invalid pass/fail.
@@ -100,23 +140,31 @@ class Engine:
                     findings.append(na)
                     continue
                 try:
-                    for f in runner.run(probe, self.target, recon):
+                    for f in runner.run(probe, probe_target, recon):
                         f.assessed_tier = target_tier.name
                         findings.append(f)
                 except Exception as e:  # noqa: BLE001
                     recon.notes.append(f"probe {probe.name} crashed: {e}")
             if self.adaptive:
                 try:
-                    findings.extend(mutation_mod.run(self.target, self.adaptive_budget,
+                    findings.extend(mutation_mod.run(probe_target, self.adaptive_budget,
                                                      use_llm=self.use_judge))
                 except Exception as e:  # noqa: BLE001
                     recon.notes.append(f"adaptive attacker crashed: {e}")
             if self.genetic:
                 try:
-                    findings.extend(genetic_mod.run(self.target, budget=self.genetic_budget,
+                    findings.extend(genetic_mod.run(probe_target, budget=self.genetic_budget,
                                                     use_llm=self.use_judge))
                 except Exception as e:  # noqa: BLE001
                     recon.notes.append(f"genetic attacker crashed: {e}")
+
+        # ADR 0004: attribute runtime findings to the surface they were observed on.
+        # Everything appended after this point (MCP manifest, architecture answers) is
+        # configuration-review or questionnaire evidence and is never attributed.
+        if self.surface is not None:
+            surface_id = probe_target.surface.id
+            for f in findings:
+                f.surface_id = surface_id
 
         if self.use_judge and judge_mod.available():
             for f in findings:
@@ -140,7 +188,7 @@ class Engine:
         kb_mod.enrich_all(findings)
         from . import taxonomy as taxonomy_mod
         taxonomy_mod.enrich_all(findings)   # D1: CWE/CAPEC/NIST mappings
-        repro.build_all(findings, self.target)
+        repro.build_all(findings, probe_target)   # ADR 0005: cite the driven target
         for f in findings:
             if f.prompt or f.response_excerpt:
                 f.raw_request = f.raw_request or f.prompt

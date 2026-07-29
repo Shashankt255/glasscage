@@ -13,7 +13,7 @@ Drivers perform I/O; Surfaces do not. That keeps transport in one layer.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Optional, Protocol, runtime_checkable
 
 if TYPE_CHECKING:  # typing-only import; no runtime cycle
@@ -30,6 +30,43 @@ class PromptAction(Action):
     """A chat prompt — the only action kind exercised in this release."""
 
     prompt: str
+
+
+@dataclass
+class HttpAction(Action):
+    """A single HTTP request against a REST or GraphQL surface (ADR 0007).
+
+    Status: Experimental — no driver consumes it yet.
+
+    The shape mirrors what `discovery` already emits for a REST candidate (a
+    `{"method", "path"}` locator plus an `io_schema`), so it describes data the
+    repository already produces rather than an invented model.
+
+    Deliberately minimal: this expresses *one request*, nothing more. Authentication
+    belongs to `AuthContext`; timeouts, retries, redirects, pagination and content
+    negotiation belong to the driver that performs the request.
+    """
+
+    method: str
+    path: str
+    query: dict = field(default_factory=dict)
+    headers: dict = field(default_factory=dict)
+    body: Any = None
+
+
+@dataclass
+class ToolCallAction(Action):
+    """A single tool invocation on an MCP or function surface (ADR 0007).
+
+    Status: Experimental — no driver consumes it yet.
+
+    Kept separate from HttpAction rather than merged into one envelope: a tool call has
+    no path or method and an HTTP request has no tool name, so a single record would
+    make every field optional and meaningless.
+    """
+
+    name: str
+    arguments: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -52,6 +89,16 @@ class Observation:
     status: Optional[int] = None
     custody_hash: Optional[str] = None
 
+    @property
+    def raw(self) -> Any:
+        """Compatibility alias for `ChatResponse.raw`.
+
+        Additive: plugin probes written against the pre-surface contract read `.raw` off
+        whatever `target.send()` returns. `ChatDriver` maps `ChatResponse.raw` onto
+        `response`, so this alias keeps those probes working when the engine drives a
+        surface. Not a field, so serialization and equality are unaffected."""
+        return self.response
+
     @classmethod
     def failure(cls, error: str) -> "Observation":
         """Construct a failed observation. Drivers return this instead of raising, so a
@@ -65,6 +112,10 @@ class Driver(Protocol):
     in later PRs). `runtime_checkable` so tests can assert conformance structurally."""
 
     kind: "SurfaceKind"
+    # ADR 0005: every driver declares the target it drives. Ownership is verified from
+    # this declaration, so a driver that cannot answer "what do you drive?" is refused
+    # rather than trusted.
+    target: Any
 
     def drive(self, surface: "Surface", action: Action) -> Observation:
         ...

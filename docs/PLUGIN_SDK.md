@@ -9,6 +9,12 @@ without modifying the core.
   module-level `register(registry)` hook.
 - Declare `GLASSCAGE_PLUGIN_API = "1.0"`; a major-version mismatch is refused.
 - Every probe MUST define `name`, `owasp_id`, and `min_tier`.
+- A probe MAY define `surface_kinds` — the surface kinds it can drive. Defaults to
+  `(SurfaceKind.CHAT,)`, so a probe written before this attribute existed keeps working
+  unchanged. The engine never invokes a probe against a kind it does not declare; it
+  reports `NOT ASSESSABLE` instead, exactly as it does for an unmet `min_tier`. Declare a
+  non-chat kind only when your `run()` can actually drive one. See
+  [ADR 0006](adr/0006-probe-surface-applicability.md).
 
 ## Minimal example
 ```python
@@ -23,6 +29,7 @@ class MyProbe(Probe):
     name = "my-probe"
     owasp_id = "LLM01"
     min_tier = Tier.L0
+    # surface_kinds omitted -> (SurfaceKind.CHAT,), correct for a prompt-shaped probe
     def run(self, target, recon):
         r = target.send("...")
         status, conf, _ = canary_verdict(CANARY_INJECT, r.text)

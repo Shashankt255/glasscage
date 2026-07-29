@@ -121,6 +121,9 @@ def main(argv=None):
     ap.add_argument("--no-evidence", action="store_true",
                     help="skip screenshot-style evidence card generation")
     ap.add_argument("--schema", help="OpenAPI/function-schema/MCP JSON for schema-confirmed tools")
+    ap.add_argument("--discover", metavar="SPEC",
+                    help="enumerate the drivable surface inventory from an OpenAPI "
+                         "document or MCP manifest and exit (no target, no assessment)")
     ap.add_argument("--scope", nargs="+", help="allowlist of hostnames permitted to test")
     ap.add_argument("--rate", type=float, help="max requests per second (be polite)")
     ap.add_argument("--adaptive", action="store_true", help="run the adaptive mutation attacker")
@@ -164,6 +167,19 @@ def main(argv=None):
     if args.arch_template:
         from glasscage import architecture
         print(json.dumps(architecture.template(), indent=2))
+        return 0
+
+    # Phase 1: surface inventory (standalone; needs no target and runs no assessment).
+    if args.discover:
+        from glasscage.targets import discovery as discovery_mod
+        candidates = discovery_mod.discover(_load(args.discover))
+        md = discovery_mod.to_markdown(candidates)
+        print(md)
+        with open(f"{args.out}_surfaces.md", "w", encoding="utf-8") as fh:
+            fh.write(md)
+        with open(f"{args.out}_surfaces.json", "w", encoding="utf-8") as fh:
+            json.dump(discovery_mod.to_json(candidates), fh, indent=2)
+        print(f"\nWrote {args.out}_surfaces.(md/json)")
         return 0
 
     # P0-5: adapter validation (standalone; needs no target). Honest by construction:

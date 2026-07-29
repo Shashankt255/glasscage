@@ -62,6 +62,22 @@ print(glasscage.__version__)"`.
 - **Purpose:** print a blank architecture questionnaire to stdout.
 - **Example:** `python -m glasscage --arch-template > arch.json`
 
+### `--discover SPEC` — Experimental
+- **Purpose:** enumerate the **drivable surface inventory** from an OpenAPI document or
+  an MCP manifest. Prints a table and writes `<out>_surfaces.md` / `<out>_surfaces.json`.
+- **Example:** `python -m glasscage --discover openapi.json --out inv`
+- **When:** scoping an engagement — "where can this application be driven?" — before or
+  independently of an assessment.
+- **Runs nothing.** No target is constructed, no probe is sent, no report is produced.
+  Discovered surfaces are **candidates**: they are not bound to a driver and are not
+  driven. Promotion to a driven surface is not available in this release.
+- **Not the same as `--schema`.** `--schema` feeds schema-confirmed blast radius *during*
+  an assessment and flattens operations into capability records; `--discover` keeps the
+  locator, HTTP method and I/O schema that `--schema` discards, and assesses nothing.
+- **Common mistake:** expecting findings. This is an inventory, not a test. `$ref` is not
+  resolved and only `paths` → HTTP methods and MCP `tools` are enumerated, so the count
+  is a lower bound on a spec that leans on references.
+
 ---
 
 ## Attack engines
