@@ -1,0 +1,325 @@
+Python Library Documentation: module glasscage.adapters.external in glasscage.adapters
+
+NAME
+    glasscage.adapters.external - External-tool adapters with real normalization (GLASSCAGE Stage D1).
+
+DESCRIPTION
+    Status:
+      garak      Implemented (format verified against NVIDIA docs) / Partial (live run
+                 requires garak installed; parser unit-tested against a fixture)
+      promptfoo  Implemented (parser) / Experimental (live run)
+      pyrit      Experimental (PyRIT persists to a DuckDB memory store; we parse a
+                 documented JSON export shape - live compatibility unverified)
+      deepteam   Experimental (parser against representative RiskAssessment export)
+      fuzzyai    Experimental (parser against representative results export)
+
+    Every adapter turns a framework's NATIVE OUTPUT into canonical GLASSCAGE Findings,
+    preserving source_framework, source_rule_id, confidence, evidence, timestamp,
+    raw_output, and full taxonomy (OWASP/ATLAS/CWE/CAPEC/NIST via taxonomy.py).
+
+    Honesty contract: when a tool is neither installed nor given an output file to
+    parse, run() returns available=False with a "Not Tested" error. We never
+    fabricate findings.
+
+CLASSES
+    _ExternalAdapter(glasscage.adapters.base.ExternalToolAdapter)
+        DeepTeamAdapter
+        FuzzyAIAdapter
+        GarakAdapter
+        PromptfooAdapter
+        PyRITAdapter
+
+    class DeepTeamAdapter(_ExternalAdapter)
+     |  Method resolution order:
+     |      DeepTeamAdapter
+     |      _ExternalAdapter
+     |      glasscage.adapters.base.ExternalToolAdapter
+     |      builtins.object
+     |
+     |  Static methods defined here:
+     |
+     |  parser = parse_deepteam(path: 'str') -> 'list[Finding]'
+     |      DeepTeam representative RiskAssessment export.
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  module = 'deepteam'
+     |
+     |  name = 'deepteam'
+     |
+     |  status = 'Experimental'
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from _ExternalAdapter:
+     |
+     |  available(self) -> 'bool'
+     |      True only if the underlying tool is importable/executable here.
+     |
+     |  run(self, target, options=None)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from _ExternalAdapter:
+     |
+     |  binary = None
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  version(self) -> 'str | None'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  api_version = '1.0'
+
+    class FuzzyAIAdapter(_ExternalAdapter)
+     |  Method resolution order:
+     |      FuzzyAIAdapter
+     |      _ExternalAdapter
+     |      glasscage.adapters.base.ExternalToolAdapter
+     |      builtins.object
+     |
+     |  Static methods defined here:
+     |
+     |  parser = parse_fuzzyai(path: 'str') -> 'list[Finding]'
+     |      FuzzyAI representative results export.
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  module = 'fuzzyai'
+     |
+     |  name = 'fuzzyai'
+     |
+     |  status = 'Experimental'
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from _ExternalAdapter:
+     |
+     |  available(self) -> 'bool'
+     |      True only if the underlying tool is importable/executable here.
+     |
+     |  run(self, target, options=None)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from _ExternalAdapter:
+     |
+     |  binary = None
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  version(self) -> 'str | None'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  api_version = '1.0'
+
+    class GarakAdapter(_ExternalAdapter)
+     |  Method resolution order:
+     |      GarakAdapter
+     |      _ExternalAdapter
+     |      glasscage.adapters.base.ExternalToolAdapter
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  version(self)
+     |
+     |  ----------------------------------------------------------------------
+     |  Static methods defined here:
+     |
+     |  parser = parse_garak(path: 'str', threshold: 'float' = 0.5) -> 'list[Finding]'
+     |      garak report.jsonl: attempt rows (status==2) with detector_results.
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  module = 'garak'
+     |
+     |  name = 'garak'
+     |
+     |  status = 'Implemented (parser) / Partial (live)'
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from _ExternalAdapter:
+     |
+     |  available(self) -> 'bool'
+     |      True only if the underlying tool is importable/executable here.
+     |
+     |  run(self, target, options=None)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from _ExternalAdapter:
+     |
+     |  binary = None
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  api_version = '1.0'
+
+    class PromptfooAdapter(_ExternalAdapter)
+     |  Method resolution order:
+     |      PromptfooAdapter
+     |      _ExternalAdapter
+     |      glasscage.adapters.base.ExternalToolAdapter
+     |      builtins.object
+     |
+     |  Static methods defined here:
+     |
+     |  parser = parse_promptfoo(path: 'str') -> 'list[Finding]'
+     |      promptfoo eval JSON: results.results[*].gradingResult.pass == False -> vuln.
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  binary = 'promptfoo'
+     |
+     |  name = 'promptfoo'
+     |
+     |  status = 'Implemented (parser) / Experimental (live)'
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from _ExternalAdapter:
+     |
+     |  available(self) -> 'bool'
+     |      True only if the underlying tool is importable/executable here.
+     |
+     |  run(self, target, options=None)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from _ExternalAdapter:
+     |
+     |  module = None
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  version(self) -> 'str | None'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  api_version = '1.0'
+
+    class PyRITAdapter(_ExternalAdapter)
+     |  Method resolution order:
+     |      PyRITAdapter
+     |      _ExternalAdapter
+     |      glasscage.adapters.base.ExternalToolAdapter
+     |      builtins.object
+     |
+     |  Static methods defined here:
+     |
+     |  parser = parse_pyrit(path: 'str') -> 'list[Finding]'
+     |      PyRIT representative export: list of {prompt, response, score{...}}.
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  module = 'pyrit'
+     |
+     |  name = 'pyrit'
+     |
+     |  status = 'Experimental'
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from _ExternalAdapter:
+     |
+     |  available(self) -> 'bool'
+     |      True only if the underlying tool is importable/executable here.
+     |
+     |  run(self, target, options=None)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from _ExternalAdapter:
+     |
+     |  binary = None
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  version(self) -> 'str | None'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  api_version = '1.0'
+
+FUNCTIONS
+    parse_deepteam(path: 'str') -> 'list[Finding]'
+        DeepTeam representative RiskAssessment export.
+
+    parse_fuzzyai(path: 'str') -> 'list[Finding]'
+        FuzzyAI representative results export.
+
+    parse_garak(path: 'str', threshold: 'float' = 0.5) -> 'list[Finding]'
+        garak report.jsonl: attempt rows (status==2) with detector_results.
+
+    parse_promptfoo(path: 'str') -> 'list[Finding]'
+        promptfoo eval JSON: results.results[*].gradingResult.pass == False -> vuln.
+
+    parse_pyrit(path: 'str') -> 'list[Finding]'
+        PyRIT representative export: list of {prompt, response, score{...}}.
+
+FILE
+    /home/claude/glasscage/glasscage/adapters/external.py
+

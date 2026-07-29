@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "glasscage"
+version = "1.0.0rc3"
+description = "GLASSCAGE - AI Application Security Assessment Platform (AI Attack Knowledge Graph)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "GLASSCAGE contributors" }]
+keywords = ["ai-security", "llm", "red-team", "owasp", "mitre-atlas", "prompt-injection"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Security",
+]
+dependencies = []  # zero-dependency core (standard library only)
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.30"]          # optional LLM judge / mutation
+yaml = ["pyyaml>=6"]               # optional YAML config
+rich = ["rich>=13"]                # optional pretty CLI output
+dev = ["pytest>=8", "ruff>=0.5", "mypy>=1.10", "build>=1.2"]
+
+[project.urls]
+Homepage = "https://github.com/OWNER/REPO"
+Documentation = "https://github.com/OWNER/REPO#documentation"
+Source = "https://github.com/OWNER/REPO"
+Issues = "https://github.com/OWNER/REPO/issues"
+
+[project.scripts]
+glasscage = "cli:main"
+
+[tool.setuptools]
+py-modules = ["cli"]
+
+[tool.setuptools.packages.find]
+include = ["glasscage*"]
+
+[tool.setuptools.package-data]
+glasscage = ["py.typed", "adapters/fixtures/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true

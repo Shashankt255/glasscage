@@ -1,0 +1,30 @@
+Python Library Documentation: module glasscage.report in glasscage
+
+NAME
+    glasscage.report - Report generator: interactive HTML app + Markdown + JSON.
+
+DESCRIPTION
+    - Markdown: pentest-style deliverable (exec summary, recon, per-finding
+      remediation, verification, reproduction steps, references, Mermaid graph).
+    - HTML: a self-contained interactive single-page app with a severity dashboard,
+      live filtering/search, collapsible findings, per-finding tabs
+      (Evidence / Remediation / Verify / Reproduce / References), and embedded
+      screenshot-style evidence cards.
+    - JSON: machine-readable, with the inline evidence SVG stripped for size.
+
+FUNCTIONS
+    to_html(target_name: 'str', recon: 'ReconResult', findings: 'list[Finding]', summary: 'dict', graph: 'dict | None' = None, coverage: 'dict | None' = None, architecture: 'dict | None' = None, trust: 'dict | None' = None, chains: 'list | None' = None, posture: 'dict | None' = None) -> 'str'
+        # --------------------------------------------------------------------------- #
+        # Interactive HTML
+        # --------------------------------------------------------------------------- #
+
+    to_markdown(target_name: 'str', recon: 'ReconResult', findings: 'list[Finding]', summary: 'dict', graph: 'dict | None' = None, coverage: 'dict | None' = None, architecture: 'dict | None' = None, trust: 'dict | None' = None, chains: 'list | None' = None, posture: 'dict | None' = None) -> 'str'
+        # --------------------------------------------------------------------------- #
+        # Markdown
+        # --------------------------------------------------------------------------- #
+
+    write_json(path: 'str', target_name: 'str', recon: 'ReconResult', findings: 'list[Finding]', summary: 'dict') -> 'None'
+
+FILE
+    /home/claude/glasscage/glasscage/report.py
+

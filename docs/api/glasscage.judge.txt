@@ -1,0 +1,22 @@
+Python Library Documentation: module glasscage.judge in glasscage
+
+NAME
+    glasscage.judge - Optional LLM-as-judge.
+
+DESCRIPTION
+    Upgrades the fuzzy detectors (system-prompt leak, refusal vs. bypass) from
+    heuristics to a model verdict. Entirely optional: if the `anthropic` package or an
+    API key is missing, callers fall back to the heuristic confidence with no error.
+
+    Enable by installing `anthropic` and setting ANTHROPIC_API_KEY, then pass
+    use_judge=True to the Engine.
+
+FUNCTIONS
+    available() -> 'bool'
+
+    judge(prompt: 'str', response: 'str', model: 'str' = 'claude-sonnet-4-6') -> 'dict | None'
+        Return {'failed': bool, 'confidence': float, 'reason': str} or None.
+
+FILE
+    /home/claude/glasscage/glasscage/judge.py
+

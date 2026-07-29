@@ -1,0 +1,93 @@
+Python Library Documentation: module glasscage.target in glasscage
+
+NAME
+    glasscage.target - Target adapters.
+
+DESCRIPTION
+    HTTPChatTarget speaks to any HTTP chat endpoint (OpenAI-style, Anthropic-style,
+    or a custom bot) using a configurable request template and a dot-path to pull the
+    assistant's text out of the JSON response. Zero third-party dependencies: uses the
+    standard library only, so it runs anywhere Python does.
+
+CLASSES
+    builtins.object
+        ChatResponse
+        HTTPChatTarget
+
+    class ChatResponse(builtins.object)
+     |  ChatResponse(text: 'str', raw: 'Any', latency_ms: 'float', ok: 'bool', error: 'str | None' = None, trace: 'dict | None' = None) -> None
+     |
+     |  ChatResponse(text: 'str', raw: 'Any', latency_ms: 'float', ok: 'bool', error: 'str | None' = None, trace: 'dict | None' = None)
+     |
+     |  Methods defined here:
+     |
+     |  __eq__(self, other)
+     |      Return self==value.
+     |
+     |  __init__(self, text: 'str', raw: 'Any', latency_ms: 'float', ok: 'bool', error: 'str | None' = None, trace: 'dict | None' = None) -> None
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |
+     |  __repr__(self)
+     |      Return repr(self).
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {'error': 'str | None', 'latency_ms': 'float', 'ok':...
+     |
+     |  __dataclass_fields__ = {'error': Field(name='error',type='str | None',...
+     |
+     |  __dataclass_params__ = _DataclassParams(init=True,repr=True,eq=True,or...
+     |
+     |  __hash__ = None
+     |
+     |  __match_args__ = ('text', 'raw', 'latency_ms', 'ok', 'error', 'trace')
+     |
+     |  error = None
+     |
+     |  trace = None
+
+    class HTTPChatTarget(builtins.object)
+     |  HTTPChatTarget(config: 'dict[str, Any]')
+     |
+     |  Configurable adapter for a black-box chat endpoint.
+     |
+     |  Config keys:
+     |    url            : endpoint URL
+     |    method         : HTTP method (default POST)
+     |    headers        : dict of headers (put auth tokens here)
+     |    body_template  : JSON body with "{{PROMPT}}" where the user message goes
+     |    response_path  : dot path to the assistant text in the JSON response
+     |    timeout        : seconds (default 30)
+     |
+     |  Methods defined here:
+     |
+     |  __init__(self, config: 'dict[str, Any]')
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |
+     |  send(self, prompt: 'str') -> 'ChatResponse'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+
+DATA
+    PROMPT_PLACEHOLDER = '{{PROMPT}}'
+
+FILE
+    /home/claude/glasscage/glasscage/target.py
+

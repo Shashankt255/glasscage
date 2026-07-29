@@ -1,0 +1,19 @@
+GLASSCAGE
+Copyright 2025-2026 The GLASSCAGE Authors
+
+This product is licensed under the Apache License, Version 2.0 (the "License");
+you may not use this product except in compliance with the License. You may obtain
+a copy of the License in the accompanying LICENSE file or at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+GLASSCAGE has zero runtime dependencies (Python standard library only). Optional
+features use the following third-party packages only when their extras are installed;
+each is distributed under its own license by its respective authors:
+
+  - cryptography  (Apache-2.0 / BSD)      enables --encrypt-evidence
+  - anthropic     (MIT)                   enables the optional LLM-as-judge (--judge)
+  - pyyaml        (MIT)                   enables YAML configuration files
+  - rich          (MIT)                   enables prettier CLI output
+
+These packages are NOT bundled with GLASSCAGE and are not required for core operation.

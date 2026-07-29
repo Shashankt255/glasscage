@@ -1,0 +1,24 @@
+Python Library Documentation: module glasscage.aakg.remediation in glasscage.aakg
+
+NAME
+    glasscage.aakg.remediation - Graph-native remediation engine (GLASSCAGE Stage E5-4).
+
+DESCRIPTION
+    Status: Implemented. Instead of generic per-finding advice, this ranks candidate
+    mitigations by their measured effect on the graph:
+      * how many attack paths the mitigation would break,
+      * how much blast radius (reachable high-value assets) it removes,
+      * how many trust-boundary violations it resolves.
+    Every recommendation cites the specific graph nodes/edges that justify it. Effects
+    are simulated by inspecting current graph structure (no mutation), so results are
+    deterministic. The per-finding `remediation` text from kb.py is retained and is
+    complementary (not duplicated) - this engine answers "what should I fix first".
+
+FUNCTIONS
+    prioritize(g) -> 'list[dict]'
+
+    to_markdown(recs: 'list') -> 'str'
+
+FILE
+    /home/claude/glasscage/glasscage/aakg/remediation.py
+

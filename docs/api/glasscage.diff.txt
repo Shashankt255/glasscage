@@ -1,0 +1,18 @@
+Python Library Documentation: module glasscage.diff in glasscage
+
+NAME
+    glasscage.diff - Regression diff: compare two GLASSCAGE JSON reports.
+
+DESCRIPTION
+    Answers "did this deploy make the bot safer or riskier?" by diffing findings
+    keyed on (probe_name, owasp_id, title-ish). Surfaces newly introduced, fixed, and
+    severity-changed issues so risk can be tracked across prompt/model/tool changes.
+
+FUNCTIONS
+    diff_reports(old_path: 'str', new_path: 'str') -> 'dict'
+
+    render(d: 'dict') -> 'str'
+
+FILE
+    /home/claude/glasscage/glasscage/diff.py
+

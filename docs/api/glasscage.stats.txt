@@ -1,0 +1,57 @@
+Python Library Documentation: module glasscage.stats in glasscage
+
+NAME
+    glasscage.stats - Statistical evaluation framework (GLASSCAGE Stage B).
+
+DESCRIPTION
+    Status: Implemented.
+
+    Rationale
+    ---------
+    LLM targets are non-deterministic; a single probe run is a point estimate with
+    unknown variance. This module runs each probe over N trials and reports a success
+    rate with a Wilson score confidence interval, the outcome variance, and a
+    reproducibility metric (modal-outcome agreement). Deterministic replay is
+    supported via a seed passed to seed-aware targets (e.g. the reference harness and
+    the genetic engine), so results are reproducible where the target permits.
+
+    Wilson score interval is used instead of the normal approximation because it is
+    well-behaved at small N and extreme proportions - the common case here.
+
+CLASSES
+    builtins.object
+        TrialRunner
+
+    class TrialRunner(builtins.object)
+     |  TrialRunner(trials: 'int' = 5, seed: 'int | None' = None)
+     |
+     |  Runs a probe N times and returns aggregated findings with statistics.
+     |
+     |  Methods defined here:
+     |
+     |  __init__(self, trials: 'int' = 5, seed: 'int | None' = None)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |
+     |  run(self, probe, target, recon) -> 'list[Finding]'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+
+FUNCTIONS
+    aggregate(findings: 'list[Finding]') -> 'Finding'
+        Collapse N single-trial findings for the same probe into one aggregate.
+
+    reproducibility_report(findings: 'list[Finding]') -> 'dict'
+
+    wilson(successes: 'int', n: 'int', z: 'float' = 1.96) -> 'tuple[float, float, float]'
+        Return (point, low, high) for a binomial proportion. z=1.96 -> 95%.
+
+FILE
+    /home/claude/glasscage/glasscage/stats.py
+

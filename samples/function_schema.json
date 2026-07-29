@@ -1,0 +1,8 @@
+{
+  "functions": [
+    {"name": "search_docs", "description": "Search the knowledge base", "parameters": {"type":"object","properties":{"q":{"type":"string"}}}},
+    {"name": "send_email", "description": "Send an email to a recipient", "parameters": {"type":"object","properties":{"to":{"type":"string"},"body":{"type":"string"}}}},
+    {"name": "run_sql", "description": "Execute a SQL query against the app database", "parameters": {"type":"object","properties":{"query":{"type":"string"}}}},
+    {"name": "get_secret", "description": "Fetch a credential from the vault", "parameters": {"type":"object","properties":{"key":{"type":"string"}}}}
+  ]
+}

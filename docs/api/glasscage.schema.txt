@@ -1,0 +1,27 @@
+Python Library Documentation: module glasscage.schema in glasscage
+
+NAME
+    glasscage.schema - Schema ingestion for schema-confirmed blast radius.
+
+DESCRIPTION
+    The review flagged that blast radius rested on the model's self-reported tool
+    names (an unreliable narrator) classified by keyword. This module ingests the
+    *real* interface definition - OpenAPI, function-calling schema, or an MCP
+    tools/list - and derives a schema-confirmed tool surface with capability and
+    side-effect classification. Findings then distinguish self-reported from
+    schema-confirmed provenance, and impact scoring only trusts the latter.
+
+FUNCTIONS
+    from_function_schema(schema) -> 'list[dict]'
+        OpenAI-style function/tool list: [{name, description, parameters}].
+
+    from_mcp(manifest: 'dict') -> 'list[dict]'
+
+    from_openapi(spec: 'dict') -> 'list[dict]'
+
+    ingest(data: 'dict') -> 'list[dict]'
+        Auto-detect schema type and return schema-confirmed tools.
+
+FILE
+    /home/claude/glasscage/glasscage/schema.py
+

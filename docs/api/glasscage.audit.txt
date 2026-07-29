@@ -1,0 +1,96 @@
+Python Library Documentation: module glasscage.audit in glasscage
+
+NAME
+    glasscage.audit - Operational safety + chain of custody.
+
+DESCRIPTION
+    The review flagged --authorized as an honor-system checkbox and the SVG as a
+    self-drawn reconstruction rather than a tamper-evident capture. This module adds:
+
+      * Scope    - an explicit host allowlist; requests outside it are refused.
+      * RateLimiter - minimum inter-request interval (be a polite tester).
+      * AuditLog - append-only JSONL of every payload sent, with sha256 + timestamp,
+                   chained (each entry hashes the previous) so tampering is evident.
+      * capture  - hash + timestamp raw request/response for evidentiary integrity.
+      * har_export - standard HAR so raw exchanges load in any HTTP tooling.
+
+CLASSES
+    builtins.object
+        AuditLog
+        RateLimiter
+        Scope
+
+    class AuditLog(builtins.object)
+     |  AuditLog(path: 'str | None' = None)
+     |
+     |  Append-only, hash-chained JSONL audit trail of everything sent.
+     |
+     |  Methods defined here:
+     |
+     |  __init__(self, path: 'str | None' = None)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |
+     |  record(self, url: 'str', prompt: 'str', response: 'str', ok: 'bool') -> 'dict'
+     |
+     |  verify(self) -> 'bool'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+
+    class RateLimiter(builtins.object)
+     |  RateLimiter(rps: 'float | None' = None)
+     |
+     |  Methods defined here:
+     |
+     |  __init__(self, rps: 'float | None' = None)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |
+     |  wait(self) -> 'None'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+
+    class Scope(builtins.object)
+     |  Scope(allowed_hosts: 'list[str] | None' = None)
+     |
+     |  Explicit allowlist of hosts that may be tested.
+     |
+     |  Methods defined here:
+     |
+     |  __init__(self, allowed_hosts: 'list[str] | None' = None)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |
+     |  check(self, url: 'str') -> 'None'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+
+FUNCTIONS
+    har_export(exchanges: 'list[dict]', path: 'str') -> 'None'
+        exchanges: [{url, method, request_body, status, response_body, ts, ms}].
+
+    now_iso() -> 'str'
+
+    sha256(*parts: 'str') -> 'str'
+
+FILE
+    /home/claude/glasscage/glasscage/audit.py
+

@@ -1,0 +1,19 @@
+{
+  "tools": [
+    {
+      "name": "get_weather",
+      "description": "Return the weather for a city.",
+      "inputSchema": {"type": "object", "properties": {"city": {"type": "string"}}}
+    },
+    {
+      "name": "fetch_url",
+      "description": "Fetch a URL and return its contents.",
+      "inputSchema": {"type": "object", "properties": {"url": {"type": "string"}}}
+    },
+    {
+      "name": "notes_helper",
+      "description": "Saves a note for the user.",
+      "inputSchema": {"type": "object", "properties": {"text": {"type": "string"}}}
+    }
+  ]
+}

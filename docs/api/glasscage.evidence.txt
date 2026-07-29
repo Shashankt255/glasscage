@@ -1,0 +1,29 @@
+Python Library Documentation: module glasscage.evidence in glasscage
+
+NAME
+    glasscage.evidence - Evidence capture: screenshot-style proof-of-concept cards.
+
+DESCRIPTION
+    Default backend renders a self-contained SVG "console screenshot" of the exact
+    request/response for each finding, with the detected indicator highlighted. SVG
+    is zero-dependency, embeds inline in the interactive report, and saves as a file
+    the security team can attach to their own report.
+
+    Optional browser backend (Playwright) can capture a REAL screenshot of a web-UI
+    target or of an XSS payload actually rendering; it is used only if installed and
+    requested, and falls back silently to the SVG card otherwise.
+
+FUNCTIONS
+    browser_available() -> 'bool'
+
+    capture(finding: 'Finding', evidence_dir: 'str | None' = None) -> 'str'
+        Attach an SVG evidence card to the finding; optionally write it to disk.
+        Returns the inline SVG string.
+
+    capture_all(findings, evidence_dir: 'str | None' = None) -> 'None'
+
+    render_svg(finding: 'Finding') -> 'str'
+
+FILE
+    /home/claude/glasscage/glasscage/evidence.py
+

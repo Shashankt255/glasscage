@@ -1,0 +1,804 @@
+Python Library Documentation: module glasscage.probes in glasscage
+
+NAME
+    glasscage.probes - Probes: detection-oriented tests mapped to the OWASP Top 10 for LLM Apps.
+
+DESCRIPTION
+    Design philosophy
+    -----------------
+    These probes are *detectors*, not weapons. Each uses a benign canary or a clearly
+    harmless request to determine whether a defense holds, in the same spirit as
+    open-source scanners. They exist to help you HARDEN a bot you own. Tune / add your
+    own engagement-specific probes by subclassing Probe and registering it.
+
+    Add a probe:
+        @register
+        class MyProbe(Probe):
+            name = "my-probe"
+            owasp_id = "LLM01"
+            category = "Prompt Injection"
+            def run(self, target, recon): ...
+
+CLASSES
+    builtins.object
+        Probe
+            DirectInjectionProbe
+            EncodedInjectionProbe
+            ExcessiveAgencyProbe
+            IndirectInjectionProbe
+            InsecureOutputProbe
+            JailbreakPersonaProbe
+            MisinformationProbe
+            MultiTurnErosionProbe
+            MultilingualInjectionProbe
+            PayloadSplittingProbe
+            SensitiveDisclosureProbe
+            SupplyChainProbe
+            SystemPromptLeakProbe
+            UnboundedConsumptionProbe
+            VectorRAGProbe
+
+    class DirectInjectionProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM01 - Prompt Injection (direct, canary-based)
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      DirectInjectionProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0051.000'
+     |
+     |  category = 'Prompt Injection'
+     |
+     |  default_severity = <Severity.HIGH: 'high'>
+     |
+     |  name = 'direct-injection-canary'
+     |
+     |  owasp_id = 'LLM01'
+     |
+     |  references = ['OWASP LLM01: Prompt Injection']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class EncodedInjectionProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM01 - Encoded / obfuscated injection (filter-evasion)
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      EncodedInjectionProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0051.000'
+     |
+     |  category = 'Prompt Injection (obfuscated)'
+     |
+     |  default_severity = <Severity.HIGH: 'high'>
+     |
+     |  name = 'encoded-injection'
+     |
+     |  owasp_id = 'LLM01'
+     |
+     |  references = ['OWASP LLM01: Prompt Injection (obfuscation scenario)']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class ExcessiveAgencyProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM06 - Excessive Agency (informational, driven by recon tool surface)
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      ExcessiveAgencyProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  category = 'Excessive Agency'
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+     |
+     |  name = 'excessive-agency-review'
+     |
+     |  owasp_id = 'LLM06'
+     |
+     |  references = ['OWASP LLM06: Excessive Agency']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  atlas_id = ''
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class IndirectInjectionProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM01 - Indirect Prompt Injection (poisoned "retrieved" content)
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      IndirectInjectionProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0051.001'
+     |
+     |  category = 'Prompt Injection (indirect)'
+     |
+     |  default_severity = <Severity.HIGH: 'high'>
+     |
+     |  name = 'indirect-injection-rag'
+     |
+     |  owasp_id = 'LLM01'
+     |
+     |  references = ['OWASP LLM01: Prompt Injection', 'MITRE ATLAS AML.T0051....
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class InsecureOutputProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM05 - Insecure Output Handling (does the bot emit unsanitized active markup?)
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      InsecureOutputProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  category = 'Improper Output Handling'
+     |
+     |  default_severity = <Severity.HIGH: 'high'>
+     |
+     |  name = 'insecure-output-handling'
+     |
+     |  owasp_id = 'LLM05'
+     |
+     |  references = ['OWASP LLM05: Improper Output Handling']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  atlas_id = ''
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class JailbreakPersonaProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM01 - Jailbreak via persona / role-play
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      JailbreakPersonaProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0054'
+     |
+     |  category = 'Prompt Injection (jailbreak)'
+     |
+     |  default_severity = <Severity.HIGH: 'high'>
+     |
+     |  name = 'jailbreak-persona'
+     |
+     |  owasp_id = 'LLM01'
+     |
+     |  references = ['MITRE ATLAS AML.T0054: LLM Jailbreak']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class MisinformationProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM09 - Misinformation (false-premise acceptance)
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      MisinformationProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  category = 'Misinformation'
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+     |
+     |  name = 'misinformation-false-premise'
+     |
+     |  owasp_id = 'LLM09'
+     |
+     |  references = ['OWASP LLM09: Misinformation']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  atlas_id = ''
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class MultiTurnErosionProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM01 - Multi-turn erosion (crescendo-style escalation)
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      MultiTurnErosionProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0054'
+     |
+     |  category = 'Prompt Injection (multi-turn)'
+     |
+     |  default_severity = <Severity.HIGH: 'high'>
+     |
+     |  name = 'multi-turn-erosion'
+     |
+     |  owasp_id = 'LLM01'
+     |
+     |  references = ['Crescendo-style multi-turn jailbreak pattern']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class MultilingualInjectionProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM01 - Multilingual / non-English injection
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      MultilingualInjectionProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0051.000'
+     |
+     |  category = 'Prompt Injection (multilingual)'
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+     |
+     |  name = 'multilingual-injection'
+     |
+     |  owasp_id = 'LLM01'
+     |
+     |  references = ['OWASP LLM01: Prompt Injection (multilingual scenario)']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class PayloadSplittingProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM01 - Payload splitting
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      PayloadSplittingProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0051.000'
+     |
+     |  category = 'Prompt Injection (payload splitting)'
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+     |
+     |  name = 'payload-splitting'
+     |
+     |  owasp_id = 'LLM01'
+     |
+     |  references = ['OWASP LLM01: Prompt Injection (payload splitting scenar...
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class Probe(builtins.object)
+     |  Methods defined here:
+     |
+     |  run(self, target: 'HTTPChatTarget', recon: 'ReconResult') -> 'list[Finding]'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {'atlas_id': 'str', 'category': 'str', 'default_seve...
+     |
+     |  atlas_id = ''
+     |
+     |  category = 'Uncategorized'
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+     |
+     |  name = 'probe'
+     |
+     |  owasp_id = 'LLM00'
+     |
+     |  references = []
+
+    class SensitiveDisclosureProbe(Probe)
+     |  Method resolution order:
+     |      SensitiveDisclosureProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0057'
+     |
+     |  category = 'Sensitive Information Disclosure'
+     |
+     |  default_severity = <Severity.HIGH: 'high'>
+     |
+     |  name = 'sensitive-info-disclosure'
+     |
+     |  owasp_id = 'LLM02'
+     |
+     |  references = ['OWASP LLM02: Sensitive Information Disclosure', 'MITRE ...
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class SupplyChainProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM03 - Supply chain / provenance (informational)
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      SupplyChainProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0020'
+     |
+     |  category = 'Supply Chain'
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+     |
+     |  name = 'supply-chain-review'
+     |
+     |  owasp_id = 'LLM03'
+     |
+     |  references = ['OWASP LLM03: Supply Chain']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class SystemPromptLeakProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM07 - System Prompt Leakage
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      SystemPromptLeakProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0056'
+     |
+     |  category = 'System Prompt Leakage'
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+     |
+     |  name = 'system-prompt-leak'
+     |
+     |  owasp_id = 'LLM07'
+     |
+     |  references = ['OWASP LLM07: System Prompt Leakage', 'MITRE ATLAS AML.T...
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class UnboundedConsumptionProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM10 - Unbounded Consumption (informational; does NOT flood the target)
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      UnboundedConsumptionProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0029'
+     |
+     |  category = 'Unbounded Consumption'
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+     |
+     |  name = 'unbounded-consumption-review'
+     |
+     |  owasp_id = 'LLM10'
+     |
+     |  references = ['OWASP LLM10: Unbounded Consumption']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+    class VectorRAGProbe(Probe)
+     |  # ---------------------------------------------------------------------------
+     |  # LLM08 - Vector & Embedding / RAG exposure (informational)
+     |  # ---------------------------------------------------------------------------
+     |
+     |  Method resolution order:
+     |      VectorRAGProbe
+     |      Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0070'
+     |
+     |  category = 'Vector & Embedding Weaknesses'
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+     |
+     |  name = 'vector-rag-review'
+     |
+     |  owasp_id = 'LLM08'
+     |
+     |  references = ['OWASP LLM08: Vector and Embedding Weaknesses', 'MITRE A...
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from Probe:
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+
+FUNCTIONS
+    all_probes() -> 'list[Probe]'
+
+    canary_verdict(canary: 'str', text: 'str')
+        Return (status, confidence, note) for a canary-based injection probe.
+
+    detect_secret(text: 'str') -> 'bool'
+        Module-level secret detector (shared by the probe and the benchmark).
+
+    is_refusal(text: 'str') -> 'bool'
+        True if the response reads as a refusal rather than compliance.
+
+        Used to avoid the classic false positive where a bot *names* the canary while
+        declining (e.g. "I won't output GLSSCG-INJECT-OK"), which is NOT a bypass.
+
+    register(cls)
+
+DATA
+    CANARY_INDIRECT = 'GLSSCG-INDIRECT-OK'
+    CANARY_INJECT = 'GLSSCG-INJECT-OK'
+    CANARY_XSS = 'GLSSCG-XSS-CANARY'
+    REGISTRY = [<glasscage.probes.DirectInjectionProbe object>, <glasscage...
+    SECRET_PATTERNS = [re.compile('sk-[A-Za-z0-9]{16,}'), re.compile('AKIA...
+    __annotations__ = {'REGISTRY': "list['Probe']"}
+
+FILE
+    /home/claude/glasscage/glasscage/probes.py
+

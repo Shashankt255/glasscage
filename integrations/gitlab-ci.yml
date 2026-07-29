@@ -1,0 +1,8 @@
+# GLASSCAGE AI security scan for GitLab CI
+glasscage_ai_security:
+  image: python:3.11-slim
+  script:
+    - python cli.py --config targets.json --authorized --adaptive --sarif --out glasscage_ci
+  artifacts:
+    reports: { sast: glasscage_ci.sarif }
+    paths: [glasscage_ci.html, glasscage_ci.json, glasscage_ci.sarif]

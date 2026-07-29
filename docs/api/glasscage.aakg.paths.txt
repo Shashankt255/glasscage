@@ -1,0 +1,22 @@
+Python Library Documentation: module glasscage.aakg.paths in glasscage.aakg
+
+NAME
+    glasscage.aakg.paths - Attack-path engine (GLASSCAGE Stage E2).
+
+DESCRIPTION
+    Status: Implemented.
+
+    Replaces template-based exploit chains with dynamic traversal over the AAKG. Paths
+    run from the untrusted User to high-value assets (Secrets/Database/Filesystem) along
+    crosses/invokes/accesses edges. Each path's epistemic state is the WEAKEST edge on it
+    (a path is only Demonstrated if every hop is Demonstrated), and every path carries the
+    supporting evidence gathered from its edges. Deterministic (graph traversal is sorted).
+
+FUNCTIONS
+    build_paths(g, max_depth: 'int' = 6) -> 'list[dict]'
+
+    to_mermaid(path: 'dict') -> 'str'
+
+FILE
+    /home/claude/glasscage/glasscage/aakg/paths.py
+

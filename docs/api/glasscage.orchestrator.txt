@@ -1,0 +1,24 @@
+Python Library Documentation: module glasscage.orchestrator in glasscage
+
+NAME
+    glasscage.orchestrator - Multi-tool orchestrator (GLASSCAGE Stage C).
+
+DESCRIPTION
+    Status: Implemented (orchestration) / Roadmap (external result normalization).
+
+    Runs a set of framework adapters against one target and produces a cross-tool
+    comparison: availability, detection counts, timing, per-OWASP breakdown. This is
+    how GLASSCAGE positions itself as an orchestration + analysis platform rather than
+    another standalone scanner. Unavailable tools are reported honestly, never faked.
+
+FUNCTIONS
+    orchestrate(target, tools=None, options=None) -> 'dict'
+
+    to_markdown(report: 'dict') -> 'str'
+
+DATA
+    REGISTRY = {'deepteam': <class 'glasscage.adapters.external.DeepTeamAd...
+
+FILE
+    /home/claude/glasscage/glasscage/orchestrator.py
+

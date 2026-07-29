@@ -1,0 +1,34 @@
+Python Library Documentation: module glasscage.mcp in glasscage
+
+NAME
+    glasscage.mcp - MCP security module.
+
+DESCRIPTION
+    Analyzes a Model Context Protocol server's tool manifest (the JSON you get from a
+    `tools/list` call) for the dominant 2026 agentic attack classes:
+
+      * Tool poisoning  - hidden imperative instructions inside tool descriptions that
+                          the agent reads but the user never sees.
+      * Rug pull        - a previously-approved tool whose description/schema silently
+                          changed (diff against a pinned baseline snapshot).
+      * SSRF / secret   - tools that accept URLs or file paths reaching internal
+        exfil surface     metadata endpoints or credential stores.
+
+    This is static analysis of a manifest you provide. It does not connect to or
+    execute any server.
+
+    References: OWASP MCP Top 10 (beta), OWASP Agentic Top 10 (ASI0x), NSA MCP
+    hardening guidance.
+
+FUNCTIONS
+    analyze_manifest(manifest: 'dict') -> 'list[Finding]'
+
+    detect_rug_pull(baseline: 'dict', current: 'dict') -> 'list[Finding]'
+        Compare a pinned baseline snapshot to a current manifest.
+
+    snapshot(manifest: 'dict') -> 'dict'
+        Pin tool descriptions/schemas for later rug-pull detection.
+
+FILE
+    /home/claude/glasscage/glasscage/mcp.py
+

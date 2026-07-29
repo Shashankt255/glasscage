@@ -1,0 +1,30 @@
+Python Library Documentation: module glasscage.kb in glasscage
+
+NAME
+    glasscage.kb - Knowledge base: references, false-positive triage, and standards links.
+
+DESCRIPTION
+    For each vulnerability class GLASSCAGE reports, this module supplies:
+      * a short plain-language reference description (what the class is),
+      * verification steps to confirm a true positive vs. rule out a false positive,
+      * authoritative reference links (OWASP LLM Top 10 2025, MITRE ATLAS, CWE,
+        NIST) for the remediation guidance.
+
+    All URLs below were verified against the primary sources (genai.owasp.org,
+    atlas.mitre.org, cwe.mitre.org, nist.gov). Descriptions are paraphrased, not
+    copied, from those standards.
+
+FUNCTIONS
+    enrich(finding: 'Finding') -> 'None'
+
+    enrich_all(findings: 'list[Finding]') -> 'None'
+
+    entry(owasp_id: 'str') -> 'dict'
+
+DATA
+    KB = {'LLM01': {'links': [{'label': 'OWASP LLM01:2025 Prompt Injection...
+    __annotations__ = {'KB': 'dict[str, dict]'}
+
+FILE
+    /home/claude/glasscage/glasscage/kb.py
+

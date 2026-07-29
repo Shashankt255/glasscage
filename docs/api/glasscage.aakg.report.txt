@@ -1,0 +1,22 @@
+Python Library Documentation: module glasscage.aakg.report in glasscage.aakg
+
+NAME
+    glasscage.aakg.report - Graph-native report engine (GLASSCAGE Stage E5-3).
+
+DESCRIPTION
+    Status: Implemented (markdown). Generates the markdown assessment report by querying
+    the AAKG for every section - attack paths, trust-boundary crossings, blast radius,
+    posture (with per-factor contributions), coverage, evidence, and demonstrated vs
+    hypothesized findings. Removes the duplicated section-building that previously lived
+    in report.to_markdown by sourcing everything from one graph.
+
+    The interactive HTML report remains results-driven (report.to_html); since those
+    results are now graph-derived, it presents the same graph truth - see the Stage E5
+    architecture notes on the one remaining presentation shim.
+
+FUNCTIONS
+    to_markdown(g, results, target_name: 'str' = 'target') -> 'str'
+
+FILE
+    /home/claude/glasscage/glasscage/aakg/report.py
+

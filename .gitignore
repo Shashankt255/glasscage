@@ -1,0 +1,49 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- GLASSCAGE assessment output (NEVER commit; may contain sensitive data) ---
+# Reports and machine outputs
+*.sarif
+*_aakg.json
+*_evidence/
+*.har
+*.replay.json
+*_replay_runner.py
+*_view_*.md
+# Common report basenames used in docs/examples/CI
+demo_report*
+chatbot_only*
+/report.*
+/engagement*.*
+/first-run*.*
+/quickstart*.*
+# Audit / custody logs
+*_audit.jsonl
+*.audit.log
+custody.log
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# --- Secrets (defensive; never commit these) ---
+*.pem
+*.key
+.env

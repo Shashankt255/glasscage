@@ -1,0 +1,23 @@
+Python Library Documentation: module glasscage.aakg.trust_graph in glasscage.aakg
+
+NAME
+    glasscage.aakg.trust_graph - Trust-boundary engine on the AAKG (GLASSCAGE Stage E3).
+
+DESCRIPTION
+    Status: Implemented.
+
+    Refactors trust analysis to operate entirely on the graph. Detects privilege
+    transitions (edges from a lower to a higher trust zone), trust-boundary crossings,
+    excessive privilege (a semi-trusted component reaching multiple trusted assets),
+    least-privilege violations (a demonstrated/hypothesized reach into a trusted asset
+    with no mitigating control present), and assets reachable from the untrusted user.
+    Emits the legacy trust dict shape for backward compatibility plus new graph fields.
+
+FUNCTIONS
+    analyze(g) -> 'dict'
+
+    to_mermaid(model: 'dict') -> 'str'
+
+FILE
+    /home/claude/glasscage/glasscage/aakg/trust_graph.py
+

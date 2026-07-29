@@ -1,0 +1,15 @@
+{
+  "name": "my-support-bot-staging",
+  "url": "https://your-bot.example.com/v1/chat",
+  "method": "POST",
+  "headers": {
+    "Authorization": "Bearer REPLACE_WITH_YOUR_TOKEN"
+  },
+  "body_template": {
+    "messages": [
+      { "role": "user", "content": "{{PROMPT}}" }
+    ]
+  },
+  "response_path": "choices.0.message.content",
+  "timeout": 30
+}

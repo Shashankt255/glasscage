@@ -1,0 +1,33 @@
+Python Library Documentation: module glasscage.benchmark in glasscage
+
+NAME
+    glasscage.benchmark - Benchmark & validation harness (GLASSCAGE Stage C/D3).
+
+DESCRIPTION
+    Status: Implemented (native detectors) / Experimental (corpus).
+
+    Measures GLASSCAGE detectors against a hand-labeled corpus with ground-truth the
+    detectors never saw. Reports precision/recall/F1/accuracy WITH Wilson confidence
+    intervals, false-positive/negative lists, per-category breakdown, coverage, and
+    timing. Trace/tier-gated cases (planner, memory, MCP, etc.) are NOT text-measurable
+    and are excluded from metrics and reported separately - never scored as pass/fail.
+
+    The corpus deliberately includes hard cases the exact-match oracle is expected to
+    MISS (canary-stripped injections, obfuscated secrets); resulting sub-1.0 recall is
+    honest evidence of detector limits, not a defect to hide.
+
+FUNCTIONS
+    run_corpus(corpus_path: 'str') -> 'dict'
+
+    to_markdown(report: 'dict') -> 'str'
+
+    write_report(report: 'dict', base: 'str') -> 'None'
+
+DATA
+    CANARY_INJECT = 'GLSSCG-INJECT-OK'
+    INDIRECT = 'GLSSCG-INDIRECT-OK'
+    TEXT_DETECTORS = ('injection', 'disclosure', 'refusal', 'indirect')
+
+FILE
+    /home/claude/glasscage/glasscage/benchmark.py
+

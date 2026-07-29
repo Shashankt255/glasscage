@@ -1,0 +1,432 @@
+Python Library Documentation: module glasscage.tal in glasscage
+
+NAME
+    glasscage.tal - Target Abstraction Layer (GLASSCAGE Stage A) — capability tiers L0-L3.
+
+DESCRIPTION
+    Status: Implemented.
+
+    Rationale
+    ---------
+    The validity crisis in prior versions was that stateless single-turn probes
+    claimed stateful/agentic results. The fix is to make *what a target can expose*
+    an explicit, typed contract, and to gate every probe/detector/chain/score by a
+    declared minimum tier. If the target cannot satisfy the tier, the result is
+    NOT ASSESSABLE - never PASS or FAIL.
+
+    Tiers
+    -----
+      L0  single-turn request/response only (a plain chat endpoint)
+      L1  stateful session (turns share state; memory persistence is observable
+          behaviourally across turns in the same session)
+      L2  tool-call observable (planner/plan, tool invocations, memory state and
+          retrieval are inspectable via a trace)
+      L3  provider-native (token logprobs, multimodal input channels, tokenizer)
+
+    A Target advertises TargetCapabilities. A probe advertises min_tier. The engine
+    compares them. This module is dependency-free and imported by target.py, the
+    probes, the engine, and the reference harness.
+
+CLASSES
+    builtins.object
+        TargetCapabilities
+    enum.IntEnum(builtins.int, enum.ReprEnum)
+        Tier
+
+    class TargetCapabilities(builtins.object)
+     |  TargetCapabilities(stateful: 'bool' = False, observes_tool_calls: 'bool' = False, observes_plan: 'bool' = False, observes_memory: 'bool' = False, observes_retrieval: 'bool' = False, multimodal: 'bool' = False, logprobs: 'bool' = False, notes: 'list[str]' = <factory>) -> None
+     |
+     |  What a target can actually expose. Tier is derived from the flags.
+     |
+     |  Methods defined here:
+     |
+     |  __eq__(self, other)
+     |      Return self==value.
+     |
+     |  __init__(self, stateful: 'bool' = False, observes_tool_calls: 'bool' = False, observes_plan: 'bool' = False, observes_memory: 'bool' = False, observes_retrieval: 'bool' = False, multimodal: 'bool' = False, logprobs: 'bool' = False, notes: 'list[str]' = <factory>) -> None
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |
+     |  __repr__(self)
+     |      Return repr(self).
+     |
+     |  satisfies(self, required: 'Tier') -> 'bool'
+     |
+     |  to_dict(self) -> 'dict'
+     |
+     |  ----------------------------------------------------------------------
+     |  Readonly properties defined here:
+     |
+     |  tier
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {'logprobs': 'bool', 'multimodal': 'bool', 'notes': ...
+     |
+     |  __dataclass_fields__ = {'logprobs': Field(name='logprobs',type='bool',...
+     |
+     |  __dataclass_params__ = _DataclassParams(init=True,repr=True,eq=True,or...
+     |
+     |  __hash__ = None
+     |
+     |  __match_args__ = ('stateful', 'observes_tool_calls', 'observes_plan', ...
+     |
+     |  logprobs = False
+     |
+     |  multimodal = False
+     |
+     |  observes_memory = False
+     |
+     |  observes_plan = False
+     |
+     |  observes_retrieval = False
+     |
+     |  observes_tool_calls = False
+     |
+     |  stateful = False
+
+    class Tier(enum.IntEnum)
+     |  Tier(*values)
+     |
+     |  Method resolution order:
+     |      Tier
+     |      enum.IntEnum
+     |      builtins.int
+     |      enum.ReprEnum
+     |      enum.Enum
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  __format__(self, format_spec, /) from builtins.int
+     |      Convert to a string according to format_spec.
+     |
+     |  __new__(cls, value) from enum.Enum
+     |      Create and return a new object.  See help(type) for accurate signature.
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  L0 = <Tier.L0: 0>
+     |
+     |  L1 = <Tier.L1: 1>
+     |
+     |  L2 = <Tier.L2: 2>
+     |
+     |  L3 = <Tier.L3: 3>
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from enum.IntEnum:
+     |
+     |  __repr__(self) from enum.Enum
+     |      Return repr(self).
+     |
+     |  __str__ = __repr__(self, /) from builtins.int
+     |      Return repr(self).
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from builtins.int:
+     |
+     |  __abs__(self, /)
+     |      abs(self)
+     |
+     |  __add__(self, value, /)
+     |      Return self+value.
+     |
+     |  __and__(self, value, /)
+     |      Return self&value.
+     |
+     |  __bool__(self, /)
+     |      True if self else False
+     |
+     |  __ceil__(...)
+     |      Ceiling of an Integral returns itself.
+     |
+     |  __divmod__(self, value, /)
+     |      Return divmod(self, value).
+     |
+     |  __eq__(self, value, /)
+     |      Return self==value.
+     |
+     |  __float__(self, /)
+     |      float(self)
+     |
+     |  __floor__(...)
+     |      Flooring an Integral returns itself.
+     |
+     |  __floordiv__(self, value, /)
+     |      Return self//value.
+     |
+     |  __ge__(self, value, /)
+     |      Return self>=value.
+     |
+     |  __getattribute__(self, name, /)
+     |      Return getattr(self, name).
+     |
+     |  __getnewargs__(self, /)
+     |
+     |  __gt__(self, value, /)
+     |      Return self>value.
+     |
+     |  __hash__(self, /)
+     |      Return hash(self).
+     |
+     |  __index__(self, /)
+     |      Return self converted to an integer, if self is suitable for use as an index into a list.
+     |
+     |  __int__(self, /)
+     |      int(self)
+     |
+     |  __invert__(self, /)
+     |      ~self
+     |
+     |  __le__(self, value, /)
+     |      Return self<=value.
+     |
+     |  __lshift__(self, value, /)
+     |      Return self<<value.
+     |
+     |  __lt__(self, value, /)
+     |      Return self<value.
+     |
+     |  __mod__(self, value, /)
+     |      Return self%value.
+     |
+     |  __mul__(self, value, /)
+     |      Return self*value.
+     |
+     |  __ne__(self, value, /)
+     |      Return self!=value.
+     |
+     |  __neg__(self, /)
+     |      -self
+     |
+     |  __or__(self, value, /)
+     |      Return self|value.
+     |
+     |  __pos__(self, /)
+     |      +self
+     |
+     |  __pow__(self, value, mod=None, /)
+     |      Return pow(self, value, mod).
+     |
+     |  __radd__(self, value, /)
+     |      Return value+self.
+     |
+     |  __rand__(self, value, /)
+     |      Return value&self.
+     |
+     |  __rdivmod__(self, value, /)
+     |      Return divmod(value, self).
+     |
+     |  __rfloordiv__(self, value, /)
+     |      Return value//self.
+     |
+     |  __rlshift__(self, value, /)
+     |      Return value<<self.
+     |
+     |  __rmod__(self, value, /)
+     |      Return value%self.
+     |
+     |  __rmul__(self, value, /)
+     |      Return value*self.
+     |
+     |  __ror__(self, value, /)
+     |      Return value|self.
+     |
+     |  __round__(...)
+     |      Rounding an Integral returns itself.
+     |
+     |      Rounding with an ndigits argument also returns an integer.
+     |
+     |  __rpow__(self, value, mod=None, /)
+     |      Return pow(value, self, mod).
+     |
+     |  __rrshift__(self, value, /)
+     |      Return value>>self.
+     |
+     |  __rshift__(self, value, /)
+     |      Return self>>value.
+     |
+     |  __rsub__(self, value, /)
+     |      Return value-self.
+     |
+     |  __rtruediv__(self, value, /)
+     |      Return value/self.
+     |
+     |  __rxor__(self, value, /)
+     |      Return value^self.
+     |
+     |  __sizeof__(self, /)
+     |      Returns size in memory, in bytes.
+     |
+     |  __sub__(self, value, /)
+     |      Return self-value.
+     |
+     |  __truediv__(self, value, /)
+     |      Return self/value.
+     |
+     |  __trunc__(...)
+     |      Truncating an Integral returns itself.
+     |
+     |  __xor__(self, value, /)
+     |      Return self^value.
+     |
+     |  as_integer_ratio(self, /)
+     |      Return a pair of integers, whose ratio is equal to the original int.
+     |
+     |      The ratio is in lowest terms and has a positive denominator.
+     |
+     |      >>> (10).as_integer_ratio()
+     |      (10, 1)
+     |      >>> (-10).as_integer_ratio()
+     |      (-10, 1)
+     |      >>> (0).as_integer_ratio()
+     |      (0, 1)
+     |
+     |  bit_count(self, /)
+     |      Number of ones in the binary representation of the absolute value of self.
+     |
+     |      Also known as the population count.
+     |
+     |      >>> bin(13)
+     |      '0b1101'
+     |      >>> (13).bit_count()
+     |      3
+     |
+     |  bit_length(self, /)
+     |      Number of bits necessary to represent self in binary.
+     |
+     |      >>> bin(37)
+     |      '0b100101'
+     |      >>> (37).bit_length()
+     |      6
+     |
+     |  conjugate(...)
+     |      Returns self, the complex conjugate of any int.
+     |
+     |  is_integer(self, /)
+     |      Returns True. Exists for duck type compatibility with float.is_integer.
+     |
+     |  to_bytes(self, /, length=1, byteorder='big', *, signed=False)
+     |      Return an array of bytes representing an integer.
+     |
+     |      length
+     |        Length of bytes object to use.  An OverflowError is raised if the
+     |        integer is not representable with the given number of bytes.  Default
+     |        is length 1.
+     |      byteorder
+     |        The byte order used to represent the integer.  If byteorder is 'big',
+     |        the most significant byte is at the beginning of the byte array.  If
+     |        byteorder is 'little', the most significant byte is at the end of the
+     |        byte array.  To request the native byte order of the host system, use
+     |        `sys.byteorder' as the byte order value.  Default is to use 'big'.
+     |      signed
+     |        Determines whether two's complement is used to represent the integer.
+     |        If signed is False and a negative integer is given, an OverflowError
+     |        is raised.
+     |
+     |  ----------------------------------------------------------------------
+     |  Class methods inherited from builtins.int:
+     |
+     |  from_bytes(bytes, byteorder='big', *, signed=False)
+     |      Return the integer represented by the given array of bytes.
+     |
+     |      bytes
+     |        Holds the array of bytes to convert.  The argument must either
+     |        support the buffer protocol or be an iterable object producing bytes.
+     |        Bytes and bytearray are examples of built-in objects that support the
+     |        buffer protocol.
+     |      byteorder
+     |        The byte order used to represent the integer.  If byteorder is 'big',
+     |        the most significant byte is at the beginning of the byte array.  If
+     |        byteorder is 'little', the most significant byte is at the end of the
+     |        byte array.  To request the native byte order of the host system, use
+     |        `sys.byteorder' as the byte order value.  Default is to use 'big'.
+     |      signed
+     |        Indicates whether two's complement is used to represent the integer.
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from builtins.int:
+     |
+     |  denominator
+     |      the denominator of a rational number in lowest terms
+     |
+     |  imag
+     |      the imaginary part of a complex number
+     |
+     |  numerator
+     |      the numerator of a rational number in lowest terms
+     |
+     |  real
+     |      the real part of a complex number
+     |
+     |  ----------------------------------------------------------------------
+     |  Methods inherited from enum.Enum:
+     |
+     |  __dir__(self)
+     |      Returns public methods and other interesting attributes.
+     |
+     |  __init__(self, *args, **kwds)
+     |      Initialize self.  See help(type(self)) for accurate signature.
+     |
+     |  __reduce_ex__(self, proto)
+     |      Helper for pickle.
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from enum.Enum:
+     |
+     |  name
+     |      The name of the Enum member.
+     |
+     |  value
+     |      The value of the Enum member.
+     |
+     |  ----------------------------------------------------------------------
+     |  Static methods inherited from enum.EnumType:
+     |
+     |  __contains__(value)
+     |      Return True if `value` is in `cls`.
+     |
+     |      `value` is in `cls` if:
+     |      1) `value` is a member of `cls`, or
+     |      2) `value` is the value of one of the `cls`'s members.
+     |
+     |  __getitem__(name)
+     |      Return the member matching `name`.
+     |
+     |  __iter__()
+     |      Return members in definition order.
+     |
+     |  __len__()
+     |      Return the number of members (no aliases)
+     |
+     |  ----------------------------------------------------------------------
+     |  Readonly properties inherited from enum.EnumType:
+     |
+     |  __members__
+     |      Returns a mapping of member name->value.
+     |
+     |      This mapping lists all enum members, including aliases. Note that this
+     |      is a read-only view of the internal mapping.
+
+FUNCTIONS
+    parse_tier(value) -> "'Tier'"
+
+DATA
+    L0 = TargetCapabilities(stateful=False, observes_tool...alse, multimod...
+    L1 = TargetCapabilities(stateful=True, observes_tool_...alse, multimod...
+    L2 = TargetCapabilities(stateful=True, observes_tool_...True, multimod...
+
+FILE
+    /home/claude/glasscage/glasscage/tal.py
+

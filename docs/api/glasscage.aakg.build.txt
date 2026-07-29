@@ -1,0 +1,24 @@
+Python Library Documentation: module glasscage.aakg.build in glasscage.aakg
+
+NAME
+    glasscage.aakg.build - Assemble the AAKG from an assessment run (GLASSCAGE Stage E1).
+
+DESCRIPTION
+    Status: Implemented.
+
+    Turns recon + findings + schema tools + MCP + architecture answers + taxonomy into
+    a single property graph. Edge epistemic state is derived from evidence:
+      * DEMONSTRATED  - an impact-confirmed finding proves the relationship
+      * HYPOTHESIZED  - architecturally reachable (e.g. a schema tool exists) but unshown
+      * NOT_ASSESSABLE - a probe that would prove it was tier-gated at this target tier
+
+    This is the function every downstream engine (paths/trust/blast) reads from.
+
+FUNCTIONS
+    build_graph(recon, findings, mcp_manifest=None, architecture_answers=None, target_tier='L0', ts='') -> 'PropertyGraph'
+
+    high_value_assets(g) -> 'list'
+
+FILE
+    /home/claude/glasscage/glasscage/aakg/build.py
+

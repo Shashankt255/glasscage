@@ -1,0 +1,53 @@
+# GLASSCAGE developer CI (tests, lint, types, build, fuzz, benchmarks)
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: { python-version: ["3.10", "3.11", "3.12"] }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ matrix.python-version }}" }
+      - name: Unit + integration tests (stdlib only)
+        run: python -m unittest discover -s tests -q
+      - name: Fuzz + property tests
+        run: |
+          python -m unittest tests.test_fuzz -q
+          python -m unittest tests.test_property -q
+      - name: Detector benchmark (regression gate)
+        run: python cli.py --benchmark benchmark/corpus.json --out /tmp/ci_bench
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install build
+      - run: python -m build            # blocking: a broken package fails the build
+
+  lint-type:
+    # Advisory during RC: failures are VISIBLE (this job goes red) but do not block
+    # merge, because the job is marked continue-on-error. To make lint/type BLOCKING
+    # for GA, delete the `continue-on-error: true` line below.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install ruff mypy
+      - run: ruff check glasscage cli.py
+      - run: mypy glasscage
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: python tools/benchmark_perf.py --json > perf.json
+      - uses: actions/upload-artifact@v4
+        with: { name: perf, path: perf.json }

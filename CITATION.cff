@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: "GLASSCAGE: AI Attack Knowledge Graph security assessment platform"
+message: "If you use GLASSCAGE in your work, please cite it as below."
+type: software
+authors:
+  - name: "The GLASSCAGE Authors"
+repository-code: "https://github.com/OWNER/REPO"
+url: "https://github.com/OWNER/REPO"
+abstract: >
+  GLASSCAGE is a zero-dependency security assessment platform for LLM and agentic
+  applications. It builds an AI Attack Knowledge Graph from probe evidence and derives
+  attack paths, trust-boundary analysis, blast radius, coverage, remediation, and
+  evidence-gated narratives. Findings are hypotheses requiring confirmation; efficacy
+  has not been independently validated as of this release.
+license: Apache-2.0
+version: 1.0.0rc3
+date-released: 2026-07-16
+keywords:
+  - LLM security
+  - AI red teaming
+  - prompt injection
+  - attack graph
+  - OWASP LLM Top 10

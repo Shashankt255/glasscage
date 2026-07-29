@@ -1,0 +1,33 @@
+Python Library Documentation: module glasscage.posture in glasscage
+
+NAME
+    glasscage.posture - Dynamic risk model & AI Security Posture Score (GLASSCAGE v1.0, objective 6).
+
+DESCRIPTION
+    Design rationale
+    ----------------
+    Letter grades hide their reasoning and don't compose. This module computes a
+    documented, multi-factor Risk Index (0-100, higher = worse) from eight factors,
+    each normalized 0..1 with stated inputs, then a Posture Score = 100 - Risk Index
+    (higher = stronger security). Every factor and weight is emitted so the number is
+    auditable and reproducible.
+
+    Factors (weight):
+      exploitability (0.18)  worst finding score + adaptive success + low complexity
+      privileges     (0.10)  privilege required to trigger (public bot = worse)
+      reachable_assets(0.14) schema-confirmed trusted assets an exploit can reach
+      automation     (0.12)  can it be scripted/mass-run (adaptive/encoding success)
+      persistence    (0.10)  memory/retrieval poisoning present
+      blast_radius   (0.14)  trust-model reachable capabilities
+      business_impact(0.14)  impact-confirmed findings x asset criticality
+      chain_risk     (0.08)  strongest instantiated exploit chain
+
+    A confidence interval widens the Risk Index by untested surface (coverage) and
+    low detection confidence.
+
+FUNCTIONS
+    compute(findings, recon, trust=None, chains=None, coverage=None, adaptive_success=False) -> 'dict'
+
+FILE
+    /home/claude/glasscage/glasscage/posture.py
+

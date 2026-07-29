@@ -1,0 +1,35 @@
+Python Library Documentation: module glasscage.chain in glasscage
+
+NAME
+    glasscage.chain - Attack-chain / exploit-path engine (GLASSCAGE v1.0, objective 2).
+
+DESCRIPTION
+    Design rationale
+    ----------------
+    Single findings understate real risk; adversaries compose them. This engine
+    instantiates canonical kill-chain templates (mapped to MITRE ATLAS/ATT&CK-style
+    phases) when their preconditions are met by the run's findings + trust model,
+    producing ordered exploit paths such as:
+
+      Prompt Injection -> Memory Poisoning -> Planner Manipulation ->
+      Tool Invocation -> Privilege Escalation -> Data Exfiltration
+
+    Each chain carries contributing findings, a likelihood (product of link
+    confidences discounted by required-but-missing links), an aggregate severity,
+    a narrative, and a Mermaid diagram. Chains only claim links that are evidenced
+    (a real finding) or architecturally reachable (trust model) - inferred links are
+    flagged so the tester knows what to confirm.
+
+    Zero-dependency. Additive/backward compatible.
+
+FUNCTIONS
+    build(findings, trust=None) -> 'list[dict]'
+
+    to_mermaid(chain: 'dict') -> 'str'
+
+DATA
+    PHASES = ['initial-access', 'persistence', 'planner-control', 'executi...
+
+FILE
+    /home/claude/glasscage/glasscage/chain.py
+

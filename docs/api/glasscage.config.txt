@@ -1,0 +1,18 @@
+Python Library Documentation: module glasscage.config in glasscage
+
+NAME
+    glasscage.config - Configuration validation (GLASSCAGE RC hardening).
+
+DESCRIPTION
+    Status: Implemented. Validates target/run configuration up front with clear,
+    actionable errors instead of failing deep in a request. Pure stdlib.
+
+FUNCTIONS
+    validate_target_config(cfg: 'dict') -> 'dict'
+        Validate a target config dict. Returns it unchanged or raises ConfigError.
+
+    validate_trials(trials: 'int') -> 'int'
+
+FILE
+    /home/claude/glasscage/glasscage/config.py
+

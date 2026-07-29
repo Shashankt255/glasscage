@@ -1,0 +1,27 @@
+Python Library Documentation: module glasscage.validation in glasscage
+
+NAME
+    glasscage.validation - Cross-framework validation harness (GLASSCAGE Stage D4).
+
+DESCRIPTION
+    Status: Implemented (mechanism) / honest availability gating.
+
+    Runs multiple framework adapters against the SAME target and compares them:
+    detection overlap, unique findings, pairwise agreement (Jaccard on OWASP-category
+    sets), runtime, and native reproducibility. Tools neither installed nor supplied
+    an output file are reported **Not Tested** - never fabricated.
+
+FUNCTIONS
+    paper_report(bench: 'dict', val: 'dict', corpus_meta: 'dict | None' = None) -> 'str'
+        D5: paper-quality validation report combining benchmark + cross-tool validation.
+
+    to_markdown(v: 'dict') -> 'str'
+
+    validate(target, tools, adapter_files=None, native_reproducibility=True) -> 'dict'
+
+DATA
+    REGISTRY = {'deepteam': <class 'glasscage.adapters.external.DeepTeamAd...
+
+FILE
+    /home/claude/glasscage/glasscage/validation.py
+

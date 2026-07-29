@@ -1,0 +1,27 @@
+Python Library Documentation: module glasscage.aakg.coverage in glasscage.aakg
+
+NAME
+    glasscage.aakg.coverage - Graph-native coverage engine (GLASSCAGE Stage E5-2).
+
+DESCRIPTION
+    Status: Implemented. Replaces the finding-list coverage computation with one that
+    reads OWASP/ATLAS/CAPEC/CWE/NIST coverage directly from graph relationships.
+
+    For every taxonomy family, coverage is the set of taxonomy nodes reachable via
+    FINDING -[mapped_to]-> node edges, and each tested category is classified by the
+    strongest evidence state among the findings that map to it:
+      Demonstrated > Hypothesized > Not Assessable ; Untested if no finding maps to it.
+
+    Emits the legacy coverage dict keys (so report/HTML shims keep working) plus a new
+    `taxonomy_coverage` breakdown.
+
+FUNCTIONS
+    compute(g) -> 'dict'
+
+DATA
+    CANONICAL = {'LLM01': 'Prompt Injection', 'LLM02': 'Sensitive Informat...
+    KNOWN_GAPS = {'LLM04': 'Data/model poisoning requires training-pipelin...
+
+FILE
+    /home/claude/glasscage/glasscage/aakg/coverage.py
+

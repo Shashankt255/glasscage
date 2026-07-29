@@ -1,0 +1,31 @@
+Python Library Documentation: module glasscage.architecture in glasscage
+
+NAME
+    glasscage.architecture - Architecture / defense-in-depth assessment.
+
+DESCRIPTION
+    The most important review point: tools don't secure systems, architecture does.
+    Prompt injection has no complete fix, so the highest-value question is whether the
+    system is designed to CONTAIN a compromised model - least privilege on tools,
+    output encoding, human-in-the-loop on high-impact actions, tenant isolation,
+    secrets kept out of context, and monitoring.
+
+    This module scores a short architecture questionnaire (answers provided by the
+    engineer) and turns gaps into findings/recommendations mapped to OWASP mitigations.
+    It is assessed input, clearly labelled as such - not something GLASSCAGE can probe
+    black-box.
+
+FUNCTIONS
+    assess(answers: 'dict') -> 'list[Finding]'
+
+    summary(findings: 'list[Finding]') -> 'dict'
+
+    template() -> 'dict'
+        A blank answers file the engineer fills in: yes / no / unknown.
+
+DATA
+    CONTROLS = {'authz_in_code': ('Is authorization enforced in applicatio...
+
+FILE
+    /home/claude/glasscage/glasscage/architecture.py
+

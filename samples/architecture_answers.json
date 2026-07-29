@@ -1,0 +1,12 @@
+{
+  "tool_least_privilege": "no",
+  "hitl_high_impact": "no",
+  "output_encoding": "yes",
+  "untrusted_content_segregation": "unknown",
+  "secrets_out_of_context": "yes",
+  "authz_in_code": "no",
+  "tenant_isolation": "unknown",
+  "rate_and_cost_limits": "yes",
+  "mcp_allowlist_pinning": "no",
+  "monitoring_logging": "yes"
+}

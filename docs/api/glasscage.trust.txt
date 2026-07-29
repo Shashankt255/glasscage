@@ -1,0 +1,38 @@
+Python Library Documentation: module glasscage.trust in glasscage
+
+NAME
+    glasscage.trust - Trust-boundary & privilege-transition analyzer (GLASSCAGE v1.0, objective 5).
+
+DESCRIPTION
+    Design rationale
+    ----------------
+    The highest-leverage question in AI-app security is not "can the model be tricked"
+    but "when it is, what does it reach?". That is an *architecture* question. This
+    module models the system as a graph of components grouped into trust zones,
+    derives the edges (data/control flow), flags boundary crossings and
+    privilege transitions, and marks violations where untrusted influence reaches a
+    trusted asset without a mitigating control.
+
+    Inputs (all optional, best-effort):
+      * recon.schema_tools   - schema-confirmed tools (capability -> component)
+      * mcp_manifest         - MCP servers/tools
+      * architecture answers - which controls exist (from architecture.py)
+
+    Zero-dependency. Backward compatible: purely additive, produces its own result.
+
+FUNCTIONS
+    build(recon, mcp_manifest=None, architecture_answers=None) -> 'dict'
+
+    summary_line(model: 'dict') -> 'str'
+
+    to_mermaid(model: 'dict') -> 'str'
+
+DATA
+    COMPONENTS = {'CICD': 'trusted', 'Cloud': 'trusted', 'Database': 'trus...
+    SEMI = 'semi-trusted'
+    TRUSTED = 'trusted'
+    UNTRUSTED = 'untrusted'
+
+FILE
+    /home/claude/glasscage/glasscage/trust.py
+

@@ -1,0 +1,22 @@
+Python Library Documentation: module glasscage.aakg.posture in glasscage.aakg
+
+NAME
+    glasscage.aakg.posture - Graph-native posture engine (GLASSCAGE Stage E5-1).
+
+DESCRIPTION
+    Status: Implemented. Computes the AI Security Posture Score entirely from graph
+    evidence - demonstrated vs hypothesized findings, capability tiers, trust
+    boundaries, attack paths, blast radius, and mitigation nodes - with an explicit
+    per-factor contribution breakdown. No independent recomputation from raw findings.
+
+    Emits the same keys as the legacy posture (risk_index, posture_score, band,
+    risk_interval, factors, weights, ...) so report/summary shims are unaffected, and
+    adds `contributions` (each factor's value, weight, points, and citing graph ids)
+    and `source: "aakg"`.
+
+FUNCTIONS
+    compute(g, coverage=None) -> 'dict'
+
+FILE
+    /home/claude/glasscage/glasscage/aakg/posture.py
+

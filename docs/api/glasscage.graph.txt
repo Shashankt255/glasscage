@@ -1,0 +1,21 @@
+Python Library Documentation: module glasscage.graph in glasscage
+
+NAME
+    glasscage.graph - Attack-surface graph + blast-radius.
+
+DESCRIPTION
+    Builds a small graph of  agent -> tools -> reachable data/actions  from recon and
+    (optionally) an MCP manifest, then estimates blast radius: what an attacker can
+    reach if they win a prompt-injection primitive on the agent. Renders to Mermaid
+    so it drops straight into the Markdown/HTML report.
+
+FUNCTIONS
+    build_graph(recon, mcp_manifest: 'dict | None' = None) -> 'dict'
+
+    summary_line(graph: 'dict') -> 'str'
+
+    to_mermaid(graph: 'dict') -> 'str'
+
+FILE
+    /home/claude/glasscage/glasscage/graph.py
+

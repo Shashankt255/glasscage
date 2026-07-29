@@ -1,0 +1,31 @@
+Python Library Documentation: module glasscage.taxonomy in glasscage
+
+NAME
+    glasscage.taxonomy - Taxonomy crosswalk (GLASSCAGE Stage D).
+
+DESCRIPTION
+    Status: Implemented (static reference table; NOT the AI Attack Knowledge Graph).
+
+    A flat, auditable crosswalk from OWASP LLM Top 10 (2025) to MITRE ATLAS, CWE,
+    CAPEC, and NIST AI RMF, plus heuristics to map external-framework rule/probe/
+    plugin identifiers onto an OWASP id. Used by the adapters to normalize imported
+    findings. Deliberately a lookup table, not a graph engine. CAPEC/NIST mappings
+    are best-effort advisory.
+
+FUNCTIONS
+    classify(rule_name: 'str') -> 'str'
+
+    enrich(owasp_id: 'str') -> 'dict'
+
+    enrich_all(findings) -> 'None'
+        Fill cwe_id/capec_id/nist_id (and atlas_id if missing) from the crosswalk.
+
+        Applied to native findings so every GLASSCAGE finding carries the full
+        OWASP/ATLAS/CWE/CAPEC/NIST mapping, matching imported external findings.
+
+DATA
+    CROSSWALK = {'LLM01': {'atlas': 'AML.T0051', 'capec': 'CAPEC-248', 'cw...
+
+FILE
+    /home/claude/glasscage/glasscage/taxonomy.py
+

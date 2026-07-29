@@ -1,0 +1,8 @@
+# GLASSCAGE core has ZERO third-party dependencies (standard library only).
+# The following are OPTIONAL and only needed if you extend the tool:
+#
+#   anthropic        # if you add an LLM-as-judge scorer for fuzzy detections
+#   pyyaml           # if you prefer YAML target configs over JSON
+#   rich             # nicer CLI output
+#
+# Install only what you need, e.g.:  pip install pyyaml rich

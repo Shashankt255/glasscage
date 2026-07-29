@@ -1,0 +1,23 @@
+Python Library Documentation: module glasscage.coverage in glasscage
+
+NAME
+    glasscage.coverage - Coverage accounting.
+
+DESCRIPTION
+    Fixes the "false assurance" risk: a clean report must state exactly what was
+    tested and what was NOT. This module maps executed probes to a canonical taxonomy
+    and produces an explicit coverage statement plus a not-tested list. PASSED means
+    "resisted the specific strings tried", never "robust".
+
+FUNCTIONS
+    build(findings, probes_run) -> 'dict'
+
+    statement(cov: 'dict') -> 'str'
+
+DATA
+    CANONICAL = {'LLM01': 'Prompt Injection', 'LLM02': 'Sensitive Informat...
+    KNOWN_GAPS = {'LLM04': 'Data/model poisoning requires training-pipelin...
+
+FILE
+    /home/claude/glasscage/glasscage/coverage.py
+

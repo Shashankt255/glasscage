@@ -1,0 +1,20 @@
+Python Library Documentation: module glasscage.remediation in glasscage
+
+NAME
+    glasscage.remediation - Remediation advisor: map each finding to concrete, actionable fixes.
+
+DESCRIPTION
+    This is the "suggest the fix" half of the tool. Keyed by OWASP LLM id so any new
+    probe automatically inherits guidance as long as it declares an owasp_id.
+
+FUNCTIONS
+    advise(finding: 'Finding') -> 'list[str]'
+
+    apply_all(findings: 'list[Finding]') -> 'None'
+
+DATA
+    __annotations__ = {'_REMEDIATION': 'dict[str, list[str]]'}
+
+FILE
+    /home/claude/glasscage/glasscage/remediation.py
+

@@ -1,0 +1,287 @@
+Python Library Documentation: module glasscage.agent_probes in glasscage
+
+NAME
+    glasscage.agent_probes - Agent-security probes (GLASSCAGE Stage A, tier-aware).
+
+DESCRIPTION
+    Status: Implemented (L2 confirmation) / Partial (behavioural fallback at L1).
+
+    Each probe declares min_tier. The engine reports NOT ASSESSABLE when the target
+    cannot satisfy it - so these never emit an invalid PASS/FAIL against a plain L0
+    chat endpoint. When a trace is available (L2 reference harness or an instrumented
+    target), the probe CONFIRMS real exploitation (planner step injected, tool
+    actually routed, memory actually persisted) and marks the finding impact-confirmed.
+
+CLASSES
+    glasscage.probes.Probe(builtins.object)
+        ContextExhaustionProbe
+        GoalHijackProbe
+        LoopAmplificationProbe
+        MemoryPoisoningProbe
+        PlannerManipulationProbe
+        ToolRoutingProbe
+
+    class ContextExhaustionProbe(glasscage.probes.Probe)
+     |  Method resolution order:
+     |      ContextExhaustionProbe
+     |      glasscage.probes.Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0029'
+     |
+     |  category = 'Agentic: Context-Window Pressure'
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+     |
+     |  name = 'context-window-exhaustion'
+     |
+     |  owasp_id = 'LLM10'
+     |
+     |  references = ['OWASP LLM10: Unbounded Consumption']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.probes.Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.probes.Probe:
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+
+    class GoalHijackProbe(glasscage.probes.Probe)
+     |  Method resolution order:
+     |      GoalHijackProbe
+     |      glasscage.probes.Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0051'
+     |
+     |  category = 'Agentic: Autonomous Goal Hijack'
+     |
+     |  dimension = 'steerability'
+     |
+     |  min_tier = <Tier.L0: 0>
+     |
+     |  name = 'goal-hijack'
+     |
+     |  owasp_id = 'LLM06'
+     |
+     |  references = ['OWASP LLM06: Excessive Agency; goal hijacking']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.probes.Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.probes.Probe:
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+
+    class LoopAmplificationProbe(glasscage.probes.Probe)
+     |  Method resolution order:
+     |      LoopAmplificationProbe
+     |      glasscage.probes.Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0029'
+     |
+     |  category = 'Agentic: Retry / Loop Amplification'
+     |
+     |  dimension = 'informational'
+     |
+     |  min_tier = <Tier.L0: 0>
+     |
+     |  name = 'loop-amplification'
+     |
+     |  owasp_id = 'LLM10'
+     |
+     |  references = ['OWASP LLM10: Unbounded Consumption']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.probes.Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.probes.Probe:
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+
+    class MemoryPoisoningProbe(glasscage.probes.Probe)
+     |  Method resolution order:
+     |      MemoryPoisoningProbe
+     |      glasscage.probes.Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0080'
+     |
+     |  category = 'Agentic: Persistent Memory Poisoning'
+     |
+     |  dimension = 'steerability'
+     |
+     |  min_tier = <Tier.L1: 1>
+     |
+     |  name = 'memory-poisoning'
+     |
+     |  owasp_id = 'LLM01'
+     |
+     |  references = ['MITRE ATLAS AML.T0080: Context/Memory Poisoning']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.probes.Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.probes.Probe:
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+
+    class PlannerManipulationProbe(glasscage.probes.Probe)
+     |  Method resolution order:
+     |      PlannerManipulationProbe
+     |      glasscage.probes.Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0051'
+     |
+     |  category = 'Agentic: Planner Manipulation'
+     |
+     |  dimension = 'steerability'
+     |
+     |  min_tier = <Tier.L2: 2>
+     |
+     |  name = 'planner-manipulation'
+     |
+     |  owasp_id = 'LLM01'
+     |
+     |  references = ['OWASP LLM01; agent planner subversion']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.probes.Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.probes.Probe:
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+
+    class ToolRoutingProbe(glasscage.probes.Probe)
+     |  Method resolution order:
+     |      ToolRoutingProbe
+     |      glasscage.probes.Probe
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  run(self, target, recon)
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  atlas_id = 'AML.T0053'
+     |
+     |  category = 'Agentic: Tool Routing Manipulation'
+     |
+     |  dimension = 'steerability'
+     |
+     |  min_tier = <Tier.L2: 2>
+     |
+     |  name = 'tool-routing-manipulation'
+     |
+     |  owasp_id = 'LLM06'
+     |
+     |  references = ['OWASP LLM06; tool invocation abuse']
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.probes.Probe:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.probes.Probe:
+     |
+     |  default_severity = <Severity.MEDIUM: 'medium'>
+
+DATA
+    CANARY_INJECT = 'GLSSCG-INJECT-OK'
+
+FILE
+    /home/claude/glasscage/glasscage/agent_probes.py
+

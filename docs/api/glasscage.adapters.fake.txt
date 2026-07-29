@@ -1,0 +1,50 @@
+Python Library Documentation: module glasscage.adapters.fake in glasscage.adapters
+
+NAME
+    glasscage.adapters.fake - Fake adapter: deterministic canned findings to prove orchestration + tests.
+
+CLASSES
+    glasscage.adapters.base.ExternalToolAdapter(builtins.object)
+        FakeAdapter
+
+    class FakeAdapter(glasscage.adapters.base.ExternalToolAdapter)
+     |  Method resolution order:
+     |      FakeAdapter
+     |      glasscage.adapters.base.ExternalToolAdapter
+     |      builtins.object
+     |
+     |  Methods defined here:
+     |
+     |  available(self) -> 'bool'
+     |      True only if the underlying tool is importable/executable here.
+     |
+     |  run(self, target, options=None)
+     |
+     |  version(self) -> 'str | None'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes defined here:
+     |
+     |  __annotations__ = {}
+     |
+     |  name = 'fake-tool'
+     |
+     |  status = 'Implemented'
+     |
+     |  ----------------------------------------------------------------------
+     |  Data descriptors inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  __dict__
+     |      dictionary for instance variables
+     |
+     |  __weakref__
+     |      list of weak references to the object
+     |
+     |  ----------------------------------------------------------------------
+     |  Data and other attributes inherited from glasscage.adapters.base.ExternalToolAdapter:
+     |
+     |  api_version = '1.0'
+
+FILE
+    /home/claude/glasscage/glasscage/adapters/fake.py
+

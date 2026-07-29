@@ -1,0 +1,21 @@
+Python Library Documentation: module glasscage.scoring in glasscage
+
+NAME
+    glasscage.scoring - Aggregate scoring: defensible, dimension-aware, coverage-adjusted.
+
+DESCRIPTION
+    Key corrections from expert review:
+      * Steerability != impact. Canary hits (steerability) are capped; only
+        impact-confirmed findings drive high posture.
+      * Blast radius is raised ONLY by schema-confirmed high-impact tools, never by
+        the model's self-reported tool names.
+      * A confidence interval and an explicit caveat accompany every number.
+      * The letter grade is derived transparently from the worst per-finding
+        confidence-weighted vector (see cvss.py) and labelled indicative.
+
+FUNCTIONS
+    score(findings: 'list[Finding]', recon: 'ReconResult', coverage: 'dict | None' = None) -> 'dict'
+
+FILE
+    /home/claude/glasscage/glasscage/scoring.py
+

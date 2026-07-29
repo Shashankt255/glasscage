@@ -1,0 +1,29 @@
+Python Library Documentation: module glasscage.sarif in glasscage
+
+NAME
+    glasscage.sarif - Enterprise exporters: SARIF + reproducible replay (GLASSCAGE v1.0).
+
+DESCRIPTION
+    SARIF 2.1.0 (objective 9) loads directly into GitHub Advanced Security code
+    scanning, Azure DevOps, and most SAST dashboards, giving AI findings the same
+    pipeline treatment as code findings.
+
+    Replay bundle (objective 11) captures the exact payloads + expected indicators so
+    a finding can be re-run deterministically by a human or in CI, decoupled from the
+    original run. Zero-dependency. Additive.
+
+FUNCTIONS
+    to_replay(target_name: 'str', target_config: 'dict', findings: 'list') -> 'dict'
+
+    to_sarif(target_name: 'str', findings: 'list', summary: 'dict | None' = None) -> 'dict'
+
+    write_replay(path, target_name, target_config, findings)
+
+    write_sarif(path, target_name, findings, summary=None)
+
+DATA
+    REPLAY_RUNNER = '#!/usr/bin/env python3\n"""Standalone GLASSCAGE r...p...
+
+FILE
+    /home/claude/glasscage/glasscage/sarif.py
+

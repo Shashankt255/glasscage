@@ -1,0 +1,23 @@
+Python Library Documentation: module glasscage.aakg.blast in glasscage.aakg
+
+NAME
+    glasscage.aakg.blast - Blast-radius simulation on the AAKG (GLASSCAGE Stage E4).
+
+DESCRIPTION
+    Status: Implemented.
+
+    Answers: "if this finding succeeds, what becomes reachable?" by traversing
+    enables/invokes/accesses/affects edges from the finding (or the component it
+    enables) and collecting reachable components, tools, secrets, and assets. The
+    radius is computed from OBSERVED graph relationships, not static heuristics, and
+    distinguishes demonstrated reach from hypothesized reach.
+
+FUNCTIONS
+    blast_radius(g, finding_id: 'str') -> 'dict'
+        Blast radius from a single finding node.
+
+    summary(g) -> 'dict'
+
+FILE
+    /home/claude/glasscage/glasscage/aakg/blast.py
+

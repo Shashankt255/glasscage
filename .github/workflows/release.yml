@@ -1,0 +1,32 @@
+# Builds distribution artifacts on a version tag and attaches them to the GitHub Release.
+# Publishing to PyPI is intentionally left as a manual/opt-in step until release signing
+# (a documented Roadmap item) is in place.
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Run full test suite (gate the release)
+        run: python -m unittest discover -s tests -q
+      - name: Generate SBOM
+        run: python tools/gen_sbom.py > sbom.json
+      - name: Build sdist + wheel
+        run: |
+          pip install build
+          python -m build
+      - name: Attach artifacts to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
+            sbom.json
+          body_path: docs/RELEASE_NOTES_DRAFT.md
+          draft: true

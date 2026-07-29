@@ -1,0 +1,18 @@
+Python Library Documentation: module glasscage.repro in glasscage
+
+NAME
+    glasscage.repro - Reproduction steps: numbered, manual re-validation guidance per finding.
+
+DESCRIPTION
+    Produces exact steps a security team follows to reproduce a finding by hand,
+    including a ready-to-run curl built from the target config (auth redacted). MCP
+    findings get manifest-inspection steps instead of an HTTP request.
+
+FUNCTIONS
+    build(finding, target=None) -> 'list[str]'
+
+    build_all(findings, target=None) -> 'None'
+
+FILE
+    /home/claude/glasscage/glasscage/repro.py
+

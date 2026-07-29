@@ -1,0 +1,20 @@
+Python Library Documentation: module glasscage.recon in glasscage
+
+NAME
+    glasscage.recon - Recon: passive-first fingerprinting before any adversarial probe.
+
+DESCRIPTION
+    The goal of recon is to learn enough about the target to (a) confirm it is
+    reachable, (b) guess the model family / provider, (c) detect whether a guardrail
+    layer is present, (d) enumerate any tool/function surface the bot admits to, and
+    (e) capture the bot's natural refusal style so later probes can tell a genuine
+    bypass from a normal decline.
+
+    All recon prompts here are benign and conversational. Nothing here attacks.
+
+FUNCTIONS
+    run_recon(target: 'HTTPChatTarget') -> 'ReconResult'
+
+FILE
+    /home/claude/glasscage/glasscage/recon.py
+
