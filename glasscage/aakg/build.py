@@ -15,9 +15,14 @@ This is the function every downstream engine (paths/trust/blast) reads from.
 
 from __future__ import annotations
 
+import hashlib
+import re
+
 from .engine import PropertyGraph
 from .types import EdgeState, EdgeType, NodeType
 from .. import taxonomy
+
+_WS = re.compile(r"\s+")
 
 # tool capability -> asset node type
 _CAP_ASSET = {
@@ -37,6 +42,40 @@ _HIGH_VALUE = {NodeType.SECRETS, NodeType.DATABASE, NodeType.FILESYSTEM}
 
 def _status(f):
     return getattr(f.status, "value", f.status)
+
+
+def _subject_digest(prompt: str) -> str:
+    """First 12 hex chars of sha256 over the whitespace-normalised prompt (ADR 0010).
+
+    The prompt is the only existing Finding field carrying *what the finding is about*:
+    `mcp.py` writes "tool: <name>", `architecture.py` writes "(assessed) <control>", and
+    probes write the payload sent. Digested rather than used raw so no payload, canary or
+    unredacted text ever enters a node id - node ids are not covered by the redaction pass
+    that processes finding fields.
+    """
+    return hashlib.sha256(_WS.sub(" ", prompt or "").strip().encode("utf-8")).hexdigest()[:12]
+
+
+def _finding_key(f) -> str:
+    """Finding-node identity (ADR 0010): category, probe, assessed subject.
+
+    `owasp_id:probe_name` alone is not unique - `mcp.analyze_manifest` emits one finding
+    per flagged tool and `architecture.assess` one per control, so findings collapsed into
+    a single node whose label described one finding and whose status described another.
+
+    Every component is intrinsic to the finding, so the key is content-derived rather than
+    order-derived: reordering probes or changing the probe selection cannot re-key another
+    finding's node. No component depends on the target's response, so a behavioural change
+    updates a node's metadata instead of re-keying it.
+
+    `surface_id` is deliberately NOT a component. It is empty on every current run, so it
+    discriminates nothing today, and including it would make surface-driven graphs differ
+    from direct ones - breaking the direct/surface equivalence guaranteed by ADR 0002 and
+    re-asserted by ADR 0004 and ADR 0008. Surface differentiation is deferred to PR #11,
+    the first PR in which multiple runtime surfaces exist. See the revision note in
+    ADR 0010.
+    """
+    return f"{f.owasp_id}:{f.probe_name}:{_subject_digest(f.prompt)}"
 
 
 def build_graph(recon, findings, mcp_manifest=None, architecture_answers=None,
@@ -98,7 +137,7 @@ def build_graph(recon, findings, mcp_manifest=None, architecture_answers=None,
         st = _status(f)
         if st not in ("vulnerable", "inconclusive", "not_assessable"):
             continue
-        fkey = f"{f.owasp_id}:{f.probe_name}"
+        fkey = _finding_key(f)
         estate = (EdgeState.DEMONSTRATED if (st == "vulnerable" and getattr(f, "impact_confirmed", False))
                   else EdgeState.NOT_ASSESSABLE if st == "not_assessable"
                   else EdgeState.HYPOTHESIZED)

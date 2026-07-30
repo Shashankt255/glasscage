@@ -33,6 +33,27 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   architecture (questionnaire) findings never are, because they are not observations on a
   surface. Empty on the default path. Custody, HAR and reproduction still read the supplied
   target. Graph serialization, SARIF, replay bundles and reproduction steps are unaffected.
+### Fixed
+- **AAKG Finding-node identity** (`aakg/build.py`): Finding nodes were keyed
+  `f"{owasp_id}:{probe_name}"`, which is not unique — `mcp.analyze_manifest` emits one finding
+  per flagged tool and `architecture.assess` one per control, so findings merged into a single
+  node keeping the first label and the last status. `--demo --mcp-manifest
+  samples/mcp_manifest.json` emitted a node labelled `Tool 'fetch_url' …` with status
+  `vulnerable`, while `fetch_url` was assessed `inconclusive` — a fabricated per-tool verdict
+  and a breach of the evidence ceiling. Independent of surface driving.
+  Keys are now `Finding:<owasp_id>:<probe_name>:<subject_digest>`, where the digest is the
+  first 12 hex of `sha256` over the whitespace-normalised prompt. One node per graph-eligible
+  finding: 29/29 on a maximal run (was 26/29). No new node or edge type; merge policy, node
+  types, edge types, `node_id`/`edge_id`, replay bundles, SARIF, `diff.py`, CLI and the
+  benchmark unchanged. `surface_id` is deliberately **not** part of the identity — it is empty
+  on every current run and would break the direct/surface graph equivalence guaranteed by
+  ADR 0002 and re-asserted by ADRs 0004 and 0008; surface differentiation is deferred to
+  multi-surface execution. See `docs/adr/0010-finding-node-identity.md`.
+  **Unavoidable:** all Finding node ids change, and edge ids incident to them change with
+  them. Posture (45.4/54.6) and `runtime_coverage_ratio` (0.54) are unchanged.
+- `docs/adr/0010-finding-node-identity.md`.
+
+### Added
 - **Plural surface resolution** (`targets/compat.py`): `chat_surfaces_of()` returns every
   drivable CHAT surface in **registration order** (deliberately not id-sorted, unlike
   `discovery`), deduplicated first-wins. `chat_surface_of()` is now a one-line wrapper
@@ -100,7 +121,11 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
 - `Engine(target).run()` without `surface=` is behaviourally identical; identity, custody
   and reproduction still read the target.
 ### Tests
-- 350 passing (+145). Surface resolution (+14): plural resolution, registration ordering
+- 368 passing (+163). Finding identity (+18): one node per eligible finding on four run
+  configurations, both documented collisions eliminated with per-finding status restored,
+  `surface_id` excluded, direct/surface graph equivalence, determinism across repeats/seeds/
+  configurations, and no unredacted content in node ids.
+- Surface resolution (+14): plural resolution, registration ordering
   proven not id-sorted, first-wins dedup, singular equivalence, verbatim message parity
   across both forms, and resolution/ownership separation.
 - Driver custody (+12): population and hash correctness, transport
