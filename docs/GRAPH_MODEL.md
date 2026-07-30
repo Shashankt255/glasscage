@@ -24,7 +24,7 @@ on any mutation.
 See [ADR 0010](adr/0010-finding-node-identity.md).
 
 ```
-Finding:<owasp_id>:<probe_name>:<subject_digest>
+Finding:<owasp_id>:<probe_name>:<surface_id>:<subject_digest>
 
 subject_digest = first 12 hex chars of sha256(normalise(prompt))
 normalise(s)   = collapse whitespace runs to one space, then strip
@@ -42,11 +42,20 @@ separates them — one node per graph-eligible finding.
   cross-run graph comparison meaningful.
 - **Opaque.** No consumer parses a Finding id; the digest keeps payloads, canaries and
   unredacted text out of node ids, which the redaction pass does not cover.
-- **`surface_id` is deliberately excluded.** It is empty on every current run, and including
-  it would make surface-driven graphs differ from direct ones, breaking the equivalence
-  guaranteed by ADR 0002 and re-asserted by ADR 0004 and ADR 0008. Surface differentiation
-  is deferred to multi-surface execution, which must resolve the case of findings identical
-  in category, probe and prompt across surfaces.
+- **`surface_id` distinguishes surfaces** ([ADR 0011](adr/0011-multi-surface-execution.md)).
+  Every probe sends a fixed prompt, so without it every finding would collide across
+  surfaces. A direct run carries an empty component, so its ids are PR #10's with one added
+  colon and every CLI invocation is unchanged. A surface-driven run's ids differ from a
+  direct run's: ADR 0011 supersedes the *representational* equivalence of ADRs 0002/0004/0008
+  while preserving their behavioural intent.
+
+## techniques_run
+A **run-level** property counting distinct techniques executed, owned by the orchestration
+layer — not derived from the graph. The graph excludes `passed` findings, so it can only
+know which techniques produced graph-eligible evidence, never how many ran. Surface-count
+independent: driving one application at three surfaces does not treble it. Every
+evidence-derived analysis — posture, attack paths, blast radius, trust boundaries,
+remediation — remains graph-native.
 
 ## Consumers (read-only)
 `paths` (attack paths), `trust_graph` (trust boundaries), `blast` (blast radius),

@@ -1,6 +1,10 @@
 # ADR 0005 — Declared and governed ownership
 
 Status: Accepted · Phase 1 / Sprint 2 / PR #5
+
+> **Report-identity deferral discharged by [ADR 0011](0011-multi-surface-execution.md).**
+> An ApplicationTarget run now names the application; a direct run names the target.
+
 Supersedes the "one authoritative target" clause of
 [ADR 0002](0002-engine-surface-wiring.md) (that ADR's other decisions stand).
 

@@ -130,12 +130,16 @@ class TestNonPerturbation(unittest.TestCase):
         self.assertEqual([f.evidence_hash for f in direct["findings"]],
                          [f.evidence_hash for f in driven["findings"]])
 
-    def test_aakg_serialization_is_unchanged(self):
+    def test_aakg_serialization_differs_only_by_the_surface_component(self):
+        """ADR 0011 supersedes the representational half of ADR 0008's non-perturbation
+        guarantee. Custody still perturbs nothing else: the graphs are identical once the
+        surface component is removed."""
         e1, _ = self._results(False)
         e2, _ = self._results(True)
-        a = json.dumps(e1._graph_obj.to_dict(), sort_keys=True)
-        b = json.dumps(e2._graph_obj.to_dict(), sort_keys=True)
-        self.assertEqual(_stable(a), _stable(b))
+        a = _stable(json.dumps(e1._graph_obj.to_dict(), sort_keys=True))
+        b = _stable(json.dumps(e2._graph_obj.to_dict(), sort_keys=True))
+        self.assertNotEqual(a, b)
+        self.assertEqual(a, b.replace(":chat:", "::"))
 
 
 if __name__ == "__main__":

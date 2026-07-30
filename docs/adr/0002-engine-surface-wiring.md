@@ -2,6 +2,13 @@
 
 Status: Accepted · Phase 1 / Sprint 1 / PR #2 (executes the ADR 0001 follow-up)
 
+> **Representational clause superseded by [ADR 0011](0011-multi-surface-execution.md).**
+> The direct/surface *behavioural* equivalence below still holds: a single-surface driven
+> run produces the same findings as a direct run. The *representational* half — identical
+> graph node ids and serialization — was retired when multi-surface execution restored
+> `surface_id` into Finding identity.
+
+
 > **Partially superseded by [ADR 0005](0005-declared-and-governed-ownership.md).** The
 > "one authoritative target" clause below — requiring the driven surface to be bound to
 > the *same object* supplied to the engine — was generalised to *declared and governed

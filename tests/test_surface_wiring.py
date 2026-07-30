@@ -164,29 +164,40 @@ class TestRouting(unittest.TestCase):
 
 # ---------------- equivalence ----------------
 class TestEquivalence(unittest.TestCase):
-    def test_findings_and_summary_identical(self):
+    """ADR 0011 splits ADR 0002's equivalence claim in two.
+
+    Behavioural equivalence is preserved: a surface-driven run produces the same findings
+    as a direct run. Representational equivalence is knowingly retired: node ids gain the
+    surface component, so graph serialization and the ids cited in reports differ.
+    """
+
+    def test_findings_are_behaviourally_identical(self):
         _, direct, _ = _run(False)
         _, driven, drv = _run(True)
         self.assertGreater(drv.drives, 0)          # routing actually happened
         self.assertEqual(_shape(direct), _shape(driven))
-        self.assertEqual(direct["summary"], driven["summary"])
-        self.assertEqual(direct["coverage"], driven["coverage"])
-        self.assertEqual(direct["posture"], driven["posture"])
+        self.assertEqual(direct["summary"]["posture_score"],
+                         driven["summary"]["posture_score"])
+        self.assertEqual(direct["coverage"]["techniques_run"],
+                         driven["coverage"]["techniques_run"])
 
-    def test_markdown_report_identical(self):
+    def test_markdown_report_differs_only_by_the_surface_component(self):
         e1, direct, _ = _run(False)
         e2, driven, drv = _run(True)
         self.assertGreater(drv.drives, 0)
-        self.assertEqual(_stable(e1.report_markdown(direct)),
-                         _stable(e2.report_markdown(driven)))
+        a = _stable(e1.report_markdown(direct))
+        b = _stable(e2.report_markdown(driven))
+        self.assertNotEqual(a, b)
+        self.assertEqual(a, b.replace(":chat:", "::"))
 
-    def test_aakg_serialization_identical(self):
+    def test_aakg_serialization_differs_only_by_the_surface_component(self):
         e1, _, _ = _run(False)
         e2, _, drv = _run(True)
         self.assertGreater(drv.drives, 0)
-        a = json.dumps(e1._graph_obj.to_dict(), sort_keys=True)
-        b = json.dumps(e2._graph_obj.to_dict(), sort_keys=True)
-        self.assertEqual(_stable(a), _stable(b))
+        a = _stable(json.dumps(e1._graph_obj.to_dict(), sort_keys=True))
+        b = _stable(json.dumps(e2._graph_obj.to_dict(), sort_keys=True))
+        self.assertNotEqual(a, b)
+        self.assertEqual(a, b.replace(":chat:", "::"))
 
 
 # ---------------- contract forwarding ----------------

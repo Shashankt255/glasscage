@@ -72,99 +72,184 @@ class Engine:
         # None keeps the pre-existing single-target path exactly as it was.
         self.surface = surface
 
-    def _probe_target(self):
-        """The object probes talk to: the target itself, or a shim over a Surface.
+    def _report_identity(self) -> str:
+        """What the report header names (ADR 0011, discharging ADR 0005's deferral).
 
-        Capability tier and reproduction read this object (ADR 0005), so they follow the
-        driven target. The report header and custody keep reading `self.target`, so
-        `name`, `url`, `method` and `capabilities` are sourced exactly as before.
+        An application-level run names the application; a single-target run names the
+        target, exactly as before. Per-finding provenance stays exact via `surface_id`
+        and reproduction steps, so the header names the assessment subject while findings
+        name their endpoints.
+        """
+        from .targets.application import ApplicationTarget
+        if isinstance(self.surface, ApplicationTarget) and self.surface.base_url:
+            return self.surface.base_url
+        return self.target.name
+
+    def _probe_targets(self):
+        """Every object probes talk to, validated before any traffic (ADR 0011).
+
+        Order is exactly `chat_surfaces_of()`'s output (INV-1): registration order,
+        deduplicated, never sorted or re-ordered here. Every surface is validated up
+        front so an ownership or governance refusal aborts the run before any surface is
+        probed, preserving ADR 0005 across N surfaces.
+
+        Capability tier and reproduction read these objects (ADR 0005), so they follow the
+        driven target. Custody keeps reading `self.target`.
         """
         if self.surface is None:
-            return self.target
-        from .targets.compat import SurfaceTarget, chat_surface_of
-        return SurfaceTarget(chat_surface_of(self.surface), origin=self.target)
+            return [self.target]
+        from .targets.compat import (SurfaceTarget, chat_surfaces_of,
+                                     verify_application_scope)
+        surfaces = chat_surfaces_of(self.surface)
+        verify_application_scope(self.surface, surfaces)
+        return [SurfaceTarget(s, origin=self.target) for s in surfaces]
+
+    def _assess_surface(self, probe_target, recon, runner, target_tier, driven_kind,
+                        out, Tier):
+        """Run every probe and attacker against one surface (ADR 0011).
+
+        Body unchanged from the single-surface loop; only the collection target and the
+        recon it reads are per-surface. Attacker budgets are PER_SURFACE (INV-3).
+        """
+        from .targets.surface import SurfaceKind
+        for probe in self.probes:
+            # ADR 0006: applicability is checked BEFORE capability tier - being unable to
+            # drive a surface at all is more fundamental than lacking a capability on it.
+            # Probes that declare nothing are read as CHAT-only, so plugins keep working.
+            kinds = getattr(probe, "surface_kinds", (SurfaceKind.CHAT,))
+            if driven_kind not in kinds:
+                out.append(Finding(
+                    probe_name=probe.name, title=(
+                        f"NOT ASSESSABLE on a {driven_kind.value} surface: probe "
+                        f"drives {', '.join(k.value for k in kinds)}"),
+                    owasp_id=probe.owasp_id, category=probe.category,
+                    status=Status.NOT_ASSESSABLE, severity=Severity.INFO,
+                    confidence=0.0, dimension="informational",
+                    assessed_tier=target_tier.name,
+                    required_tier=getattr(probe, "min_tier", Tier.L0).name,
+                    prompt="(surface-gated)", response_excerpt=""))
+                continue
+            required = getattr(probe, "min_tier", Tier.L0)
+            if target_tier < required:
+                # Stage A: honest NOT ASSESSABLE instead of an invalid pass/fail.
+                out.append(Finding(
+                    probe_name=probe.name, title=(
+                        f"NOT ASSESSABLE at {target_tier.name}: requires "
+                        f"{required.name} ({required.label})"),
+                    owasp_id=probe.owasp_id, category=probe.category,
+                    status=Status.NOT_ASSESSABLE, severity=Severity.INFO,
+                    confidence=0.0, dimension="informational",
+                    assessed_tier=target_tier.name, required_tier=required.name,
+                    prompt="(tier-gated)", response_excerpt=""))
+                continue
+            try:
+                for f in runner.run(probe, probe_target, recon):
+                    f.assessed_tier = target_tier.name
+                    out.append(f)
+            except Exception as e:  # noqa: BLE001
+                recon.notes.append(f"probe {probe.name} crashed: {e}")
+        if self.adaptive:
+            try:
+                out.extend(mutation_mod.run(probe_target, self.adaptive_budget,
+                                            use_llm=self.use_judge))
+            except Exception as e:  # noqa: BLE001
+                recon.notes.append(f"adaptive attacker crashed: {e}")
+        if self.genetic:
+            try:
+                out.extend(genetic_mod.run(probe_target, budget=self.genetic_budget,
+                                           use_llm=self.use_judge))
+            except Exception as e:  # noqa: BLE001
+                recon.notes.append(f"genetic attacker crashed: {e}")
+
+    @staticmethod
+    def _merge_recons(recons):
+        """Run-level recon (ADR 0011). One surface returns its own object unchanged.
+
+        `reachable` is true if any surface was; list fields are order-preserving unions;
+        notes concatenate so every unreachable surface stays named (INV-4). `schema_tools`
+        is run-level and identical on each, so the first is authoritative.
+        """
+        if len(recons) == 1:
+            return recons[0]
+        merged = ReconResult()
+        merged.reachable = any(r.reachable for r in recons)
+        for field_name in ("model_hints", "guardrail_signals", "tool_surface", "notes"):
+            seen: dict = {}
+            for r in recons:
+                for v in getattr(r, field_name):
+                    seen.setdefault(v, None)
+            setattr(merged, field_name, list(seen))
+        merged.schema_tools = recons[0].schema_tools if recons else []
+        merged.refusal_style = next((r.refusal_style for r in recons
+                                     if r.refusal_style is not None), None)
+        merged.latency_ms = next((r.latency_ms for r in recons
+                                  if r.latency_ms is not None), None)
+        return merged
+
+    @staticmethod
+    def _run_tier(probe_targets, TargetCapabilities):
+        """Run-level capability tier: the weakest surface's (ADR 0011).
+
+        A run is only as assessable as its least capable surface. One surface returns its
+        own tier, so the legacy path is unchanged.
+        """
+        pairs = [(getattr(pt, "capabilities", None) or TargetCapabilities())
+                 for pt in probe_targets]
+        weakest = min(pairs, key=lambda c: c.tier)
+        return weakest.tier, weakest
 
     def run(self) -> dict:
-        probe_target = self._probe_target()
-        recon: ReconResult = recon_mod.run_recon(probe_target)
-        if self.schema_tools:
-            recon.schema_tools = self.schema_tools
+        # ADR 0011: every resolved CHAT surface is driven, in `chat_surfaces_of()` order,
+        # all validated before any traffic.
+        probe_targets = self._probe_targets()
+
+        from .tal import TargetCapabilities, Tier
+        from .stats import TrialRunner
+        from .targets.surface import SurfaceKind
+        runner = TrialRunner(trials=self.trials, seed=self.seed)
 
         findings: list[Finding] = []
         adaptive_success = False
-        # Stage A: determine the target's capability tier (default L0).
-        from .tal import TargetCapabilities, Tier
-        # ADR 0005: the tier describes the target actually driven, not the one supplied.
-        caps = getattr(probe_target, "capabilities", None) or TargetCapabilities()
-        target_tier = caps.tier
-        from .stats import TrialRunner
-        runner = TrialRunner(trials=self.trials, seed=self.seed)
-        # ADR 0006: which surface kind is actually being driven. Legacy runs drive a
-        # single chat endpoint, so CHAT is the default when no surface is bound.
-        from .targets.surface import SurfaceKind
-        _driven_surface = getattr(probe_target, "surface", None)
-        driven_kind = _driven_surface.kind if _driven_surface is not None else SurfaceKind.CHAT
+        surface_recons: list[ReconResult] = []
+        surface_batches: list[tuple] = []   # (probe_target, findings produced on it)
 
-        if recon.reachable:
-            for probe in self.probes:
-                # ADR 0006: applicability is checked BEFORE capability tier - being
-                # unable to drive a surface at all is more fundamental than lacking a
-                # capability on it. Probes that declare nothing are read as CHAT-only,
-                # so third-party plugins keep working.
-                kinds = getattr(probe, "surface_kinds", (SurfaceKind.CHAT,))
-                if driven_kind not in kinds:
-                    na = Finding(
-                        probe_name=probe.name, title=(
-                            f"NOT ASSESSABLE on a {driven_kind.value} surface: probe "
-                            f"drives {', '.join(k.value for k in kinds)}"),
-                        owasp_id=probe.owasp_id, category=probe.category,
-                        status=Status.NOT_ASSESSABLE, severity=Severity.INFO,
-                        confidence=0.0, dimension="informational",
-                        assessed_tier=target_tier.name,
-                        required_tier=getattr(probe, "min_tier", Tier.L0).name,
-                        prompt="(surface-gated)", response_excerpt="")
-                    findings.append(na)
-                    continue
-                required = getattr(probe, "min_tier", Tier.L0)
-                if target_tier < required:
-                    # Stage A: honest NOT ASSESSABLE instead of an invalid pass/fail.
-                    na = Finding(
-                        probe_name=probe.name, title=(
-                            f"NOT ASSESSABLE at {target_tier.name}: requires "
-                            f"{required.name} ({required.label})"),
-                        owasp_id=probe.owasp_id, category=probe.category,
-                        status=Status.NOT_ASSESSABLE, severity=Severity.INFO,
-                        confidence=0.0, dimension="informational",
-                        assessed_tier=target_tier.name, required_tier=required.name,
-                        prompt="(tier-gated)", response_excerpt="")
-                    findings.append(na)
-                    continue
-                try:
-                    for f in runner.run(probe, probe_target, recon):
-                        f.assessed_tier = target_tier.name
-                        findings.append(f)
-                except Exception as e:  # noqa: BLE001
-                    recon.notes.append(f"probe {probe.name} crashed: {e}")
-            if self.adaptive:
-                try:
-                    findings.extend(mutation_mod.run(probe_target, self.adaptive_budget,
-                                                     use_llm=self.use_judge))
-                except Exception as e:  # noqa: BLE001
-                    recon.notes.append(f"adaptive attacker crashed: {e}")
-            if self.genetic:
-                try:
-                    findings.extend(genetic_mod.run(probe_target, budget=self.genetic_budget,
-                                                    use_llm=self.use_judge))
-                except Exception as e:  # noqa: BLE001
-                    recon.notes.append(f"genetic attacker crashed: {e}")
+        for probe_target in probe_targets:
+            # ADR 0011: one ReconResult per surface. Probes read `tool_surface` and
+            # `model_hints` while assessing and three derive findings entirely from
+            # recon, so a merged fingerprint would let one endpoint drive another's
+            # verdicts. `schema_tools` is run-level (INV-2) and identical for each.
+            recon: ReconResult = recon_mod.run_recon(probe_target)
+            if self.schema_tools:
+                recon.schema_tools = self.schema_tools
+            surface_recons.append(recon)
 
-        # ADR 0004: attribute runtime findings to the surface they were observed on.
-        # Everything appended after this point (MCP manifest, architecture answers) is
-        # configuration-review or questionnaire evidence and is never attributed.
-        if self.surface is not None:
-            surface_id = probe_target.surface.id
-            for f in findings:
-                f.surface_id = surface_id
+            # Stage A: capability tier of the target actually driven (ADR 0005).
+            caps = getattr(probe_target, "capabilities", None) or TargetCapabilities()
+            target_tier = caps.tier
+            # ADR 0006: which surface kind is being driven. Legacy runs drive a single
+            # chat endpoint, so CHAT is the default when no surface is bound.
+            _driven_surface = getattr(probe_target, "surface", None)
+            driven_kind = (_driven_surface.kind if _driven_surface is not None
+                           else SurfaceKind.CHAT)
+
+            batch: list[Finding] = []
+            if not recon.reachable and _driven_surface is not None:
+                recon.notes.append(f"surface {_driven_surface.id}: not reachable")
+            if recon.reachable:
+                self._assess_surface(probe_target, recon, runner, target_tier,
+                                     driven_kind, batch, Tier)
+            # ADR 0004/0011: attribute this surface's findings to the surface that
+            # produced them, before the next surface runs.
+            if _driven_surface is not None:
+                for f in batch:
+                    f.surface_id = _driven_surface.id
+            surface_batches.append((probe_target, batch))
+            findings.extend(batch)
+
+        # ADR 0011: run-level recon. A single surface yields its own object unchanged, so
+        # the legacy path is byte-identical.
+        recon = self._merge_recons(surface_recons)
+        target_tier, caps = self._run_tier(probe_targets, TargetCapabilities)
 
         if self.use_judge and judge_mod.available():
             for f in findings:
@@ -188,7 +273,12 @@ class Engine:
         kb_mod.enrich_all(findings)
         from . import taxonomy as taxonomy_mod
         taxonomy_mod.enrich_all(findings)   # D1: CWE/CAPEC/NIST mappings
-        repro.build_all(findings, probe_target)   # ADR 0005: cite the driven target
+        # ADR 0005/0011: each surface's findings cite the target that produced them.
+        # `build_all` skips findings that already carry steps, so the final call covers
+        # MCP and architecture evidence only.
+        for _pt, _batch in surface_batches:
+            repro.build_all(_batch, _pt)
+        repro.build_all(findings, self.target)
         for f in findings:
             if f.prompt or f.response_excerpt:
                 f.raw_request = f.raw_request or f.prompt
@@ -230,7 +320,13 @@ class Engine:
             trust_model = aakg_trust.analyze(graph_obj)
             chains = aakg_paths.build_paths(graph_obj) if self.build_chains else []
             blast = aakg_blast.summary(graph_obj)
+            _techniques_run = cov["techniques_run"]
             cov = aakg_cov.compute(graph_obj)          # graph-native coverage overrides
+            # ADR 0011: `techniques_run` counts distinct techniques executed - a property
+            # of the assessment process, not of the evidence graph. The graph excludes
+            # passed findings, so it can only know which techniques produced graph-eligible
+            # evidence, never how many ran. Preserve the run-level count computed above.
+            cov["techniques_run"] = _techniques_run
             posture = aakg_posture.compute(graph_obj, cov)
             remediation_priorities = aakg_rem.prioritize(graph_obj)
             aakg_stats = graph_obj.stats()
@@ -247,9 +343,18 @@ class Engine:
         from . import stats as stats_mod
         stats_report = stats_mod.reproducibility_report(findings)
         na = sum(1 for f in findings if f.status is Status.NOT_ASSESSABLE)
+        # ADR 0011: attacker budgets are PER_SURFACE (INV-3); report the effective total
+        # so the cost of driving N surfaces is visible rather than discovered.
+        n_surfaces = len(probe_targets)
         tier_info = {"target_tier": target_tier.name, "target_tier_label": target_tier.label,
                      "not_assessable": na, "trials": self.trials,
-                     "capabilities": caps.to_dict()}
+                     "capabilities": caps.to_dict(),
+                     "surfaces_driven": n_surfaces,
+                     "attacker_budget_contract": "PER_SURFACE",
+                     "effective_adaptive_budget": (self.adaptive_budget * n_surfaces
+                                                   if self.adaptive else 0),
+                     "effective_genetic_budget": (self.genetic_budget * n_surfaces
+                                                  if self.genetic else 0)}
         summary["target_tier"] = target_tier.name
         summary["not_assessable_count"] = na
         summary["trials"] = self.trials
@@ -265,7 +370,7 @@ class Engine:
             }
             narratives = narr_mod.build_all(self._graph_obj, chains)
             story_obj = story_mod.build_story(self._graph_obj, _results_for_story,
-                                              self.target.name)
+                                              self._report_identity())
             self._narratives, self._story = narratives, story_obj
 
         return {"recon": recon, "findings": findings, "summary": summary,
@@ -281,15 +386,15 @@ class Engine:
         graph_obj = getattr(self, "_graph_obj", None)
         if self.use_aakg and graph_obj is not None:
             from .aakg import report as aakg_report
-            return aakg_report.to_markdown(graph_obj, results, self.target.name)
-        return report.to_markdown(self.target.name, results["recon"], results["findings"],
+            return aakg_report.to_markdown(graph_obj, results, self._report_identity())
+        return report.to_markdown(self._report_identity(), results["recon"], results["findings"],
                                   results["summary"], results.get("graph"),
                                   results.get("coverage"), results.get("architecture"),
                                   results.get("trust"), results.get("chains"),
                                   results.get("posture"))
 
     def report_html(self, results: dict) -> str:
-        return report.to_html(self.target.name, results["recon"], results["findings"],
+        return report.to_html(self._report_identity(), results["recon"], results["findings"],
                               results["summary"], results.get("graph"),
                               results.get("coverage"), results.get("architecture"),
                               results.get("trust"), results.get("chains"),

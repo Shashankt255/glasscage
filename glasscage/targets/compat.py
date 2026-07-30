@@ -78,6 +78,28 @@ def _verify_governance(origin, driven) -> None:
                 f"attached to {_describe(origin)!r}")
 
 
+def verify_application_scope(source: object, surfaces: list) -> None:
+    """Refuse any surface not governed by the application's scope (ADR 0011).
+
+    `ApplicationTarget.scope` was declared by ADR 0001 and had no reader, so an operator
+    attaching a scope there received silent zero enforcement. It is now authoritative for
+    the application: when set, every driven target must present that same object.
+
+    Verify, never propagate - the same discipline `_verify_governance` applies to the
+    supplied target's controls. Enforcement stays inside the target's own `send()`.
+    """
+    scope = getattr(source, "scope", None)
+    if not isinstance(source, ApplicationTarget) or scope is None:
+        return
+    for surface in surfaces:
+        driven = _bound_target(surface)
+        if getattr(driven, "scope", None) is not scope:
+            raise TargetError(
+                f"surface {surface.id!r} drives {_describe(driven)!r}, which is not "
+                "governed by the ApplicationTarget's scope: probing it would bypass the "
+                "operator's host allowlist")
+
+
 class SurfaceTarget:
     """Presents a bound Surface through the `send(prompt)` contract probes expect."""
 

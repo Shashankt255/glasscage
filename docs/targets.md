@@ -97,6 +97,32 @@ method and parameters; discovery keeps exactly those. `schema.py` is unchanged.
 only `paths` → HTTP methods are enumerated. Empty documents yield an empty list;
 malformed documents raise `ConfigError`; nothing is ever invented.
 
+## Multi-surface execution
+`Engine(target, surface=<ApplicationTarget>)` drives **every** registered CHAT surface.
+See [ADR 0011](adr/0011-multi-surface-execution.md).
+
+- **Order** is exactly `chat_surfaces_of()`'s output — registration order, never sorted
+  (INV-1). The engine does not re-decide ordering.
+- **Validate-all-before-traffic:** every surface's ownership and governance is checked up
+  front, so a refusal aborts the run before any surface is probed (ADR 0005 across N).
+- **`ApplicationTarget.scope`**, when set, is verified against every driven target; a
+  mismatch raises `TargetError` pre-traffic. Verified, never propagated.
+- **Per-surface recon:** each surface gets its own `ReconResult`. Probes read
+  `tool_surface` and `model_hints` while assessing, and three derive findings entirely
+  from recon, so a merged fingerprint would let one endpoint drive another's verdicts.
+  Run-level recon is an order-preserving union.
+- **Per-surface attribution and reproduction:** each finding carries its producing
+  surface's `surface_id` and cites that surface's target in its reproduction steps.
+- **Report identity:** an application run names `base_url`; a bare `Surface` or direct run
+  names the target (discharges ADR 0005's deferral).
+- **Failure:** an unreachable surface is skipped and named in `notes`; its siblings
+  continue. If none is reachable the run completes with `reachable` false and every
+  surface named, so it is distinguishable from a clean assessment (INV-4).
+- **Attacker budget is `PER_SURFACE`** (INV-3): N surfaces perform N × budget evaluations.
+  The effective total is reported in `results["tier"]`.
+- **Shared state:** surfaces bound to the same target share that target's state. That is a
+  property of the target, not of the orchestration.
+
 ## Driving a surface from the engine
 `Engine(target, surface=...)` routes probe, recon and attacker traffic through the bound
 surface instead of calling the target directly. Status: **Implemented** (CHAT only).

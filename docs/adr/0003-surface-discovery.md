@@ -2,6 +2,11 @@
 
 Status: Accepted · Phase 1 / Sprint 2 / PR #2
 
+> **Ordering clause superseded.** The follow-up order stated here (binding before
+> non-chat drivers) was revised: see [ADR 0011](0011-multi-surface-execution.md).
+> Binding is last; multi-surface execution blocks no downstream work.
+
+
 ## Context
 [ADR 0001](0001-surface-driver-foundation.md) defined `SurfaceCandidate` and stated that
 "discovery modules (later Phase 1 PRs) emit these; the engine decides which to bind to a

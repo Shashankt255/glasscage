@@ -150,12 +150,16 @@ class TestSerialization(unittest.TestCase):
 
 # ---------------- non-perturbation ----------------
 class TestNonPerturbation(unittest.TestCase):
-    def test_aakg_serialization_identical_between_paths(self):
+    def test_aakg_serialization_differs_only_by_the_surface_component(self):
+        """ADR 0011 supersedes the representational half of ADR 0004's non-perturbation
+        guarantee. Attribution still perturbs nothing else: the graphs are identical once
+        the surface component is removed."""
         e1, _ = _direct()
         e2, _ = _driven()
-        a = json.dumps(e1._graph_obj.to_dict(), sort_keys=True)
-        b = json.dumps(e2._graph_obj.to_dict(), sort_keys=True)
-        self.assertEqual(_stable(a), _stable(b))
+        a = _stable(json.dumps(e1._graph_obj.to_dict(), sort_keys=True))
+        b = _stable(json.dumps(e2._graph_obj.to_dict(), sort_keys=True))
+        self.assertNotEqual(a, b)
+        self.assertEqual(a, b.replace(":chat:", "::"))
 
     def test_repro_and_sarif_unchanged_for_a_driven_run(self):
         _, direct = _direct()

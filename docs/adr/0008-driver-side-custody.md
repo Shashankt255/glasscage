@@ -2,6 +2,11 @@
 
 Status: Accepted · Phase 2 / Sprint 1 / PR #8
 
+> **Representational clause superseded by [ADR 0011](0011-multi-surface-execution.md).**
+> Custody still perturbs nothing; graph node ids differ between direct and surface-driven
+> runs only by the surface component.
+
+
 ## Context
 [ADR 0001](0001-surface-driver-foundation.md) declared `Observation.custody_hash` so that
 custody would generalise beyond chat. Seven PRs later nothing had ever populated it.

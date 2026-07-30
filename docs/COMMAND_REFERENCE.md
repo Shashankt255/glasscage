@@ -109,6 +109,19 @@ print(glasscage.__version__)"`.
 - **Purpose:** deterministic replay of stochastic engines.
 - **Example:** `--seed 1`
 
+### Attacker budget contract: `PER_SURFACE`
+- `--adaptive` and `--genetic` budgets are **per-surface exploration allowances**, not run
+  totals. Driving an application at N surfaces performs **N × budget** evaluations — five
+  surfaces at `--genetic 40` is 200. The effective total is reported in
+  `results["tier"]["effective_adaptive_budget"]` / `["effective_genetic_budget"]`, with
+  `["attacker_budget_contract"] == "PER_SURFACE"`.
+- **Why named:** dividing a budget across surfaces would silently weaken every surface's
+  assessment as an application grows. Naming the contract means any future total-budget
+  mode arrives as an additional named option rather than a silent redefinition of these
+  flags. See [ADR 0011](adr/0011-multi-surface-execution.md).
+- **Reachable from the Python API only.** The CLI drives a single target, so `N` is 1 and
+  the effective budget equals the flag value.
+
 ---
 
 ## Evidence & safety

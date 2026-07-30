@@ -2,6 +2,12 @@
 
 Status: Accepted · Phase 1 / Sprint 2 / PR #4
 
+> **Partially superseded by [ADR 0011](0011-multi-surface-execution.md).** The
+> non-perturbation guarantee below holds behaviourally; graph node ids now carry the
+> surface component on surface-driven runs. The follow-up ordering stated here was also
+> revised: multi-surface execution blocks no downstream work, and binding is last.
+
+
 ## Context
 [ADR 0003](0003-surface-discovery.md) leaves three Phase 1 items in order: **per-surface
 attribution**, then **binding** (promoting a discovered `SurfaceCandidate` to a driven

@@ -81,18 +81,20 @@ class TestOneNodePerFinding(unittest.TestCase):
 
 # ---------------- documented collisions eliminated ----------------
 class TestDocumentedCollisions(unittest.TestCase):
+    # ADR 0011 identity update: a direct run carries an empty surface component, so the
+    # pinned ids gain a colon. The guarantee asserted is unchanged.
     def test_mcp_collision_eliminated(self):
         eng, _ = _run(maximal=True)
         ids = {n["id"]: n for n in _finding_nodes(eng)}
-        self.assertIn("Finding:MCP07:mcp-analyzer:ca58bd41c936", ids)
-        self.assertIn("Finding:MCP07:mcp-analyzer:f74b6ac34d23", ids)
+        self.assertIn("Finding:MCP07:mcp-analyzer::ca58bd41c936", ids)
+        self.assertIn("Finding:MCP07:mcp-analyzer::f74b6ac34d23", ids)
         self.assertNotIn("Finding:MCP07:mcp-analyzer", ids)
 
     def test_mcp_nodes_report_their_own_status(self):
         eng, _ = _run(maximal=True)
         ids = {n["id"]: n for n in _finding_nodes(eng)}
-        fetch = ids["Finding:MCP07:mcp-analyzer:ca58bd41c936"]
-        meta = ids["Finding:MCP07:mcp-analyzer:f74b6ac34d23"]
+        fetch = ids["Finding:MCP07:mcp-analyzer::ca58bd41c936"]
+        meta = ids["Finding:MCP07:mcp-analyzer::f74b6ac34d23"]
         self.assertIn("fetch_url", fetch["label"])
         self.assertEqual(fetch["metadata"]["status"], "inconclusive")
         self.assertIn("metadata_probe", meta["label"])
@@ -113,26 +115,39 @@ class TestDocumentedCollisions(unittest.TestCase):
             self.assertTrue(n["label"] and src.title.startswith(n["label"][:20]))
 
 
-# ---------------- surface_id is not part of the identity ----------------
-class TestSurfaceIdExcluded(unittest.TestCase):
-    def test_key_ignores_surface_id(self):
+# ---------------- surface_id IS part of the identity (ADR 0011) ----------------
+# Supersedes the retired TestSurfaceIdExcluded. ADR 0010 excluded surface_id because it
+# was empty on every run and including it would have broken ADR 0002's direct/surface
+# equivalence. ADR 0011 restores it: multiple runtime surfaces now exist and every probe
+# sends a fixed prompt, so without it every finding would collide across surfaces.
+# Representational equivalence is knowingly retired; behavioural equivalence is not.
+class TestSurfaceIdIncluded(unittest.TestCase):
+    def test_key_includes_surface_id(self):
         eng, res = _run()
         f = _eligible(res)[0]
         before = _finding_key(f)
         f.surface_id = "some-surface"
-        self.assertEqual(_finding_key(f), before)
+        self.assertNotEqual(_finding_key(f), before)
+        self.assertIn(":some-surface:", _finding_key(f))
 
-    def test_key_has_exactly_three_components(self):
+    def test_key_has_exactly_four_components(self):
         eng, res = _run(maximal=True)
         for f in _eligible(res):
-            self.assertEqual(len(_finding_key(f).split(":")), 3)
+            self.assertEqual(len(_finding_key(f).split(":")), 4)
 
-    def test_direct_and_surface_driven_graphs_are_byte_identical(self):
-        e1, _ = _run(maximal=True)
+    def test_surface_driven_graph_differs_only_by_the_surface_component(self):
+        """Also pins ADR 0010's surviving single-surface guarantee: a direct run carries
+        an empty surface component, so its ids are PR #10's with one added colon."""
+        e1, res1 = _run(maximal=True)
         e2, _ = _run(surface=True, maximal=True)
-        a = json.dumps(e1._graph_obj.to_dict(), sort_keys=True)
-        b = json.dumps(e2._graph_obj.to_dict(), sort_keys=True)
-        self.assertEqual(_stable(a), _stable(b))
+        for f in _eligible(res1):
+            self.assertEqual(f.surface_id, "")
+        direct = sorted(n["id"] for n in _finding_nodes(e1))
+        driven = sorted(n["id"] for n in _finding_nodes(e2))
+        self.assertIn("Finding:MCP07:mcp-analyzer::ca58bd41c936", direct)
+        self.assertNotEqual(direct, driven)
+        self.assertEqual(len(direct), len(driven))
+        self.assertEqual(direct, sorted(i.replace(":chat:", "::") for i in driven))
 
 
 # ---------------- determinism ----------------

@@ -1,6 +1,12 @@
 # ADR 0010 — Finding-node identity
 
 Status: **Accepted (revised)** · Phase 2 / PR #10
+
+> **Extended by [ADR 0011](0011-multi-surface-execution.md).** The single-surface identity
+> guarantee below remains true — a direct run is unchanged. The `surface_id` *exclusion*
+> is intentionally superseded for multi-surface execution: the key is now
+> `owasp_id:probe_name:surface_id:subject_digest`.
+
 Revision: `surface_id` removed from the identity composition following implementation
 findings. All other content stands.
 

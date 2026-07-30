@@ -33,7 +33,30 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   architecture (questionnaire) findings never are, because they are not observations on a
   surface. Empty on the default path. Custody, HAR and reproduction still read the supplied
   target. Graph serialization, SARIF, replay bundles and reproduction steps are unaffected.
+### Added
+- **Multi-surface execution** (`engine.py`, `targets/compat.py`, `aakg/build.py`):
+  `Engine(target, surface=<ApplicationTarget>)` now drives **every** registered CHAT surface
+  instead of only the first, in `chat_surfaces_of()` order (INV-1), with every surface's
+  ownership and governance validated before any traffic. Each surface gets its own
+  `ReconResult` — probes read `tool_surface`/`model_hints` while assessing and three derive
+  findings entirely from recon, so a merged fingerprint would let one endpoint drive
+  another's verdicts. Findings carry their producing surface's `surface_id` and cite that
+  surface's target in reproduction steps. `Finding` node identity gains `surface_id`
+  (`Finding:<owasp>:<probe>:<surface>:<digest>`); a direct run carries an empty component,
+  so **every CLI invocation is unchanged**. `ApplicationTarget.scope`, declared by ADR 0001
+  and never read, is now verified against every driven target and refuses a mismatch
+  pre-traffic. An unreachable surface is skipped and named in `notes`; if none is reachable
+  the run is distinguishable from a clean assessment (INV-4). Report identity is the
+  application's `base_url` for an application run (discharges ADR 0005's deferral). Attacker
+  budgets are `PER_SURFACE` (INV-3) with the effective total reported.
+  See `docs/adr/0011-multi-surface-execution.md`.
 ### Fixed
+- **`techniques_run` counted findings, not techniques** (`engine.py`): the graph-native
+  figure reported 27 on a baseline run in which 23 distinct techniques ran and 21 probes
+  were registered, because it counted graph-eligible Finding nodes. It is now a run-level
+  property owned by the orchestration layer and is surface-count independent. A pre-existing
+  defect on v0.1.0-phase1, independent of multi-surface, which restoring `surface_id` would
+  have amplified ~N×. Every evidence-derived analysis remains graph-native.
 - **AAKG Finding-node identity** (`aakg/build.py`): Finding nodes were keyed
   `f"{owasp_id}:{probe_name}"`, which is not unique — `mcp.analyze_manifest` emits one finding
   per flagged tool and `architecture.assess` one per control, so findings merged into a single
@@ -121,7 +144,14 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
 - `Engine(target).run()` without `surface=` is behaviourally identical; identity, custody
   and reproduction still read the target.
 ### Tests
-- 368 passing (+163). Finding identity (+18): one node per eligible finding on four run
+- 406 passing (+201). Multi-surface (+38): iteration and registration order, per-surface
+  attribution, graph distinctness, recon isolation, per-surface reproduction,
+  validate-all-before-traffic, `ApplicationTarget.scope` verification, failure and total
+  failure, determinism, backward compatibility, report identity, INV-2 severity invariance,
+  surface-count-independent `techniques_run`, and `PER_SURFACE` budget accounting.
+  Ten existing tests changed as authorised by ADR 0011 (eight superseded guarantees, two
+  identity updates); no other existing test was modified.
+- Finding identity (+18): one node per eligible finding on four run
   configurations, both documented collisions eliminated with per-finding status restored,
   `surface_id` excluded, direct/surface graph equivalence, determinism across repeats/seeds/
   configurations, and no unredacted content in node ids.

@@ -57,7 +57,8 @@ def _subject_digest(prompt: str) -> str:
 
 
 def _finding_key(f) -> str:
-    """Finding-node identity (ADR 0010): category, probe, assessed subject.
+    """Finding-node identity (ADR 0010, extended by ADR 0011): category, probe, surface,
+    assessed subject.
 
     `owasp_id:probe_name` alone is not unique - `mcp.analyze_manifest` emits one finding
     per flagged tool and `architecture.assess` one per control, so findings collapsed into
@@ -68,14 +69,14 @@ def _finding_key(f) -> str:
     finding's node. No component depends on the target's response, so a behavioural change
     updates a node's metadata instead of re-keying it.
 
-    `surface_id` is deliberately NOT a component. It is empty on every current run, so it
-    discriminates nothing today, and including it would make surface-driven graphs differ
-    from direct ones - breaking the direct/surface equivalence guaranteed by ADR 0002 and
-    re-asserted by ADR 0004 and ADR 0008. Surface differentiation is deferred to PR #11,
-    the first PR in which multiple runtime surfaces exist. See the revision note in
-    ADR 0010.
+    `surface_id` was excluded by ADR 0010 because it was empty on every run and including
+    it would have broken the direct/surface graph equivalence of ADR 0002. ADR 0011
+    restores it: multiple runtime surfaces now exist, every probe sends a fixed prompt, so
+    without it every finding would collide across surfaces. ADR 0011 supersedes the
+    *representational* clause of ADRs 0002/0004/0008 while preserving their behavioural
+    intent - a direct run (`surface_id` empty) is unchanged.
     """
-    return f"{f.owasp_id}:{f.probe_name}:{_subject_digest(f.prompt)}"
+    return f"{f.owasp_id}:{f.probe_name}:{getattr(f, 'surface_id', '')}:{_subject_digest(f.prompt)}"
 
 
 def build_graph(recon, findings, mcp_manifest=None, architecture_answers=None,
