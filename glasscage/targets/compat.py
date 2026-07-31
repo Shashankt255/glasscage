@@ -112,6 +112,12 @@ class SurfaceTarget:
                     "drives, so evidence attribution cannot be verified; expose a `target` "
                     "attribute on the driver")
             _verify_governance(origin, driven)
+        # ADR 0012: a driver may declare that its target must hold a usable Scope. The
+        # requirement is declared by the driver, so this boundary enforces it without
+        # knowing which kind demanded it.
+        if getattr(surface.driver, "requires_scope", False):
+            from .rest import require_scope
+            require_scope(driven)
         self.surface = surface
         self.origin = origin
         # ADR 0005: the driven target is authoritative for attribution.
@@ -120,6 +126,16 @@ class SurfaceTarget:
     def send(self, prompt: str) -> Observation:
         """Drive the bound surface once. Returns an Observation, never raises."""
         return self.surface.drive(PromptAction(prompt=prompt))
+
+    def drive(self, action) -> Observation:
+        """Drive the bound surface with an explicit Action (ADR 0012 R4).
+
+        The documented contract for non-chat probes. `send(prompt)` remains the CHAT
+        contract. A probe reaching for this on a run with no bound surface cannot occur:
+        ADR 0006 resolves the driven kind to CHAT when no surface is bound, so a non-chat
+        probe is gated to NOT ASSESSABLE before it runs.
+        """
+        return self.surface.drive(action)
 
     def __getattr__(self, name: str):
         # Only reached for attributes SurfaceTarget does not define itself. Delegation
@@ -130,44 +146,57 @@ class SurfaceTarget:
         return getattr(self.__dict__["driven"], name)
 
 
-def chat_surfaces_of(source: object) -> list[Surface]:
-    """Resolve a Surface or ApplicationTarget to every drivable CHAT surface (ADR 0009).
+# ADR 0012 widens the drivable set from {CHAT} to {CHAT, REST}. Every other kind has no
+# driver and is still refused loudly rather than silently assessed at the wrong surface.
+_DRIVABLE_KINDS = (SurfaceKind.CHAT, SurfaceKind.REST)
+
+
+def drivable_surfaces_of(source: object) -> list[Surface]:
+    """Resolve a Surface or ApplicationTarget to every drivable surface (ADR 0009/0012).
 
     Order is **registration order** - the sequence the operator added surfaces in - and
     is deliberately not sorted. `discovery` sorts its candidates by id because a document
     has no inherent order; a registration list does, and that order is the operator's.
-    Duplicate ids collapse first-wins. Only CHAT is drivable in this release, so anything
-    else is refused loudly rather than silently assessed at the wrong surface.
+    Duplicate ids collapse first-wins.
 
     Resolution only: ownership and governance are validated per surface when a
     `SurfaceTarget` is constructed (ADR 0005). This function never raises `TargetError`.
     """
     if isinstance(source, Surface):
-        if source.kind is not SurfaceKind.CHAT:
+        if source.kind not in _DRIVABLE_KINDS:
             raise ConfigError(
-                f"only CHAT surfaces are drivable in this release, got {source.kind}")
+                f"no driver for surface kind {source.kind} in this release")
         return [source]
     if isinstance(source, ApplicationTarget):
-        chat = source.surfaces_of(SurfaceKind.CHAT)
-        if not chat:
-            raise ConfigError("ApplicationTarget registers no CHAT surface to drive")
+        found = [s for s in source.surfaces if s.kind in _DRIVABLE_KINDS]
+        if not found:
+            raise ConfigError("ApplicationTarget registers no drivable surface")
         seen: dict = {}
-        for surface in chat:
+        for surface in found:
             seen.setdefault(surface.id, surface)   # first-wins, insertion-ordered
         return list(seen.values())
     raise ConfigError(
         f"expected a Surface or ApplicationTarget, got {type(source).__name__}")
 
 
-def chat_surface_of(source: object) -> Surface:
-    """The single CHAT surface to drive: the first result of `chat_surfaces_of`.
+def chat_surfaces_of(source: object) -> list[Surface]:
+    """Historical name for `drivable_surfaces_of` (ADR 0012).
 
-    Ambiguity is not refused - an application registering several CHAT surfaces yields
-    the first. Multi-surface execution is a later change; until then this preserves the
-    behaviour every current caller depends on.
-
-    No refusal logic lives here. Every `ConfigError` originates in `chat_surfaces_of`,
-    so the two cannot drift, and indexing is safe because the empty case is already
-    refused there.
+    Retained with an unchanged signature so callers - including `engine.py` - keep
+    working. Its behaviour widens with the drivable set; new code should use
+    `drivable_surfaces_of`.
     """
-    return chat_surfaces_of(source)[0]
+    return drivable_surfaces_of(source)
+
+
+def chat_surface_of(source: object) -> Surface:
+    """The single surface to drive: the first result of `drivable_surfaces_of`.
+
+    Ambiguity is not refused - an application registering several drivable surfaces
+    yields the first, in registration order.
+
+    No refusal logic lives here. Every `ConfigError` originates in
+    `drivable_surfaces_of`, so the two cannot drift, and indexing is safe because the
+    empty case is already refused there.
+    """
+    return drivable_surfaces_of(source)[0]

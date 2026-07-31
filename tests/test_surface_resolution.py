@@ -28,8 +28,9 @@ from glasscage.targets import (
     chat_surfaces_of,
 )
 
-_NON_CHAT = "only CHAT surfaces are drivable in this release, got "
-_NO_CHAT = "ApplicationTarget registers no CHAT surface to drive"
+# ADR 0012 widened the drivable set to {CHAT, REST}; GRAPHQL has no driver.
+_NO_DRIVER = "no driver for surface kind "
+_NO_CHAT = "ApplicationTarget registers no drivable surface"
 _WRONG_TYPE = "expected a Surface or ApplicationTarget, got "
 
 
@@ -42,26 +43,34 @@ def _rest(sid="api"):
                    driver=ChatDriver(ReferenceAgent()))
 
 
+def _undrivable(sid="gql"):
+    """A kind with no driver in this release - still refused (ADR 0012)."""
+    return Surface(id=sid, kind=SurfaceKind.GRAPHQL, locator="/graphql",
+                   driver=ChatDriver(ReferenceAgent()))
+
+
 # ---------------- plural resolution ----------------
 class TestPluralResolution(unittest.TestCase):
     def test_single_surface_yields_one_element(self):
         s = _chat()
         self.assertEqual(chat_surfaces_of(s), [s])
 
-    def test_application_yields_all_chat_surfaces_in_registration_order(self):
+    # ADR 0012 supersedes the CHAT-only kind filter: REST is drivable. Registration
+    # ordering (INV-1) and first-wins dedup are unchanged and still asserted.
+    def test_application_yields_all_drivable_surfaces_in_registration_order(self):
         app = ApplicationTarget(base_url="https://x.example")
         first = app.add_surface(_chat(sid="alpha"))
-        app.add_surface(_rest("api"))
+        middle = app.add_surface(_rest("api"))
         second = app.add_surface(_chat(sid="beta"))
-        self.assertEqual([s.id for s in chat_surfaces_of(app)], ["alpha", "beta"])
-        self.assertEqual(chat_surfaces_of(app), [first, second])
+        self.assertEqual([s.id for s in chat_surfaces_of(app)], ["alpha", "api", "beta"])
+        self.assertEqual(chat_surfaces_of(app), [first, middle, second])
 
-    def test_non_chat_surfaces_are_excluded(self):
+    def test_kinds_without_a_driver_are_excluded(self):
         app = ApplicationTarget()
-        app.add_surface(_rest("r1"))
+        app.add_surface(_undrivable("g1"))
         app.add_surface(_chat(sid="c1"))
-        app.add_surface(_rest("r2"))
-        self.assertEqual([s.id for s in chat_surfaces_of(app)], ["c1"])
+        app.add_surface(_rest("r1"))
+        self.assertEqual([s.id for s in chat_surfaces_of(app)], ["c1", "r1"])
 
     def test_single_chat_application_yields_one_element(self):
         app = ApplicationTarget()
@@ -120,9 +129,10 @@ class TestRefusalParity(unittest.TestCase):
             out.append(str(ctx.exception))
         return out
 
-    def test_non_chat_surface_refused_identically(self):
-        for msg in self._both(_rest()):
-            self.assertTrue(msg.startswith(_NON_CHAT), msg)
+    def test_driverless_kind_refused_identically(self):
+        # ADR 0012: REST is now drivable; a kind with no driver is still refused.
+        for msg in self._both(_undrivable()):
+            self.assertTrue(msg.startswith(_NO_DRIVER), msg)
 
     def test_empty_application_refused_identically(self):
         for msg in self._both(ApplicationTarget(base_url="https://x.example")):

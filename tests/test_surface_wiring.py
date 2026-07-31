@@ -286,10 +286,12 @@ class TestFailureModes(unittest.TestCase):
         with self.assertRaises(ConfigError):
             chat_surface_of(object())
 
-    def test_non_chat_surface_is_refused(self):
-        rest = Surface(id="api", kind=SurfaceKind.REST, locator="/v1", driver=_DeadDriver())
+    def test_driverless_kind_is_refused(self):
+        # ADR 0012: REST is drivable; a kind with no driver is still refused.
+        gql = Surface(id="gql", kind=SurfaceKind.GRAPHQL, locator="/graphql",
+                      driver=_DeadDriver())
         with self.assertRaises(ConfigError):
-            chat_surface_of(rest)
+            chat_surface_of(gql)
 
     def test_resolution_errors_are_glasscage_errors(self):
         with self.assertRaises(GlasscageError):
