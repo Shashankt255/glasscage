@@ -33,7 +33,9 @@ def _probe_provenance(probe) -> str:
         src = inspect.getsource(probe.run)
     except (OSError, TypeError):
         src = ""
-    if "target.send" in src:
+    # ADR 0012: a non-chat probe drives its surface with an Action instead of sending a
+    # prompt. Both are runtime evidence; only the transport differs.
+    if "target.send" in src or "target.drive" in src:
         return _RUNTIME
     name = probe.__class__.__name__.lower()
     if "manifest" in src.lower() or "mcp" in name:

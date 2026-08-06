@@ -10,6 +10,7 @@ findings get manifest-inspection steps instead of an HTTP request.
 from __future__ import annotations
 
 import json
+import re
 
 _REDACT_HEADERS = {"authorization", "x-api-key", "api-key", "cookie", "x-auth-token"}
 _CANARY_HINT = {
@@ -24,6 +25,62 @@ _CANARY_HINT = {
     "system-prompt-leak": "configuration/system-prompt text is disclosed",
     "sensitive-info-disclosure": "secret-shaped content (keys/passwords) is returned",
 }
+
+
+_CANONICAL_FIRST_LINE = re.compile(r"^[A-Z]+ https?://\S*$")
+
+
+def _is_canonical_request(prompt: str) -> bool:
+    """True when the prompt is a canonical REST request (ADR 0012 R2/R3).
+
+    The canonical form's first line is `<METHOD> <absolute-url>`. A chat prompt is free
+    text and cannot match: it would have to begin with an uppercase verb followed by a
+    single absolute URL and nothing else.
+    """
+    first = (prompt or "").split("\n", 1)[0]
+    return bool(_CANONICAL_FIRST_LINE.match(first))
+
+
+def _split_canonical(prompt: str) -> tuple[str, list[str], str]:
+    """Split a canonical request into (request line, header lines, body).
+
+    Mirrors the producer in `targets.rest.canonical_request`, which joins
+    `[request line, header block, "", body]`. An empty header block is still a line, so a
+    request with no headers serializes its separator as `\\n\\n\\n`. Partitioning on the
+    first `\\n\\n` therefore stops one line early on exactly the requests the REST probe
+    issues - it has no headers - and hands the separator's own newline to the body,
+    inventing a body for a bodyless GET and prefixing a real one with a stray newline.
+    Splitting positionally keeps reproduction equal to what was sent (ADR 0012 R3).
+    """
+    lines = (prompt or "").split("\n")
+    if len(lines) > 1 and lines[1] == "":
+        return lines[0], [], "\n".join(lines[3:])   # empty header block occupies line 1
+    sep = 1
+    while sep < len(lines) and lines[sep] != "":
+        sep += 1
+    return lines[0], lines[1:sep], "\n".join(lines[sep + 1:])
+
+
+def _curl_from_canonical(prompt: str) -> str:
+    """Render curl from the canonical REST request that produced the finding.
+
+    Reproduction is built from `Finding.prompt`, which carries the exact serialization the
+    driver hashed for custody, so the reproduced request is the request that was issued.
+    """
+    request_line, header_lines, body = _split_canonical(prompt)
+    method, _, url = request_line.partition(" ")
+    parts = [f"curl -sS -X {method} '{url}' \\"]
+    for header in header_lines:
+        if not header.strip():
+            continue
+        name, _, value = header.partition(":")
+        val = "<REDACTED>" if name.strip().lower() in _REDACT_HEADERS else value.strip()
+        parts.append(f"  -H '{name.strip()}: {val}' \\")
+    if body:
+        parts.append("  --data '" + body.replace("'", "'\\''") + "'")
+    else:
+        parts[-1] = parts[-1].rstrip(" \\")
+    return "\n".join(parts)
 
 
 def _curl(target, prompt: str) -> str:
@@ -58,7 +115,11 @@ def build(finding, target=None) -> list[str]:
     prompt = finding.prompt or ""
     indicator = _CANARY_HINT.get(finding.probe_name, "the indicator described in Evidence appears")
     steps = [f"Target: {getattr(target, 'name', 'the endpoint')}"]
-    if target is not None and prompt and not prompt.startswith("("):
+    if _is_canonical_request(prompt):
+        # ADR 0012: a REST finding carries the canonical request that produced it.
+        steps.append("Re-issue this exact request (auth redacted — insert your own token):")
+        steps.append(_curl_from_canonical(prompt))
+    elif target is not None and prompt and not prompt.startswith("("):
         steps.append("Send this exact request (auth redacted — insert your own token):")
         steps.append(_curl(target, prompt))
     elif prompt:

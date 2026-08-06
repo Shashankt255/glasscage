@@ -286,6 +286,51 @@ class SensitiveDisclosureProbe(Probe):
 
 
 # ---------------------------------------------------------------------------
+# LLM02 - Sensitive Information Disclosure over a REST surface (ADR 0012)
+# ---------------------------------------------------------------------------
+@register
+class RestResponseDisclosureProbe(Probe):
+    """Issue a REST surface's own declared operation and inspect the response body.
+
+    Reuses `SECRET_PATTERNS`, the same detector the chat disclosure probe uses, so the
+    verdict rule is identical across transports. Declares REST applicability (ADR 0006),
+    drives via the documented `drive(action)` contract (ADR 0012 R4), and writes the
+    canonical request as `prompt` so Finding identity separates endpoints (ADR 0010) and
+    reproduction re-issues exactly what was sent (ADR 0012 R3).
+    """
+
+    name = "rest-response-disclosure"
+    owasp_id = "LLM02"
+    category = "Sensitive Information Disclosure"
+    default_severity = Severity.HIGH
+    dimension = "impact"
+    surface_kinds = (_SurfaceKind.REST,)
+    atlas_id = "AML.T0057"
+    references = ["OWASP LLM02: Sensitive Information Disclosure",
+                  "MITRE ATLAS AML.T0057: LLM Data Leakage"]
+
+    def run(self, target, recon):
+        from .targets.driver import HttpAction
+        from .targets.rest import canonical_request
+        surface = getattr(target, "surface", None)
+        loc = (surface.locator if surface is not None else None) or {}
+        action = HttpAction(method=loc.get("method", "GET"), path=loc.get("path", "/"))
+        obs = target.drive(action)
+        request = obs.request or canonical_request(action, str(loc.get("path", "/")))
+        if not obs.ok:
+            return [self._finding(Status.ERROR, "REST disclosure probe transport error",
+                                  Severity.INFO, request, obs.error or "", 0.0)]
+        if detect_secret(obs.text):
+            return [self._finding(
+                Status.VULNERABLE,
+                "REST response contains secret-shaped material (manual confirm)",
+                Severity.CRITICAL, request, obs.text, 0.75, impact_confirmed=True)]
+        return [self._finding(Status.PASSED,
+                              "No secret-shaped content in the REST response",
+                              Severity.INFO, request, obs.text, 0.6)]
+
+
+# ---------------------------------------------------------------------------
 # LLM06 - Excessive Agency (informational, driven by recon tool surface)
 # ---------------------------------------------------------------------------
 @register
