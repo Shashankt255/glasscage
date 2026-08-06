@@ -185,6 +185,62 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   structural typing, adaptive and genetic paths, legacy invariance, evidence-attribution
   refusal, plugin `.raw` compatibility, and typed refusal of unsupported inputs.
 
+### Added
+- **REST surface execution** (`targets/rest.py`, `probes.py`, `recon.py`, `repro.py`,
+  `coverage_provenance.py`): the first non-chat surface driven end to end. `RestTarget` /
+  `RestDriver` consume `HttpAction` (ADR 0007, previously declared with no consumer), attach
+  custody to every observation (ADR 0008) and compose the absolute URL once so the scope
+  check, the issued request, the custody hash and the reproduction command cannot disagree
+  (R8). A REST target **requires a non-empty `Scope` and is refused without one, before any
+  socket opens** (R1): `audit.Scope.check()` defers to `--authorized`, a gate REST never
+  crosses, so possession of a target is not authorisation. Chat keeps its optional scope
+  because `--authorized` does gate it. One canonical request serialization serves custody
+  hashing, Finding identity and reproduction (R2), with every ordering total.
+  `SurfaceTarget.drive(action)` is the documented contract for non-chat probes (R4);
+  `send(prompt)` remains the CHAT contract, unchanged. The drivable set widens from `{CHAT}`
+  to `{CHAT, REST}`; `chat_surfaces_of` is retained as an unchanged-signature alias.
+  `RestResponseDisclosureProbe` (LLM02) is **registered and part of the default battery**,
+  reusing `SECRET_PATTERNS` so the verdict rule is identical across transports, and driving
+  the surface's own declared locator rather than guessing paths. `run_recon` dispatches on
+  surface kind — a chat prompt reaches a REST endpoint as a refused `PromptAction`, so a
+  prompt-only recon would mark every REST surface unreachable and skip it; chat concepts
+  (`model_hints`, `guardrail_signals`, `tool_surface`, `refusal_style`) stay empty for REST
+  because that is the honest answer for the kind. Driving a surface with an Action counts as
+  runtime evidence in `coverage_provenance` exactly as sending a prompt does.
+  See `docs/adr/0012-rest-surface-execution.md`.
+  **Unavoidable:** because the probe declares `(REST,)` and a default run is CHAT, every chat
+  run now emits one additional NOT_ASSESSABLE finding and `not_assessable_count` rises by
+  one. Gating a registered probe honestly is preferred to a battery that silently omits what
+  it cannot assess and reports coverage it has not earned.
+  **Unchanged:** the benchmark (byte-identical corpus report), `runtime_coverage_ratio`
+  (0.54), replay bundles, SARIF, chat findings including `evidence_hash` and reproduction
+  steps, custody, the graph identity scheme and determinism — verified by comparison against
+  the pre-PR tree, not by assertion.
+- `docs/adr/0012-rest-surface-execution.md`.
+### Fixed
+- **REST reproduction did not reproduce the request that was issued** (`repro.py`):
+  `_curl_from_canonical` split the canonical request on the first `\n\n`, but an empty header
+  block still occupies a line, so a header-less request serializes its separator as `\n\n\n`.
+  The split stopped one line early and handed the separator's own newline to the body: a
+  bodyless GET rendered as `--data '<newline>'` and a real body gained a leading newline —
+  contradicting R3, which requires reproduction to equal what was sent. The REST probe sends
+  no headers, so this fired on every REST finding. Now split positionally against the
+  producer's grammar (`_split_canonical`). Chat reproduction is untouched.
+### Tests
+- 464 passing (+58). REST driver and contract (+30, PR #12 Commit 1): `HttpAction`
+  consumption, fail-closed scope, canonical serialization and custody determinism, the
+  `drive` contract, declared ownership and governance, widened resolution with INV-1 ordering
+  preserved, and the alias contract. REST probe, recon, reproduction and provenance (+32):
+  probe declaration and registration, locator-driven requests, verdict parity with the shared
+  detector, transport and HTTP errors reported as errors rather than clean passes, canonical
+  prompts giving distinct endpoints distinct Finding identity, recon reachability without a
+  chat prompt with chat concepts honestly empty, reproduction regressions covering the defect
+  above, and provenance counting a driven probe as runtime.
+  Three existing tests were replaced as authorised: `test_every_registered_probe_is_chat_`
+  `applicable`, `test_default_run_has_no_surface_gated_finding` and
+  `test_chat_surface_driven_run_is_not_gated` encoded invariants that are false by
+  construction once a non-chat probe is registered. No other existing test was modified.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added

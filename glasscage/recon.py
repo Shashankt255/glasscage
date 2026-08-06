@@ -91,7 +91,34 @@ def _detect_tools(text: str) -> list[str]:
     return sorted(tools)
 
 
+def _recon_rest(target, surface) -> ReconResult:
+    """Reachability for a REST surface (ADR 0012).
+
+    Re-issues the surface's own declared locator as a benign request: no transport
+    knowledge lives here beyond the action the surface already describes. `model_hints`,
+    `guardrail_signals`, `tool_surface` and `refusal_style` are chat concepts and stay
+    empty - that is the honest answer for REST, not a gap.
+    """
+    from .targets.driver import HttpAction
+    loc = surface.locator or {}
+    obs = target.drive(HttpAction(method=loc.get("method", "GET"), path=loc.get("path", "/")))
+    result = ReconResult()
+    result.latency_ms = obs.latency_ms
+    result.reachable = bool(obs.ok)
+    if not obs.ok:
+        result.notes.append(f"surface {surface.id}: reachability probe failed: {obs.error}")
+    return result
+
+
 def run_recon(target: HTTPChatTarget) -> ReconResult:
+    # ADR 0012: reachability is determined per surface kind. A chat prompt is meaningless
+    # to a REST endpoint, so a prompt-only recon would report every REST surface
+    # unreachable and silently skip it.
+    from .targets.surface import SurfaceKind
+    _surface = getattr(target, "surface", None)
+    if _surface is not None and _surface.kind is SurfaceKind.REST:
+        return _recon_rest(target, _surface)
+
     result = ReconResult()
 
     # Reachability + latency via the identity probe.

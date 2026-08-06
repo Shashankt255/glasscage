@@ -101,11 +101,18 @@ class TestDeclaration(unittest.TestCase):
     def test_default_is_chat_only(self):
         self.assertEqual(Probe.surface_kinds, (SurfaceKind.CHAT,))
 
-    def test_every_registered_probe_is_chat_applicable(self):
+    def test_registry_is_chat_applicable_except_the_rest_probe(self):
+        """ADR 0012 registers the first non-chat probe, so the blanket "every registered
+        probe is chat-applicable" invariant no longer holds. What replaces it is narrower
+        and still exact: the REST probe is the only exception, and it declares REST alone.
+        Asserting the exception by name keeps a second non-chat probe from arriving
+        unnoticed."""
         probes = all_probes()
-        self.assertEqual(len(probes), 21)
-        for p in probes:
-            self.assertIn(SurfaceKind.CHAT, getattr(p, "surface_kinds", ()))
+        self.assertEqual(len(probes), 22)
+        non_chat = [p for p in probes
+                    if SurfaceKind.CHAT not in getattr(p, "surface_kinds", ())]
+        self.assertEqual([p.name for p in non_chat], ["rest-response-disclosure"])
+        self.assertEqual(non_chat[0].surface_kinds, (SurfaceKind.REST,))
 
     def test_a_subclass_may_narrow_or_widen(self):
         self.assertEqual(_RestOnlyProbe.surface_kinds, (SurfaceKind.REST,))
@@ -181,16 +188,23 @@ class TestBackwardCompatibility(unittest.TestCase):
         self.assertEqual(probe.calls, 1)
         self.assertEqual(_gated(res, probe.name), [])
 
-    def test_default_run_has_no_surface_gated_finding(self):
+    def test_default_run_gates_only_the_rest_probe(self):
+        """A default run on a chat target now legitimately gates one probe. The point of
+        the original test - that no *chat* probe is gated - is preserved by naming the
+        single expected exception rather than asserting an empty list."""
         _, res = _run(None)
         self.assertTrue(res["findings"])
-        self.assertEqual([f for f in res["findings"] if f.prompt == "(surface-gated)"], [])
+        gated = [f for f in res["findings"] if f.prompt == "(surface-gated)"]
+        self.assertEqual([f.probe_name for f in gated], ["rest-response-disclosure"])
+        self.assertIs(gated[0].status, Status.NOT_ASSESSABLE)
 
-    def test_chat_surface_driven_run_is_not_gated(self):
+    def test_chat_surface_driven_run_gates_only_the_rest_probe(self):
         agent = ReferenceAgent()
         eng = Engine(agent, capture_evidence=False, surface=ChatSurface(agent))
         res = eng.run()
-        self.assertEqual([f for f in res["findings"] if f.prompt == "(surface-gated)"], [])
+        gated = [f for f in res["findings"] if f.prompt == "(surface-gated)"]
+        self.assertEqual([f.probe_name for f in gated], ["rest-response-disclosure"])
+        self.assertIs(gated[0].status, Status.NOT_ASSESSABLE)
 
 
 # ---------------- integration ----------------

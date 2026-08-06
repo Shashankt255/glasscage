@@ -2,11 +2,14 @@
 
 Additive Phase 1 foundation. Defines the drivable-surface contract that discovery and
 driver PRs build on. Since [ADR 0002](adr/0002-engine-surface-wiring.md) the run
-pipeline can optionally drive a CHAT surface; the default path is unchanged.
+pipeline can optionally drive a CHAT surface, and since
+[ADR 0012](adr/0012-rest-surface-execution.md) a REST surface; the default path is
+unchanged.
 
 ## Concepts
-- **`SurfaceKind`** — `CHAT, REST, GRAPHQL, FUNCTION, MCP_TOOL, RAG, VECTOR_DB`. Only
-  `CHAT` is exercised in this release.
+- **`SurfaceKind`** — `CHAT, REST, GRAPHQL, FUNCTION, MCP_TOOL, RAG, VECTOR_DB`. `CHAT` and
+  `REST` are exercised in this release; every other kind has no driver and is refused
+  loudly rather than silently assessed at the wrong surface.
 - **`Surface`** — a drivable thing: `id`, `kind`, `locator`, optional `io_schema`, a
   bound `Driver`. `surface.drive(action)` delegates to the driver.
 - **`Driver`** (Protocol) — exercises a surface: `drive(surface, action) -> Observation`.
@@ -14,7 +17,7 @@ pipeline can optionally drive a CHAT surface; the default path is unchanged.
   | Action | Fields | Serves | Status |
   |---|---|---|---|
   | `PromptAction` | `prompt` | `CHAT` | Implemented |
-  | `HttpAction` | `method`, `path`, `query`, `headers`, `body` | `REST`, later `GRAPHQL` | Experimental — no driver yet |
+  | `HttpAction` | `method`, `path`, `query`, `headers`, `body` | `REST`, later `GRAPHQL` | Implemented — consumed by `RestDriver` (ADR 0012) |
   | `ToolCallAction` | `name`, `arguments` | `MCP_TOOL`, `FUNCTION` | Experimental — no driver yet |
 
   `HttpAction` mirrors what discovery emits for a REST candidate (`{"method", "path"}`
@@ -150,8 +153,10 @@ surface instead of calling the target directly. Status: **Implemented** (CHAT on
   change — the two agree on every field any caller reads (`ok`, `text`, `error`, `trace`,
   `latency_ms`), and `Observation.raw` is an additive alias for `response` so plugin
   probes written against `ChatResponse.raw` keep working. See ADR 0002.
-- Resolution failures (non-CHAT surface, no CHAT surface registered, wrong type) raise
-  `ConfigError`. Everything raised here is a `GlasscageError`.
+- Resolution failures (a surface kind with no driver, no drivable surface registered, wrong
+  type) raise `ConfigError`. A REST target additionally requires a non-empty `Scope` and is
+  refused with `TargetError` before any socket opens (ADR 0012). Everything raised here is a
+  `GlasscageError`.
 
 ### Probe applicability
 Probes declare which surface kinds they can drive via `Probe.surface_kinds`, defaulting
@@ -167,6 +172,9 @@ to `(SurfaceKind.CHAT,)`. See [ADR 0006](adr/0006-probe-surface-applicability.md
 - Set membership, not an ordinal like `min_tier` — surface kinds have no ordering.
 - Probes that declare nothing are read as chat-applicable, so existing plugins are
   unaffected.
+- `rest-response-disclosure` is the first registered probe declaring a non-CHAT kind. It is
+  part of the default battery, so a chat run emits one `NOT ASSESSABLE` finding for it
+  rather than omitting it and reporting coverage it has not earned (ADR 0012).
 
 ### Finding attribution
 Findings produced by target interaction on a surface-driven run carry
