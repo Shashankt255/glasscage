@@ -370,6 +370,52 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   candidate. Guards were mutation-tested against six wrong binders, since a new module's
   baseline run fails only on import and proves nothing.
 
+### Added
+- **CLI exposure of surface-driven assessment** (`cli.py`): `--rest-config FILE` plus
+  `--rest-spec SPEC` discover an OpenAPI document's operations, bind them to a `RestTarget`
+  and assess every one. ADR 0002 deferred this *"until a discovery PR gives it something to
+  select"*; discovery landed in ADR 0003 and binding in ADR 0014, so the REST programme
+  built across PRs #12–#15 — driver, probe, transport-boundary auth, binding — is reachable
+  by an operator for the first time. `--authorized` gates the REST path exactly as it gates
+  `--config`, and **the CLI adds no refusal logic of its own**: ADR 0012 R1's non-empty
+  `Scope` is enforced where it already lives, by `require_scope` at `SurfaceTarget`
+  construction, so there is one enforcement point rather than two that could drift. Surfaces
+  are bound after `--scope`/`--rate`/`--audit-log` are attached, and the same target object
+  is passed as both the engine's target and the bound driver's, so ADR 0005's governance
+  check compares an object with itself and nothing is propagated.
+  **`--discover` is untouched** — not reused, not overloaded, unchanged in every
+  combination. It remains an inventory command that drives nothing, which is why a dedicated
+  `--rest-spec` exists: overloading one flag would have made `discovery`'s documented
+  read-only guarantee conditional on which other flags were present.
+  See `docs/adr/0015-cli-surface-exposure.md`.
+  **Expect a mostly NOT ASSESSABLE report.** ADR 0006 gates every chat probe on a REST
+  surface and ADR 0012 registered the REST probe into the default battery, so a
+  two-operation spec yields 42 gated findings and 2 assessed ones. That is the honest
+  reading of a battery that is 21/22 chat-shaped, shown rather than hidden.
+  **Accepted, unfixed:** `--discover` alongside `--config` still silently ignores
+  `--config`, exactly as before; fixing it would modify `--discover`.
+  **Unchanged:** every existing invocation — `--demo`, `--harness`, `--config`,
+  `--benchmark`, `--diff`, `--mcp-manifest`, and `--discover` in all combinations — plus the
+  benchmark, `runtime_coverage_ratio`, replay, SARIF, custody, graph identity, `discovery`
+  output and determinism, verified against `v0.3.4-surface-binding` by tree comparison. No
+  existing test was modified.
+- `docs/adr/0015-cli-surface-exposure.md`.
+### Changed
+- `docs/adr/0012-rest-surface-execution.md` carries a banner marking its
+  **authorisation-asymmetry rationale** superseded by ADR 0015. R1's requirement is
+  unchanged — REST still requires a non-empty `Scope` — but the reason given for it, that
+  REST has no CLI path, is no longer true. ADR 0015 re-grounds the asymmetry on ADR 0014's
+  accepted limitation that binding does not verify a target's host against the discovered
+  document, which is an exposure chat does not have.
+### Tests
+- 572 passing (+21). CLI surface exposure: end-to-end REST assessment with every discovered
+  operation driven and attributed; a secret in a REST response reported; ADR 0012 R1
+  preserved with the refusal raised before any request; `--authorized` gating and no report
+  written on refusal; `--discover` byte-identical with and without `--rest-spec` present,
+  still returning without assessing alongside `--config` and `--rest-config`, and still
+  writing its inventory files; existing invocations unaffected; the NOT ASSESSABLE ratio
+  asserted as a recorded expectation; and determinism across repeated runs.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
