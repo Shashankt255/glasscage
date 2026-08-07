@@ -81,6 +81,20 @@ def _load(path):
         return json.load(fh)
 
 
+def _driven_kinds(surface):
+    """The surface kinds this run drove (ADR 0018).
+
+    CHAT when nothing is bound, matching ADR 0006's rule that a run with no surface
+    resolves to CHAT. Resolution goes through `drivable_surfaces_of` so this agrees with
+    what the engine actually drove rather than inferring it from the target's type.
+    """
+    from glasscage.targets import SurfaceKind
+    from glasscage.targets.compat import drivable_surfaces_of
+    if surface is None:
+        return {SurfaceKind.CHAT}
+    return {s.kind for s in drivable_surfaces_of(surface)}
+
+
 def _parse_adapter_files(items):
     """['garak=run.jsonl','promptfoo=out.json'] -> {'garak':'run.jsonl',...}"""
     out = {}
@@ -421,14 +435,30 @@ def main(argv=None):
                           results["summary"])
         extra.append(f"{args.out}.sarif")
     if args.replay:
-        from glasscage import sarif
-        cfg = _load(args.config) if args.config else {"url": target.url, "name": target.name,
-                                                      "body_template": target.body_template,
-                                                      "response_path": target.response_path}
-        sarif.write_replay(f"{args.out}.replay.json", target.name, cfg, results["findings"])
-        with open(f"{args.out}_replay_runner.py", "w", encoding="utf-8") as fh:
-            fh.write(sarif.REPLAY_RUNNER)
-        extra.append(f"{args.out}.replay.json")
+        # ADR 0018: the bundle and its runner are chat-shaped by construction -
+        # `target_config` carries `body_template`/`response_path`, and the emitted runner
+        # builds an HTTPChatTarget and calls `send()`. No format exists for a non-chat
+        # surface, so none is written rather than one written unusable. The assessment,
+        # the report, SARIF and HAR are unaffected.
+        from glasscage.targets import SurfaceKind
+        _non_chat = sorted(k.value for k in _driven_kinds(surface)
+                           if k is not SurfaceKind.CHAT)
+        if _non_chat:
+            print(f"warning: --replay is not supported for {', '.join(_non_chat)} "
+                  "surfaces; no replay bundle or runner was written. The bundle format "
+                  "and its runner are chat-only (ADR 0018). The assessment itself, the "
+                  "report, SARIF and HAR are unaffected.", file=sys.stderr)
+        else:
+            from glasscage import sarif
+            cfg = _load(args.config) if args.config else {
+                "url": target.url, "name": target.name,
+                "body_template": target.body_template,
+                "response_path": target.response_path}
+            sarif.write_replay(f"{args.out}.replay.json", target.name, cfg,
+                               results["findings"])
+            with open(f"{args.out}_replay_runner.py", "w", encoding="utf-8") as fh:
+                fh.write(sarif.REPLAY_RUNNER)
+            extra.append(f"{args.out}.replay.json")
 
     s = results["summary"]
     p = results.get("posture", {})
