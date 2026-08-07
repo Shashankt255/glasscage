@@ -416,6 +416,49 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   writing its inventory files; existing invocations unaffected; the NOT ASSESSABLE ratio
   asserted as a recorded expectation; and determinism across repeated runs.
 
+### Fixed
+- **`coverage_provenance` reported assessed categories as untested**
+  (`coverage_provenance.py`): provenance was derived from `probes.REGISTRY` alone, but
+  `mcp.analyze_manifest` is not a registered probe — the engine calls it directly — so
+  MCP03 and MCP07 fell through to `not_tested` while being assessed. Measured on
+  `v0.4.0-cli-surface`: `config_review_only` was `[]` and `not_tested` was
+  `['LLM04','MCP03','MCP07','MULTIMODAL']`, while the analyzer emitted
+  `{'MCP07': 2, 'MCP03': 1}` on the shipped sample manifest. The `config_review` bucket the
+  module documents (*"e.g. MCP"*) was structurally unreachable: across 22 registered probes,
+  19 classified runtime and 3 questionnaire, none config_review, because no registered probe
+  carries an MCP `owasp_id`. A module whose stated purpose is *"an honest runtime coverage
+  figure"* was under-reporting. Provenance now derives from the registry **plus** a declared
+  set of categories assessed by non-probe assessors; strength order is unchanged, so a
+  runtime category is never demoted by a declaration.
+  See `docs/adr/0016-non-probe-assessor-provenance.md`.
+  **Reporting-layer only, by decision:** MCP is **not** registered as a probe, the battery
+  stays at 22, no gated finding is introduced, and **`runtime_coverage_ratio` stays 0.54** —
+  arithmetically, not by adjustment, since the ratio is `runtime / universe = 7/13` and
+  neither term moves.
+  **Visible change:** the report's `coverage_provenance` field moves `MCP03` and `MCP07`
+  from `not_tested` to `config_review_only`; `not_tested` now holds only `LLM04` and
+  `MULTIMODAL`, which genuinely have no assessor.
+  **Accepted:** `architecture.assess` is also a non-probe assessor and is deliberately not
+  declared — every category it covers is already runtime-tested or questionnaire-covered, so
+  declaring it changes no bucket (simulated and confirmed identical). The gap is latent and
+  recorded in ADR 0016.
+  **Unchanged:** `runtime_tested`, `universe` (13), battery composition, gated-finding
+  counts, graph identity, custody, SARIF, replay, benchmark, `discovery` output and
+  determinism, verified against `v0.4.0-cli-surface` by tree comparison. No existing test was
+  modified.
+- `docs/adr/0016-non-probe-assessor-provenance.md`.
+### Tests
+- 589 passing (+17). Non-probe assessor provenance: MCP03/MCP07 classified `config_review`
+  and removed from `not_tested`; the frozen invariants asserted explicitly
+  (`runtime_coverage_ratio == 0.54`, the exact `runtime_tested` set, `universe == 13`,
+  battery of 22, unchanged gated-finding count, buckets partitioning the universe); MCP still
+  absent from the probe registry; two-direction anti-drift checks against both what
+  `mcp.analyze_manifest` emits and the `MCP\d\d` literals in `mcp.py`; non-canonical `MCP00`
+  excluded from every bucket; and precedence, so a runtime category is not demoted and
+  config_review outranks questionnaire. Guards were mutation-tested against four wrong
+  declarations — omitting a category, declaring a non-canonical one, classifying MCP as
+  runtime, and declaring nothing — all caught.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
