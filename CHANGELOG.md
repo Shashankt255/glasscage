@@ -459,6 +459,49 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   declarations — omitting a category, declaring a non-canonical one, classifying MCP as
   runtime, and declaring nothing — all caught.
 
+### Fixed
+- **A REST assessment crashed when `--adaptive` or `--genetic` was passed** (`engine.py`):
+  ADR 0006 gates every registered probe on the driven surface kind, but the adaptive and
+  genetic attackers were invoked unconditionally from the same per-surface loop. Both are
+  prompt-shaped — each drives through `target.send()` — so on a REST surface the
+  `PromptAction` was refused, a finding was still produced carrying a chat-shaped prompt,
+  and `repro.build_all` (outside any `try`) rendered it as a chat request, reading
+  `target.body_template` off a `RestTarget` that has no such attribute. Measured on
+  `v0.4.1-coverage-provenance`: `AttributeError: 'RestTarget' object has no attribute
+  'body_template'` for both flags. PR #16 made this operator-reachable —
+  `--rest-config … --rest-spec … --adaptive` is a supported combination. The attackers are
+  now gated where the probes are, emitting the **same** `NOT ASSESSABLE` record ADR 0006
+  already defines — same fields, same `"(surface-gated)"` prompt, no new shape or sentinel.
+  Reported rather than skipped silently, so an operator can tell "did not run" from "ran and
+  found nothing". See `docs/adr/0017-attacker-surface-applicability.md`.
+- **`rest.py` told operators REST has no CLI path** (`targets/rest.py`): three sites — the
+  module docstring, `require_scope`'s docstring, and the raised `TargetError` — asserted
+  that `--authorized` does not gate REST. PR #16 gave REST a CLI path where it does, and
+  ADR 0015 recorded the wording as owed. R1's requirement and behaviour are **unchanged**;
+  only the stated reason is corrected, to ADR 0014's accepted limitation that binding does
+  not verify a target's host against the document it was discovered from — which is what
+  makes the allowlist load-bearing, and an exposure chat does not have.
+- **`schema.from_openapi` raised `AttributeError` on a malformed path entry**
+  (`schema.py`): a path whose value is not an object reached `.items()`. ADR 0003 recorded
+  this in its *"Note for the next PR"*, drawing the contrast that `discovery.py` skips such
+  entries. It now skips them the same way, so the two OpenAPI consumers agree; a malformed
+  sibling no longer suppresses valid operations in the same document.
+- **Redaction wrote its count to unreachable state** (`redaction.py`): `redact_finding` set
+  `f.metadata["redactions"]` on a field `Finding` does not declare, so `dataclasses.asdict`
+  never saw it and the value reached no report, bundle or export. The dead write is removed;
+  the count remains the function's return value. Recording it for real would require a new
+  `Finding` field and a changed report format, which this change deliberately does not do.
+- `docs/adr/0017-attacker-surface-applicability.md`.
+### Tests
+- 616 passing (+27). Recorded correctness defects: the REST-plus-attacker crash reproduced
+  and eliminated for both flags with the gate reported rather than silent; CHAT, direct and
+  no-attacker runs asserted unchanged; the false `rest.py` claims asserted absent from both
+  source and the raised message while every scope refusal is asserted unchanged; malformed
+  OpenAPI entries skipped across five shapes without suppressing valid siblings, and
+  `schema` asserted to agree with `discovery` on the same document; no undeclared attribute
+  left on a redacted `Finding`, with redaction behaviour and the 41-field shape unchanged;
+  plus `runtime_coverage_ratio`, provenance buckets and battery size frozen.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added

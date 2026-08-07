@@ -79,9 +79,10 @@ def redact_finding(f) -> int:
             if isinstance(turn.get(k), str):
                 turn[k], n = redact_text(turn[k])
                 total += n
-    if total:
-        f.metadata = getattr(f, "metadata", {}) or {}
-        f.metadata["redactions"] = f.metadata.get("redactions", 0) + total
+    # The count is returned, not stored. A previous version wrote it to `f.metadata`,
+    # which `Finding` does not declare: the attribute existed on the instance but
+    # `dataclasses.asdict` never saw it, so the value reached no report, bundle or export.
+    # Recording it for real would mean a new `Finding` field and a changed report format.
     return total
 
 
