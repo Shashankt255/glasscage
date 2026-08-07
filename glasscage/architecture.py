@@ -81,7 +81,10 @@ def assess(answers: dict) -> list[Finding]:
         f = Finding(probe_name="architecture-review", owasp_id=owasp, title=title,
                     category="Architecture / Defense-in-Depth", status=status,
                     severity=s, confidence=0.9, dimension="informational",
-                    prompt=f"(assessed) {cid}", response_excerpt=f"answer: {ans}")
+                    prompt=f"(assessed) {cid}", response_excerpt=f"answer: {ans}",
+                    # ADR 0010 follow-up: the control id is this finding's subject, carried
+                    # contractually rather than only by convention in `prompt`.
+                    source_rule_id=cid)
         if status is not Status.PASSED:
             f.remediation = [fix]
         findings.append(f)

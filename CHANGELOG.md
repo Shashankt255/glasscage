@@ -283,6 +283,54 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   determinism with and without credentials, `repr` safety, absence from issued and audited
   URLs, parity refusal pre-traffic, and authenticated recon. No existing test was modified.
 
+### Fixed
+- **Regression diffs merged distinct findings and could report NO CHANGE on a regression**
+  (`diff.py`): the comparison key was `probe_name::owasp_id`, which is not unique —
+  `mcp.analyze_manifest` emits one finding per flagged tool and `architecture.assess` one
+  per control. The dict comprehensions in `diff_reports` therefore discarded all but the
+  last finding per key, so a newly-vulnerable finding sharing a probe/OWASP pair with an
+  existing one never reached `introduced` and the verdict read `NO CHANGE`. Reproduced on
+  `v0.3.2-rest-auth`: the shipped MCP sample manifest produced two `mcp-analyzer::MCP07`
+  findings collapsing to one. ADR 0010 fixed the identical collapse in the graph — calling
+  it "a fabricated per-tool verdict and a breach of the evidence ceiling" — and recorded
+  this layer as follow-up; this is that follow-up. The key is now the Finding identity of
+  ADR 0010 as extended by ADR 0011: `owasp_id:probe_name:surface_id:subject_digest(prompt)`.
+  The digest is composed in `diff.py` rather than imported from `aakg.build`, because ADR
+  0010 records the graph and the report diff as deliberately different layers; a test
+  asserts both produce the same digest for the same prompt.
+  **Unavoidable:** diff keys change, so a stored baseline report from before this change is
+  not comparable against one produced after it. Re-generate baselines.
+  **Note:** a diff between a direct run and a surface-driven run now separates findings by
+  `surface_id`, so they compare as all-introduced plus all-fixed. That reflects two
+  different assessment configurations rather than a regression.
+- **`Finding` declared six fields twice** (`models.py`): `source_framework`,
+  `source_rule_id`, `cwe_id`, `capec_id`, `nist_id` and `raw_output` appeared in both the
+  original block and the Stage D block. A dataclass collapses a repeated annotation into
+  one field that keeps its **first position** and takes its **last default**, so
+  `source_framework`'s first default `"glasscage"` was unreachable — the effective value
+  was `"glasscage-native"` — and editing the first declaration had no effect. Recorded as
+  owed debt by ADR 0004 ("belongs in its own PR"); resolved here because populating
+  `source_rule_id` required editing one of the shadowed declarations. Consolidated onto the
+  first declaration carrying Stage D's values, so field order, field count (41) and every
+  effective default are unchanged.
+### Added
+- **`source_rule_id` populated for subject-per-finding probes** (`mcp.py`,
+  `architecture.py`): the tool name and the control id respectively. ADR 0010 recorded that
+  the subject is carried by `prompt` "by convention, not contract" and named populating this
+  field as the durable fix. **This PR introduces no production reader for it**: the
+  comparison key above deliberately excludes it so that diff identity matches graph
+  identity exactly, and the graph derives its subject from `prompt`. That state is
+  intentional and recorded here rather than left to be re-discovered as a defect.
+### Tests
+- 525 passing (+22). Diff identity: the collision reproduced and eliminated for both
+  subject-per-finding probes, a regression on a second subject now reported, key components
+  matching `aakg.build._finding_key`, digest parity across whitespace variants, `surface_id`
+  separation and absent-key coercion, `source_rule_id` excluded from the key, subject
+  carriage per tool and control, and a `Finding` shape freeze asserting no duplicate
+  declaration in source plus unchanged field order, count and effective defaults. Guards
+  that pass against the pre-fix code were mutation-tested against five wrong keys. No
+  existing test was modified.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
