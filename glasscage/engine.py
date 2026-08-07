@@ -148,18 +148,53 @@ class Engine:
                     out.append(f)
             except Exception as e:  # noqa: BLE001
                 recon.notes.append(f"probe {probe.name} crashed: {e}")
+        # ADR 0017: the attackers are prompt-shaped - both drive through `target.send()` -
+        # so they are CHAT-only, exactly as a probe declaring `surface_kinds = (CHAT,)`.
+        # They were invoked regardless of the driven kind, which on a REST surface meant a
+        # refused PromptAction, a finding carrying a chat-shaped prompt, and an
+        # AttributeError out of reproduction. Gated here rather than in the attacker
+        # modules so the applicability rule stays in the one place ADR 0006 put it.
         if self.adaptive:
-            try:
-                out.extend(mutation_mod.run(probe_target, self.adaptive_budget,
-                                            use_llm=self.use_judge))
-            except Exception as e:  # noqa: BLE001
-                recon.notes.append(f"adaptive attacker crashed: {e}")
+            if driven_kind is not SurfaceKind.CHAT:
+                out.append(self._surface_gated(
+                    "adaptive-attacker", "LLM01", "Adaptive Mutation Attack",
+                    driven_kind, target_tier))
+            else:
+                try:
+                    out.extend(mutation_mod.run(probe_target, self.adaptive_budget,
+                                                use_llm=self.use_judge))
+                except Exception as e:  # noqa: BLE001
+                    recon.notes.append(f"adaptive attacker crashed: {e}")
         if self.genetic:
-            try:
-                out.extend(genetic_mod.run(probe_target, budget=self.genetic_budget,
-                                           use_llm=self.use_judge))
-            except Exception as e:  # noqa: BLE001
-                recon.notes.append(f"genetic attacker crashed: {e}")
+            if driven_kind is not SurfaceKind.CHAT:
+                out.append(self._surface_gated(
+                    "genetic-attacker", "LLM01", "Genetic Attack Engine",
+                    driven_kind, target_tier))
+            else:
+                try:
+                    out.extend(genetic_mod.run(probe_target, budget=self.genetic_budget,
+                                               use_llm=self.use_judge))
+                except Exception as e:  # noqa: BLE001
+                    recon.notes.append(f"genetic attacker crashed: {e}")
+
+    @staticmethod
+    def _surface_gated(name, owasp_id, category, driven_kind, target_tier) -> Finding:
+        """The ADR 0006 NOT ASSESSABLE shape, for an attacker rather than a probe.
+
+        Same fields and the same `(surface-gated)` prompt the probe loop above emits, so
+        reproduction, reporting and the graph treat it identically. Reported rather than
+        skipped silently: an operator who passed `--adaptive` must be able to see that it
+        did not run.
+        """
+        return Finding(
+            probe_name=name, title=(
+                f"NOT ASSESSABLE on a {driven_kind.value} surface: attacker "
+                "drives chat"),
+            owasp_id=owasp_id, category=category,
+            status=Status.NOT_ASSESSABLE, severity=Severity.INFO,
+            confidence=0.0, dimension="informational",
+            assessed_tier=target_tier.name, required_tier=target_tier.name,
+            prompt="(surface-gated)", response_excerpt="")
 
     @staticmethod
     def _merge_recons(recons):

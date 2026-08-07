@@ -5,11 +5,13 @@
 Consumes `HttpAction` (ADR 0007), declares the target it drives (ADR 0005), attaches
 custody to every observation (ADR 0008), and enforces the operational controls it holds.
 
-Fail closed on scope. `audit.Scope.check()` returns silently on an empty allowlist and
-its own comment defers to `--authorized` - a gate that does not exist for REST, which has
-no CLI path. A REST surface therefore requires a *non-empty* Scope: possession alone is
-not enough. Chat keeps its optional scope because `--authorized` gates it; the asymmetry
-is deliberate and has one reason.
+Fail closed on scope. `audit.Scope.check()` returns silently on an empty allowlist, so a
+REST surface requires a *non-empty* Scope: possession alone is not enough. The reason is
+ADR 0014's accepted limitation, recorded by ADR 0015 - binding does not verify that the
+supplied target's host matches the discovered document, so the allowlist is the only
+control between a mis-paired binding and traffic to a host the operator never named. Chat
+keeps its optional scope because its target is one configured endpoint rather than
+operations discovered from a separate document; the asymmetry is deliberate.
 
 The driver hashes but does not record twice: `Observation.custody_hash` is the driver's
 attestation (ADR 0008), and `audit.record` is called once per request because, unlike
@@ -185,14 +187,16 @@ def require_scope(driven: object) -> None:
     """Refuse a driver whose target holds no usable Scope (ADR 0012 R1).
 
     An absent Scope, or one with an empty allowlist, enforces nothing: `Scope.check()`
-    returns silently and defers to `--authorized`, which REST never crosses.
+    returns silently. Binding does not check the supplied target's host against the
+    discovered document (ADR 0014), so the allowlist is what stands between a mis-paired
+    binding and an unintended host.
     """
     scope = getattr(driven, "scope", None)
     if scope is None:
         raise TargetError(
-            f"REST target {getattr(driven, 'url', driven)!r} holds no scope: REST has no "
-            "--authorized gate, so an explicit host allowlist is required before any "
-            "request is issued")
+            f"REST target {getattr(driven, 'url', driven)!r} holds no scope: an explicit "
+            "host allowlist is required before any request is issued, because binding "
+            "does not verify this target against the document it was discovered from")
     if not getattr(scope, "allowed", None):
         raise TargetError(
             f"REST target {getattr(driven, 'url', driven)!r} holds an empty scope "

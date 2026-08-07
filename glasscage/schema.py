@@ -43,7 +43,12 @@ def _tool(name, capability, side_effect):
 def from_openapi(spec: dict) -> list[dict]:
     tools = []
     for path, methods in (spec.get("paths") or {}).items():
-        for method, op in (methods or {}).items():
+        # ADR 0003's note: a path whose value is not an object raised AttributeError here
+        # while `discovery.discover_openapi` skipped it. Skip, matching the sibling
+        # consumer - an entry that declares no operations describes no tool.
+        if not isinstance(methods, dict):
+            continue
+        for method, op in methods.items():
             if method.lower() not in ("get", "post", "put", "patch", "delete"):
                 continue
             name = (op.get("operationId") if isinstance(op, dict) else None) or f"{method} {path}"
