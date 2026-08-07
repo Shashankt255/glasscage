@@ -192,6 +192,12 @@ print(glasscage.__version__)"`.
 
 ### `--replay`
 - **Purpose:** write a reproducible replay bundle (auth headers stripped).
+- **Chat surfaces only.** The bundle's `target_config` and the emitted runner are built
+  around `HTTPChatTarget`, so there is no format for a REST or other non-chat surface. On
+  such a run the assessment completes normally, no bundle or runner is written, and a
+  warning is printed to stderr ([ADR 0018](adr/0018-replay-surface-applicability.md)).
+- **Reproducing a REST finding** does not need the bundle: each finding carries
+  `reproduction_steps` rendering the exact request as curl (ADR 0012 R3).
 
 ### `--diff OLD.json NEW.json`
 - **Purpose:** differential report between two prior JSON runs.

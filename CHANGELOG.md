@@ -502,6 +502,51 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   left on a redacted `Finding`, with redaction behaviour and the 41-field shape unchanged;
   plus `runtime_coverage_ratio`, provenance buckets and battery size frozen.
 
+### Fixed
+- **`--replay` crashed a REST assessment** (`cli.py`): the bundle's `target_config` was
+  built from `target.body_template` and `target.response_path` whenever `--config` was
+  absent, which is exactly the REST path's condition — a REST run supplies `--rest-config` —
+  and `RestTarget` declares neither. Measured on `v0.4.2-correctness`:
+  `AttributeError: 'RestTarget' object has no attribute 'body_template'`. `--demo --replay`
+  and `--harness --replay` both succeeded, so the defect was REST-specific and reachable
+  only since PR #16 made `--rest-config … --replay` a supported pairing.
+  **Guarding the attribute read alone would not have been enough.** The artifact is
+  chat-shaped in three places: `to_replay` writes `body_template`/`response_path`;
+  `REPLAY_RUNNER` imports `HTTPChatTarget`, constructs one, and calls `send()`; and
+  `_INDICATOR` has no entry for `rest-response-disclosure`, so a REST step would carry a
+  null indicator the runner can never satisfy. A REST finding's prompt is the canonical
+  request and does not start with `(`, so the bundle would have been produced and been
+  unusable — posting an HTTP request line as a chat prompt.
+  **Replay is now unsupported for non-chat surfaces.** No bundle and no runner are written,
+  one warning naming the kind and the reason goes to **stderr**, and the assessment
+  completes with its normal exit code. Stdout, the report, SARIF and HAR are untouched. The
+  guard keys on the **driven surface kind** via `drivable_surfaces_of`, not on the target's
+  class, so a future non-chat surface inherits it and a driverless kind is still refused by
+  ADR 0009's existing resolution. See `docs/adr/0018-replay-surface-applicability.md`.
+  **No replay format was invented.** A REST bundle would need a version bump, a per-kind
+  `target_config` schema, a second runner, a canonical-request parser exposed to a
+  standalone script, and indicator semantics for a detector-based probe — plus an answer to
+  a safety question no ADR settles: `REPLAY_RUNNER` builds its target with no `Scope`, which
+  is consistent for chat because `--authorized` gates it, but ADR 0012 R1 requires a
+  non-empty allowlist before any REST request. All recorded in ADR 0018 for a future
+  decision.
+  **Unchanged:** every chat run — `--demo`, `--harness` and `--config` produce
+  byte-identical bundles and runners, the runner asserted by SHA-256 against
+  `v0.4.2-correctness` — plus graph identity, custody, SARIF, provenance,
+  `runtime_coverage_ratio` (0.54), battery size (22), `Finding` field order/defaults/count
+  (41), discovery output, benchmark and determinism, all verified by tree comparison. No
+  existing test was modified.
+- `docs/adr/0018-replay-surface-applicability.md`.
+### Tests
+- 638 passing (+22). Replay surface applicability: the crash reproduced and eliminated,
+  alone and combined with `--sarif`/`--har`; exit code matching a run without `--replay`; no
+  bundle, no runner, and the `Wrote …` line omitting the bundle; the warning asserted on
+  stderr with the kind and the reason, and stdout asserted line-for-line unchanged; SARIF,
+  HAR and the report still written on the same run; chat bundles frozen, with the runner
+  pinned by SHA-256 and the `target_config` shape asserted; and the guard's kind resolution
+  covered for an unbound run, a chat surface, a REST surface, a mixed application, and a
+  driverless kind that resolution still refuses.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
