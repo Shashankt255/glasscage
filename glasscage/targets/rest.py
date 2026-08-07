@@ -74,6 +74,10 @@ class RestTarget:
         self.scope = None          # audit.Scope   - REQUIRED and non-empty (ADR 0012)
         self.rate = None           # audit.RateLimiter
         self.audit = None          # audit.AuditLog
+        # ADR 0013: an AuthContext, attached by the caller exactly as the controls above
+        # are. Request material, not an operational control - the three above enforce
+        # something, this one is sent.
+        self.auth = None           # targets.AuthContext
         self.exchanges: list = []
 
 
@@ -98,6 +102,18 @@ class RestDriver:
         reproduction, so all four agree (ADR 0012 R8)."""
         return f"{self._target.url}/{str(action.path).lstrip('/')}"
 
+    def _auth_headers(self) -> dict:
+        """Headers contributed by the target's `AuthContext`, or none (ADR 0013).
+
+        Read here, at the transport boundary, and nowhere else. `canonical_request` is
+        built from the `action` alone, so a credential supplied through this path never
+        reaches the canonical form - and therefore never reaches custody, Finding
+        identity, reproduction, `exchanges`, HAR or the audit chain, all of which are
+        computed over that form. Placing auth in `action.headers` instead would put it in
+        every one of them, where `SECRET_PATTERNS` could not redact it.
+        """
+        return dict(getattr(getattr(self._target, "auth", None), "headers", None) or {})
+
     def drive(self, surface: Surface, action: Any) -> Observation:
         if not isinstance(action, HttpAction):
             return Observation.failure(
@@ -109,7 +125,9 @@ class RestDriver:
             t.rate.wait()
         canonical = canonical_request(action, url)
 
-        headers = {**t.headers, **(action.headers or {})}
+        # Auth sits beneath both, so an explicit per-request or per-target header always
+        # wins over application-level credentials (ADR 0013).
+        headers = {**self._auth_headers(), **t.headers, **(action.headers or {})}
         data = None
         if action.body is not None:
             raw = (action.body if isinstance(action.body, str)
