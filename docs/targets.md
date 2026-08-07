@@ -22,7 +22,11 @@ unchanged.
 
   `HttpAction` mirrors what discovery emits for a REST candidate (`{"method", "path"}`
   locator plus `io_schema`), so both halves of the pipeline agree by construction. It
-  expresses **one request** and nothing more — authentication belongs to `AuthContext`;
+  expresses **one request** and nothing more — authentication belongs to `AuthContext`,
+  which a REST target carries and `RestDriver` consumes at the transport boundary
+  ([ADR 0013](adr/0013-request-material-at-the-transport-boundary.md)); it is never placed
+  in an `HttpAction`, because that would put the credential into `canonical_request` and so
+  into custody, Finding identity, reproduction, HAR and the report —
   timeouts, retries, redirects, pagination and content negotiation belong to the driver.
   See [ADR 0007](adr/0007-action-model-generalisation.md).
 - **`Observation`** — uniform interaction record; fields mirror `target.ChatResponse`
@@ -155,8 +159,9 @@ surface instead of calling the target directly. Status: **Implemented** (CHAT on
   probes written against `ChatResponse.raw` keep working. See ADR 0002.
 - Resolution failures (a surface kind with no driver, no drivable surface registered, wrong
   type) raise `ConfigError`. A REST target additionally requires a non-empty `Scope` and is
-  refused with `TargetError` before any socket opens (ADR 0012). Everything raised here is a
-  `GlasscageError`.
+  refused with `TargetError` before any socket opens (ADR 0012), and a driven REST target
+  that does not carry the supplied target's `AuthContext` is refused the same way
+  (ADR 0013). Everything raised here is a `GlasscageError`.
 
 ### Probe applicability
 Probes declare which surface kinds they can drive via `Probe.surface_kinds`, defaulting

@@ -78,6 +78,28 @@ def _verify_governance(origin, driven) -> None:
                 f"attached to {_describe(origin)!r}")
 
 
+def _verify_auth_parity(origin, driven) -> None:
+    """Refuse a driven target that does not carry the supplied target's `AuthContext`.
+
+    ADR 0013. Deliberately *not* folded into `_CONTROLS`: `_verify_governance` guards
+    objects that enforce something, and auth is material that is sent. The failure this
+    catches is specific - credentials attached to the supplied target but not to the one
+    actually driven, which would issue unauthenticated requests and surface the resulting
+    401s as transport errors rather than as a misconfiguration.
+
+    An auth context holding no material imposes no requirement, mirroring the way
+    `_verify_governance` ignores a control the origin does not set.
+    """
+    expected = getattr(origin, "auth", None)
+    if not (getattr(expected, "headers", None) or getattr(expected, "cookies", None)):
+        return
+    if getattr(driven, "auth", None) is not expected:
+        raise TargetError(
+            f"driven target {_describe(driven)!r} does not carry the auth context "
+            f"attached to {_describe(origin)!r}: its requests would be sent "
+            "unauthenticated")
+
+
 def verify_application_scope(source: object, surfaces: list) -> None:
     """Refuse any surface not governed by the application's scope (ADR 0011).
 
@@ -112,6 +134,7 @@ class SurfaceTarget:
                     "drives, so evidence attribution cannot be verified; expose a `target` "
                     "attribute on the driver")
             _verify_governance(origin, driven)
+            _verify_auth_parity(origin, driven)
         # ADR 0012: a driver may declare that its target must hold a usable Scope. The
         # requirement is declared by the driver, so this boundary enforces it without
         # knowing which kind demanded it.

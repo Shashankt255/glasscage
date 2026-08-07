@@ -241,6 +241,48 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   `test_chat_surface_driven_run_is_not_gated` encoded invariants that are false by
   construction once a non-chat probe is registered. No other existing test was modified.
 
+### Added
+- **Request material at the REST transport boundary** (`targets/rest.py`,
+  `targets/compat.py`, `targets/application.py`): `ApplicationTarget.auth`, declared by
+  ADR 0001 and never read, is now consumed. `RestTarget` accepts an `AuthContext` exactly as
+  it accepts `scope`/`rate`/`audit`, and `RestDriver` merges its headers into the outbound
+  request at the one point `RestTarget.headers` is already merged. `AuthContext` is
+  classified as **request material, not an operational control**: ADR 0011's "verify, never
+  propagate" governs objects that *enforce* something (`compat._CONTROLS` — `scope`, `rate`,
+  `audit`), while auth is material that is *sent*, so `auth` is deliberately not added to
+  that tuple. Because `canonical_request` is built from the `Action` alone, a credential
+  supplied this way never reaches the canonical form — and therefore never reaches custody,
+  Finding identity, reproduction, `exchanges`, HAR or the audit chain, all of which are
+  computed over it. Precedence is `{**auth, **target.headers, **action.headers}`, so an
+  explicit header always wins. A driven target not carrying the supplied target's
+  `AuthContext` is refused with `TargetError` before any traffic — verification *in addition
+  to* consumption, never instead of it. **CHAT is not extended**: `HTTPChatTarget` keeps
+  `config["headers"]`, and a test asserts it has no `auth` attribute so the boundary cannot
+  erode silently. See `docs/adr/0013-request-material-at-the-transport-boundary.md`.
+  **Unchanged:** the default path is byte-identical to `v0.3.1-rest-runtime` — benchmark,
+  `runtime_coverage_ratio` (0.54), replay, SARIF, chat findings including `evidence_hash`,
+  custody, graph identity and determinism — verified by tree comparison, not assertion. No
+  existing test required modification.
+- `docs/adr/0013-request-material-at-the-transport-boundary.md`.
+### Fixed
+- **Credentials disclosed in cleartext through `repr`** (`targets/application.py`):
+  `AuthContext` and `ApplicationTarget` are dataclasses with a generated `repr`, which
+  renders every field. Interpolating an application target into a log line, an f-string or
+  an exception message emitted the bearer token and session cookie verbatim. Not recoverable
+  by redaction either — `redaction` matches `SECRET_PATTERNS`, which describes API-key and
+  password shapes and does not match a bearer token. The credential-bearing fields are now
+  excluded from the generated `repr`; `scheme` is retained because it names the mechanism
+  without disclosing material. Pre-existing on `v0.3.1-rest-runtime` and independent of the
+  feature work above; the regression test fails against that baseline.
+### Tests
+- 503 passing (+37). REST transport authentication: inert default and canonical-form
+  invariance, the credential reaching the outbound headers, one negative assertion per
+  prohibited sink (canonical request, `Observation.request`, custody, Finding identity,
+  reports, SARIF, replay, HAR, `exchanges`, audit log, reproduction steps, exception
+  messages), header precedence in both directions, `_CONTROLS` and CHAT boundaries,
+  determinism with and without credentials, `repr` safety, absence from issued and audited
+  URLs, parity refusal pre-traffic, and authenticated recon. No existing test was modified.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added

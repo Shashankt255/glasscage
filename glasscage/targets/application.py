@@ -27,11 +27,18 @@ class AuthContext:
     or log secrets. Redaction of any secret that appears in evidence remains the job of
     the reporting layer (`redaction`), exactly as it is today — this object does not
     change that guarantee.
+
+    ADR 0013: the credential-bearing fields are excluded from the generated `repr`. A
+    dataclass renders every field by default, so interpolating an `ApplicationTarget`
+    into a log line or an exception message emitted the bearer token in cleartext. That
+    is not recoverable by redaction either: `redaction` matches `SECRET_PATTERNS`, which
+    describes API-key and password shapes and does not match a bearer token. `scheme` is
+    retained in the `repr` because it names the mechanism without disclosing material.
     """
 
     scheme: str = "none"  # e.g. "none", "bearer", "api_key", "cookie", "oauth"
-    headers: dict = field(default_factory=dict)
-    cookies: dict = field(default_factory=dict)
+    headers: dict = field(default_factory=dict, repr=False)
+    cookies: dict = field(default_factory=dict, repr=False)
 
 
 @dataclass
