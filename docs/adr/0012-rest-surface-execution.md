@@ -2,6 +2,13 @@
 
 Status: Accepted · Phase 2 / PR #12
 
+> **Authorisation-asymmetry rationale superseded by [ADR 0015](0015-cli-surface-exposure.md).**
+> R1's requirement is unchanged — REST still requires a non-empty `Scope`. The reason stated
+> for it below, that REST has no CLI path and so never crosses `--authorized`, no longer
+> holds: `--rest-config` gives REST a CLI path. ADR 0015 re-grounds the asymmetry on
+> ADR 0014's accepted limitation that binding does not verify a target's host against the
+> discovered document.
+
 Discharges the follow-up [ADR 0011](0011-multi-surface-execution.md) deferred to "the first
 non-chat driver PR", including its open review risk D3 (operational controls enforced by the
 target rather than the driver). Makes [ADR 0007](0007-action-model-generalisation.md)'s

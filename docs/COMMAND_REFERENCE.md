@@ -21,6 +21,28 @@ print(glasscage.__version__)"`.
 - **Common mistake:** forgetting `--authorized` (run is refused, exit 2). Malformed
   `response_path` returns empty responses — validate against a manual curl first.
 
+### `--rest-config PATH` + `--rest-spec SPEC`
+- **Purpose:** assess a REST application. `--rest-spec` is an OpenAPI document whose
+  operations are discovered and bound; `--rest-config` is a JSON
+  `{url, headers?, timeout?, name?}` describing the endpoint to drive. Both are required
+  together (ADR 0015).
+- **Example:**
+  `python -m glasscage --rest-spec openapi.json --rest-config rest.json --scope api.example --authorized --out r`
+- **When:** assessing an HTTP API rather than a chat endpoint.
+- **`--scope` is mandatory here, unlike `--config`.** A REST target with no host allowlist
+  is refused before any request (ADR 0012 R1). The reason is ADR 0014's accepted
+  limitation: binding does not check that `--rest-config`'s host matches the document in
+  `--rest-spec`, so the allowlist is the only thing preventing traffic to an unintended
+  host if the two are mis-paired.
+- **Expect a mostly NOT ASSESSABLE report.** 21 of the 22 registered probes are
+  chat-shaped and are gated on a REST surface (ADR 0006), so a two-operation spec yields
+  42 gated findings and 2 assessed. The gated entries record that a probe was not
+  applicable — they are not failures.
+- **Not the same as `--discover`.** `--discover` only prints an inventory and drives
+  nothing; `--rest-spec` assesses. Neither affects the other.
+- **Common mistake:** omitting `--scope` (refused), or omitting `--rest-spec` (there is
+  nothing to drive without operations to bind).
+
 ### `--demo`
 - **Purpose:** run against a built-in mock (L0). No network, no authorization.
 - **Example:** `python -m glasscage --demo --out r`

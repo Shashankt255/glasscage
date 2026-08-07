@@ -123,6 +123,12 @@ for c in candidates:
   `chat_surface_from_target` and `rest_surface_from_target`: the container stores surfaces,
   it does not construct them.
 
+From the CLI, `--rest-spec SPEC --rest-config FILE` performs exactly the sequence above —
+discover, bind, register, drive — and `--scope` is mandatory there because ADR 0012 R1 is
+enforced downstream at `SurfaceTarget` construction. `--discover` is unaffected and still
+drives nothing. See [ADR 0015](adr/0015-cli-surface-exposure.md) and
+[COMMAND_REFERENCE](COMMAND_REFERENCE.md).
+
 This complements `schema.ingest` rather than replacing it: `schema.py` flattens
 operations into capability records for schema-confirmed blast radius and drops the path,
 method and parameters; discovery keeps exactly those. `schema.py` is unchanged.

@@ -124,6 +124,13 @@ def main(argv=None):
     ap.add_argument("--discover", metavar="SPEC",
                     help="enumerate the drivable surface inventory from an OpenAPI "
                          "document or MCP manifest and exit (no target, no assessment)")
+    ap.add_argument("--rest-config", metavar="FILE",
+                    help="JSON REST target config {url, headers?, timeout?, name?} to "
+                         "ASSESS; requires --rest-spec and a non-empty --scope")
+    ap.add_argument("--rest-spec", metavar="SPEC",
+                    help="OpenAPI document whose operations are discovered, bound and "
+                         "assessed against --rest-config. Distinct from --discover, "
+                         "which only prints an inventory and drives nothing")
     ap.add_argument("--scope", nargs="+", help="allowlist of hostnames permitted to test")
     ap.add_argument("--rate", type=float, help="max requests per second (be polite)")
     ap.add_argument("--adaptive", action="store_true", help="run the adaptive mutation attacker")
@@ -253,8 +260,29 @@ def main(argv=None):
                   file=sys.stderr)
             return 2
         target = HTTPChatTarget(_load(args.config))
+    elif args.rest_config:
+        # ADR 0015: the REST assessment path. --authorized gates it exactly as it gates
+        # --config; the non-empty --scope that ADR 0012 R1 requires is enforced downstream
+        # by `require_scope` at SurfaceTarget construction, not re-checked here.
+        if not args.authorized:
+            print("Refusing to run against a live target without --authorized.\n"
+                  "Only test systems you own or have written permission to assess.",
+                  file=sys.stderr)
+            return 2
+        if not args.rest_spec:
+            ap.error("--rest-config requires --rest-spec (the OpenAPI document to assess)")
+            return 2
+        from glasscage.targets import RestTarget
+        rest_cfg = _load(args.rest_config)
+        if not rest_cfg.get("url"):
+            ap.error("--rest-config must declare a 'url'")
+            return 2
+        target = RestTarget(rest_cfg["url"], headers=rest_cfg.get("headers"),
+                            timeout=rest_cfg.get("timeout", 30),
+                            name=rest_cfg.get("name"))
     else:
-        ap.error("provide --config <file>, --demo, --harness, --mcp-manifest, --benchmark, or --diff")
+        ap.error("provide --config <file>, --demo, --harness, --rest-config, "
+                 "--mcp-manifest, --benchmark, or --diff")
         return 2
 
     # Stage C/D: multi-tool orchestration mode
@@ -320,13 +348,27 @@ def main(argv=None):
         except Exception:
             pass
 
+    # ADR 0015: promote the discovered operations to bound surfaces and drive them. Built
+    # after the operational controls above so the surfaces are bound to a target that
+    # already carries them; `surface=None` leaves every other invocation unchanged.
+    surface = None
+    if args.rest_config:
+        from glasscage.targets import (ApplicationTarget, SurfaceKind, bind_candidate,
+                                       discover_openapi)
+        app = ApplicationTarget(base_url=target.url)
+        for candidate in discover_openapi(_load(args.rest_spec)):
+            app.add_candidate(candidate)
+        for candidate in app.candidates_of(SurfaceKind.REST):
+            app.add_surface(bind_candidate(candidate, target))
+        surface = app
+
     evidence_dir = None if args.no_evidence else f"{args.out}_evidence"
     engine = Engine(target, mcp_manifest=manifest, use_judge=args.judge,
                     evidence_dir=evidence_dir, capture_evidence=not args.no_evidence,
                     schema_tools=schema_tools, adaptive=args.adaptive,
                     architecture_answers=arch_answers, genetic=args.genetic,
                     trials=args.trials, seed=args.seed, use_aakg=not args.no_aakg,
-                    store_raw=args.store_raw)
+                    store_raw=args.store_raw, surface=surface)
     results = engine.run()
 
     md = engine.report_markdown(results)
