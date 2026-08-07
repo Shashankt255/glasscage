@@ -331,6 +331,45 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   that pass against the pre-fix code were mutation-tested against five wrong keys. No
   existing test was modified.
 
+### Added
+- **Surface binding** (`targets/binding.py`): `bind_candidate(candidate, target)` promotes a
+  discovered `SurfaceCandidate` to a bound `Surface`. `discovery` has emitted candidates
+  since ADR 0003 and nothing consumed them — the module recorded its own precondition,
+  *"binding cannot happen until per-surface attribution exists"*, which ADR 0004/0011
+  cleared, and ADR 0012 then supplied a non-chat driver. Binding is **pure resolution**: no
+  I/O, no target construction, no mutation of the candidate or the target. The caller
+  supplies the target, because ADR 0002 requires a bound surface to be bound to the target
+  supplied to the engine and ADR 0011 rejected propagating an application's controls onto a
+  target the engine does not own. Ownership, governance and ADR 0012's fail-closed scope
+  check stay at `SurfaceTarget` construction, so binding raises `ConfigError` and never
+  `TargetError` — a candidate bound to a scopeless target binds and is refused later, at the
+  boundary that owns that refusal. Only a kind with a driver can be bound; **REST is the
+  only bindable kind**, because `discovery` emits only REST and MCP_TOOL candidates and
+  MCP_TOOL has no driver. The bound surface keeps the candidate's id, so a finding's
+  `surface_id` traces back to the discovered operation, and the candidate's `locator` and
+  `io_schema` are carried through unchanged rather than rebuilt. Promotion is a free
+  function rather than an `ApplicationTarget` method: the container is pure data whose every
+  method stores or queries, and neither existing surface constructor is a method either, so
+  the operator idiom is unchanged — `app.add_surface(bind_candidate(c, target))` has the
+  same shape as `app.add_surface(rest_surface_from_target(...))`.
+  See `docs/adr/0014-surface-binding.md`.
+  **Unchanged:** `discovery`'s JSON and markdown output byte-identical; graph identity,
+  custody, SARIF, replay, benchmark, `runtime_coverage_ratio`, CHAT and REST behaviour and
+  determinism all verified against `v0.3.3-diff-identity` by tree comparison rather than
+  assertion. No existing module was modified beyond one export; no existing test was
+  modified.
+- `docs/adr/0014-surface-binding.md`.
+### Tests
+- 551 passing (+26). Surface binding: discovered-candidate round trip with id, locator and
+  `io_schema` preserved; the bound surface resolving as drivable and driving its declared
+  operation; registration through the existing `add_surface` idiom; purity (no request
+  issued, no target constructed, neither candidate nor target mutated); refusal by name for
+  every driverless kind and for a malformed REST locator; `ConfigError` never `TargetError`,
+  with scope and governance refusals still raised downstream at `SurfaceTarget`;
+  determinism; and a freeze on `discovery`'s output plus on the fact that it emits no CHAT
+  candidate. Guards were mutation-tested against six wrong binders, since a new module's
+  baseline run fails only on import and proves nothing.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
