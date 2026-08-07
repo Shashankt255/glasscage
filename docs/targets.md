@@ -91,9 +91,37 @@ same renderers the CLI uses. See [COMMAND_REFERENCE](COMMAND_REFERENCE.md).
 `mcp_tool:<name>`; output is deduplicated and sorted, so the same document always yields
 the same candidates in the same order.
 
-**Candidates are never bound to a Driver and are never driven.** A driven surface must be
-bound to the target supplied to the engine (see below), so promotion waits on per-surface
-attribution. A candidate is a proposal carrying provenance, not a surface.
+**Discovery itself never binds.** A candidate is a proposal carrying provenance, not a
+surface: it holds no Driver and `--discover` drives nothing. Promotion to a bound Surface is
+a separate, explicit step — see *Surface binding* below.
+
+## Surface binding
+`binding.py` promotes a candidate to a bound `Surface`. See
+[ADR 0014](adr/0014-surface-binding.md).
+
+```python
+candidates = discover_openapi(spec)
+target = RestTarget("https://api.example/v1")
+target.scope = Scope(["api.example"])          # ADR 0012: required and non-empty
+for c in candidates:
+    app.add_surface(bind_candidate(c, target))
+```
+
+- **`bind_candidate(candidate, target, surface_id=None) -> Surface`.** The bound surface
+  keeps the candidate's id, so a finding's `surface_id` traces back to the discovered
+  operation. The candidate's `locator` and `io_schema` are carried through unchanged.
+- **Pure resolution.** No I/O, no target construction, no mutation. The caller supplies the
+  target, because a bound surface must be bound to the target supplied to the engine
+  (ADR 0002) and an application's controls are verified, never propagated (ADR 0011).
+- **Refusals are `ConfigError`, never `TargetError`.** Ownership, governance and the
+  fail-closed scope check stay at `SurfaceTarget` construction (ADR 0005, ADR 0012), so a
+  candidate bound to a scopeless target binds and is refused there.
+- **REST is the only bindable kind today.** Discovery emits `REST` and `MCP_TOOL`
+  candidates; `MCP_TOOL` has no driver and is refused by name. This set is not the drivable
+  set — `CHAT` is drivable but discovery emits no CHAT candidate.
+- Promotion is a free function rather than an `ApplicationTarget` method, matching
+  `chat_surface_from_target` and `rest_surface_from_target`: the container stores surfaces,
+  it does not construct them.
 
 This complements `schema.ingest` rather than replacing it: `schema.py` flattens
 operations into capability records for schema-confirmed blast radius and drops the path,

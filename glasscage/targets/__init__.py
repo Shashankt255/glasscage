@@ -19,6 +19,7 @@ from .compat import (
     SurfaceTarget, chat_surface_of, chat_surfaces_of, drivable_surfaces_of,
 )
 from .rest import RestDriver, RestTarget, canonical_request, rest_surface_from_target
+from .binding import bind_candidate
 from .discovery import discover, discover_mcp, discover_openapi
 from .driver import (
     Action, Driver, HttpAction, Observation, PromptAction, ToolCallAction,
@@ -36,6 +37,7 @@ __all__ = [
     "RestTarget",
     "rest_surface_from_target",
     "canonical_request",
+    "bind_candidate",
     "discover",
     "discover_openapi",
     "discover_mcp",
