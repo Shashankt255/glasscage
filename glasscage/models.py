@@ -77,7 +77,7 @@ class Finding:
     cwe_id: str = ""              # CWE id (e.g. CWE-1427)
     capec_id: str = ""            # CAPEC id or "N/A"
     nist_id: str = ""             # NIST AI 100-2 / AML class ref
-    source_framework: str = "glasscage"   # D1: which tool produced this
+    source_framework: str = "glasscage-native"   # D1: which tool produced this
     source_rule_id: str = ""      # D1: original rule/probe id in that framework
     raw_output: str = ""          # D1: raw native output for provenance
     dimension: str = "informational"   # steerability | impact | informational
@@ -105,13 +105,13 @@ class Finding:
     ci_high: float | None = None
     reproducibility: float | None = None
     status_distribution: dict = field(default_factory=dict)
-    # Stage D: external framework provenance + extended taxonomy
-    source_framework: str = "glasscage-native"
-    source_rule_id: str = ""
-    cwe_id: str = ""
-    capec_id: str = ""
-    nist_id: str = ""
-    raw_output: str = ""
+    # Stage D's external-framework provenance and extended taxonomy fields
+    # (source_framework, source_rule_id, cwe_id, capec_id, nist_id, raw_output) are
+    # declared once, above. They were previously declared a second time here: a dataclass
+    # collapses a repeated annotation to one field that keeps its first position and takes
+    # its last default, so the earlier declaration's default was silently dead and editing
+    # it had no effect. Consolidated onto the first declaration with Stage D's values, so
+    # field order and every effective default are unchanged (ADR 0004's recorded debt).
     turns: list[dict] = field(default_factory=list)  # multi-turn evidence trail
     # ADR 0004: id of the Surface this finding was observed on. Empty unless the run was
     # surface-driven. Configuration-review (MCP manifest) and questionnaire

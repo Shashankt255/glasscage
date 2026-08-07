@@ -67,6 +67,9 @@ def _finding(status, title, severity, owasp_id, tool, evidence, conf) -> Finding
         severity=severity,
         confidence=conf,
         prompt=f"tool: {tool}",
+        # ADR 0010 follow-up: the tool name is this finding's subject, carried
+        # contractually rather than only by convention in `prompt`.
+        source_rule_id=str(tool),
         response_excerpt=evidence[:400],
         atlas_id="AML.T0110" if owasp_id == "MCP03" else "",
         references=["OWASP Agentic Security Initiative"],
