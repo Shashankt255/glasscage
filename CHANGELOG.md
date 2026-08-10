@@ -547,6 +547,58 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   covered for an unbound run, a chat surface, a REST surface, a mixed application, and a
   driverless kind that resolution still refuses.
 
+### Fixed
+- **The audit chain did not detect tampering** (`audit.py`): `AuditLog.verify()` walked the
+  `prev` links and recomputed nothing — it could not, because the digest covered the **raw**
+  prompt and response while the entry stores only their sha256 digests. Measured on
+  `v0.4.3-replay-applicability`, altering an entry's `url`, `ts`, `prompt_sha256`,
+  `response_sha256` or `ok` all left `verify()` returning `True`, while the module docstring,
+  `README`, `THREAT_MODEL` and four guides described the log as tamper-evident and the
+  CLI printed the verdict to the operator. Two further gaps surfaced: `ok` was stored but was
+  never a hash input, so it was unprotected in principle; and nothing read the `--audit-log`
+  file back, so the on-disk artifact had no verification path at all.
+  The digest now covers the fields the entry **retains** — `v`, `prev`, `ts`, `url`,
+  `prompt_sha256`, `response_sha256`, `ok` — so any entry is recomputable from itself.
+  Raw payloads are still never persisted: the audit log remains the one artifact that cannot
+  leak a payload, which is what justifies `redaction` having nothing to do to it, and that is
+  now a stated contract rather than an accident.
+  See `docs/adr/0019-audit-chain-integrity.md`.
+  **Canonical serialization is frozen and specified once:** each field emitted as
+  `<utf8-byte-length>":"<value>` in fixed order, booleans as `true`/`false`, passed to
+  `sha256` as a single argument. Length-prefixing is required because `audit.sha256`
+  concatenates its parts without a separator — `sha256("ab","c") == sha256("a","bc")` — and
+  **`sha256` itself is unchanged**, because `evidence_hash` (`engine.py`) and `custody_hash`
+  (`chat.py`, `rest.py`) are frozen invariants computed with it.
+  **Legacy logs are unverifiable, never tampered.** Entries gain `"v": 2`; a chain
+  containing an entry without it returns a distinct legacy state, detected *before* any
+  digest comparison, because a v1 digest can never match the v2 formula and reporting that as
+  tampering would accuse the operator of something that did not happen. v1 chains cannot be
+  upgraded — recomputing them needs raw payloads that were never stored.
+  **`verify()` is now a compatibility API only.** It keeps its signature and `bool` return
+  for existing callers and is called by no new code; `AuditLog.check()` returns a three-state
+  result and `verify_file(path)` applies the same rule to a JSONL log — the first reader that
+  artifact has ever had. `cli.py` uses `check()`, so "cannot be verified" no longer reads the
+  same as "was altered".
+  **Not claimed:** truncation of the log's tail is still undetected — a forward chain can be
+  recomputed by whoever can write the file, so detecting a removed tail needs an anchor kept
+  outside it. The run now prints the final entry hash for that purpose, a test pins the
+  limitation, and the documentation no longer implies otherwise.
+  **Unchanged:** `audit.sha256` byte-for-byte and with it `evidence_hash` and `custody_hash`;
+  `Scope`; `RateLimiter`; `har_export`; graph identity, `_finding_key`, SARIF, replay bundles
+  and runner, provenance, `runtime_coverage_ratio`, battery size, `Finding` field
+  order/defaults/count, discovery output, benchmark corpus and determinism — all verified by
+  tree comparison. No existing test was modified.
+- `docs/adr/0019-audit-chain-integrity.md`.
+### Tests
+- 677 passing (+39). Audit chain integrity: eight tamper cases (`url`, `ts`, both payload
+  digests, `ok`, `entry_hash`, `prev`, deleted middle entry), the truncation limitation
+  pinned as accepted, legacy chains asserted unverifiable rather than tampered including a
+  mixed chain and a legacy entry with a forged digest, `verify()`'s signature and bool
+  contract, canonical-form determinism with a field-boundary-shift proof and the deliberate
+  record that the underlying `sha256` helper is still ambiguous, frozen `sha256` digests, a
+  canary proving no raw payload is persisted, the exact entry shape, and JSONL verification
+  agreeing with in-memory including on-disk tampering and a malformed line.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added

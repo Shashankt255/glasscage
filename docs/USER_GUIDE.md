@@ -144,7 +144,7 @@ never to compare targets or to state absolute risk.
 | Evidence Confidence Classification | **Implemented** |
 | Secret redaction (default-on) | **Implemented** |
 | Encrypted evidence at rest | **Implemented** (requires the `cryptography` package; there is no `crypto` extra in rc3) |
-| Chain of custody (hash-chained audit) | **Implemented** |
+| Chain of custody (hash-chained audit) | **Implemented** — detects alteration of a recorded entry; stores payload digests, not payloads; does not detect tail truncation (ADR 0019) |
 | Capability tiers L0–L2 | **Implemented** |
 | Prompt injection probes (9 techniques) | **Implemented** |
 | Reference agent harness (L2) | **Implemented** |
