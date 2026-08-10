@@ -18,12 +18,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
 from urllib.parse import urlparse
+
+from .errors import ConfigError
 
 
 def now_iso() -> str:
@@ -108,6 +111,12 @@ def check_entries(entries) -> ChainResult:
     """
     prev = "0" * 64
     for i, e in enumerate(entries or []):
+        # A line that parses as JSON but is not an object is malformed, not legacy: it
+        # carries no fields to version-check, so it is reported as tampering rather than
+        # reaching the field access below.
+        if not isinstance(e, dict):
+            return ChainResult(ChainStatus.TAMPERED, len(entries or []), None,
+                               f"entry {i} is not a JSON object")
         if e.get("v") != ENTRY_VERSION:
             return ChainResult(
                 ChainStatus.LEGACY_UNVERIFIABLE, len(entries or []), None,
@@ -128,13 +137,22 @@ def check_entries(entries) -> ChainResult:
     return ChainResult(ChainStatus.VERIFIED, len(entries or []), prev if entries else None)
 
 
-def verify_file(path: str) -> ChainResult:
-    """Verify a JSONL audit log written by `--audit-log` (ADR 0019).
+class _BadLine(Exception):
+    """A JSONL line that does not parse. Internal to this module: `verify_file` turns it
+    into a `ChainResult` so the public contract stays 'returns a result'."""
 
-    The on-disk log previously had no reader at all; `AuditLog.verify()` only ever checked
-    the in-memory list. A malformed line is reported as tampering rather than skipped.
+    def __init__(self, lineno: int, parsed: int):
+        super().__init__(f"line {lineno} is not valid JSON")
+        self.lineno, self.parsed = lineno, parsed
+
+
+def _read_entries(path: str) -> list:
+    """Parse a JSONL audit log into a list, skipping blank lines (ADR 0019/0020).
+
+    Shared by `verify_file` and by `AuditLog.__init__`'s resume, so a file is read the
+    same way whether it is being checked or continued.
     """
-    entries = []
+    entries: list = []
     with open(path, encoding="utf-8") as fh:
         for i, line in enumerate(fh):
             line = line.strip()
@@ -143,8 +161,21 @@ def verify_file(path: str) -> ChainResult:
             try:
                 entries.append(json.loads(line))
             except json.JSONDecodeError:
-                return ChainResult(ChainStatus.TAMPERED, len(entries), None,
-                                   f"line {i + 1} is not valid JSON")
+                raise _BadLine(i + 1, len(entries)) from None
+    return entries
+
+
+def verify_file(path: str) -> ChainResult:
+    """Verify a JSONL audit log written by `--audit-log` (ADR 0019).
+
+    The on-disk log previously had no reader at all; `AuditLog.verify()` only ever checked
+    the in-memory list. A malformed line is reported as tampering rather than skipped.
+    """
+    try:
+        entries = _read_entries(path)
+    except _BadLine as bad:
+        return ChainResult(ChainStatus.TAMPERED, bad.parsed, None,
+                           f"line {bad.lineno} is not valid JSON")
     return check_entries(entries)
 
 
@@ -182,9 +213,36 @@ class AuditLog:
     """Append-only, hash-chained JSONL audit trail of everything sent."""
 
     def __init__(self, path: str | None = None):
+        # ADR 0020: a log file is ONE append-only chain. Opening an existing one resumes it
+        # rather than starting a second chain from genesis, which is what previously left a
+        # twice-used `--audit-log` reporting as tampered at the first entry of run two.
+        #
+        # The existing chain is verified before it is trusted: the head is only adopted
+        # once every prior entry has been recomputed under the ADR 0019 v2 rules. A file
+        # that is tampered, or that predates the integrity format, is refused rather than
+        # continued - appending to it would extend a chain that cannot be vouched for.
+        # This inherits ADR 0019's accepted limitation unchanged: verification proves the
+        # entries present are internally consistent, not that none were removed.
         self.path = path
         self.prev = "0" * 64
         self.entries: list[dict] = []
+        if path and os.path.exists(path):
+            existing = verify_file(path)
+            if existing.status is ChainStatus.TAMPERED:
+                raise ConfigError(
+                    f"refusing to append to {path!r}: its audit chain does not verify "
+                    f"({existing.detail}). Appending would extend a chain that cannot be "
+                    "vouched for; write this run to a different --audit-log path and keep "
+                    "the existing file for investigation")
+            if existing.status is ChainStatus.LEGACY_UNVERIFIABLE:
+                raise ConfigError(
+                    f"refusing to append to {path!r}: it predates the integrity format "
+                    f"({existing.detail}), so its contents cannot be verified either way "
+                    "and it cannot be upgraded. Write this run to a different "
+                    "--audit-log path")
+            if existing.head:
+                self.entries = _read_entries(path)
+                self.prev = existing.head
 
     def record(self, url: str, prompt: str, response: str, ok: bool) -> dict:
         # ADR 0019: the digest covers the fields the entry retains, so any of them can be
