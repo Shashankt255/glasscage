@@ -170,5 +170,25 @@ class ReferenceAgent:
         trace = {"plan": plan, "tool_calls": list(self.router.calls),
                  "memory": dict(self.memory),
                  "retrieval": [d["id"] for d in retrieved]}
-        return ChatResponse(text=response, raw={"harness": True}, latency_ms=1.0,
+        resp = ChatResponse(text=response, raw={"harness": True}, latency_ms=1.0,
                             ok=True, trace=trace)
+
+        # ADR 0008 §1: "recording stays with whoever owns the transport." This agent is
+        # its own transport - it does not sit on an `HTTPChatTarget`, so it inherits no
+        # `_record` and nothing above it records on its behalf. Without this the CLI
+        # attached a working `AuditLog` that was never called: a `--harness --audit-log`
+        # run performed every exchange and reported `Audit chain: verified (0 entries)`.
+        # `ChatDriver` hashes but never records (ADR 0008 §1), so a surface-driven run
+        # reaches this exact line once too - one exchange stays one entry either way.
+        # Placed on the single return path, after the response exists, so the recorded
+        # outcome is the response's own and an exception before this point records
+        # nothing: there is no response to attest to (ADR 0008 §3).
+        from datetime import datetime, timezone
+        self.exchanges.append({
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "url": self.url, "method": self.method,
+            "request_body": prompt, "status": 200 if resp.ok else 0,
+            "response_body": resp.text, "ms": resp.latency_ms})
+        if self.audit is not None:
+            self.audit.record(self.url, prompt, resp.text, resp.ok)
+        return resp
