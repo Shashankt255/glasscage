@@ -694,6 +694,54 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   nothing and to open no custody log; and the source ordering itself pinned relative to each
   driving branch, so the position cannot silently regress.
 
+### Fixed
+- **`--harness` recorded no chain of custody, and the CLI called the empty chain verified**
+  (`refagent.py`): ADR 0008 §1 settled that "recording stays with whoever owns the
+  transport". Three components own one and each records — `HTTPChatTarget._record`,
+  `_MockTarget.send` and `RestDriver.drive`. `ReferenceAgent` is the fourth: its MRO is
+  `[ReferenceAgent, object]`, so it inherits no `_record`, and ADR 0008 forbids `ChatDriver`
+  from recording for it. It declared `scope`, `rate`, `audit` and `exchanges` and used none.
+  The controls were wired correctly — at the agent's first `send()` the measured state was
+  `type(self.audit) = AuditLog` with the operator's path set — but `AuditLog.record()` was
+  called **0 times by any caller**. Measured on `v0.4.6-controls-precede-traffic`, a
+  `--harness --audit-log` run performed **25 exchanges**, wrote no log and no HAR, and
+  reported `Audit chain: verified (0 entries)` at exit 0. Because `check_entries([])`
+  returns `VERIFIED`, an inert control and a genuinely silent run were indistinguishable.
+  **Findings are not a proxy for exchanges:** that run produced 25 `send()` calls and 22
+  findings, so any accounting keyed on findings is wrong by construction.
+  `ReferenceAgent.send()` now appends one exchange and, when `self.audit` is set, records
+  one entry — on its single return path, so "exactly once per exchange" is structural and
+  the recorded outcome is the response's own `ok`. An exception raised before the response
+  exists records nothing: there is nothing to attest to (ADR 0008 §3).
+  **Not a regression.** `refagent.py` has one commit in its history and `audit.record`
+  appears at none of the 15 tags from `v0.1.0-phase1` to `v0.4.6`.
+  **Severity, stated honestly:** medium. The harness is documented as a fixture whose output
+  must not be treated as evidence about a real system, and `--config`, `--demo` and
+  `--rest-config` always recorded correctly. This was a false assurance on a
+  non-evidentiary surface, not lost evidence on a real one.
+  **Made meaningful:** `test_driver_custody.py::TestNoDoubleRecording` compared `0 == 0` and
+  could not have detected double recording; its subject is a `ReferenceAgent`, so it now
+  compares real counts. That test is unmodified.
+  **Unchanged:** `audit.py` is untouched, and with it `sha256`, `evidence_hash`,
+  `custody_hash`, `ENTRY_VERSION`, the canonical serialization, `ChainStatus`/`ChainResult`
+  and `AuditLog.verify()`; the `--config`, `--demo` and `--rest-config` entry counts; graph
+  identity, SARIF, the replay bundle and the byte-identical replay runner, provenance,
+  `runtime_coverage_ratio`, discovery output, benchmark determinism and the zero-dependency
+  boundary. Scope and rate remain unenforced for both in-process targets, as before.
+  See `docs/adr/0022-harness-transport-custody.md`.
+- `docs/adr/0022-harness-transport-custody.md`.
+### Tests
+- 753 passing (+22). Counts are taken from `ReferenceAgent.send()` itself, never from
+  findings: audit entries equal send count and are asserted to differ from the finding
+  count; one send is one entry; a surface-driven run does not double-record; HAR entry count
+  equals custody entry count; a non-ok exchange is still recorded, with the response type
+  substituted so the real `send()` body and the real recording path execute; a tool raising
+  through `_ToolRouter.call` propagates and manufactures no custody, while a later exchange
+  still records; records land in the injected `AuditLog` instance; entry URL and method are
+  the agent's own; no raw payload is persisted; two harness runs to one path double the
+  entries, still verify and advance the head (ADR 0020 resume); and `--harness` without
+  `--audit-log`, `--demo` and a real `--config` chat target are each asserted unchanged.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
