@@ -599,6 +599,55 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   canary proving no raw payload is persisted, the exact entry shape, and JSONL verification
   agreeing with in-memory including on-disk tampering and a malformed line.
 
+### Fixed
+- **A twice-used `--audit-log` reported as tampered** (`audit.py`): the flag is documented
+  as *"path to **append-only**, hash-chained JSONL audit log"*, but `AuditLog.__init__` set
+  `prev` to genesis unconditionally and never read the file, so a second run wrote a second
+  chain into the same file. Measured on `v0.4.4-audit-integrity`, two `--demo` runs to one
+  log produced 42 lines that `verify_file` rejected — *"entry 21 does not link to its
+  predecessor"*. The integrity control was accusing a correctly-used custody log of
+  tampering, which is worse than silence: it devalues every true positive it will ever
+  report. Not a regression from PR #20 — the broken on-disk linkage had existed since the
+  flag shipped, and PR #20's verifier is what made it visible.
+  A log file is now **one append-only chain**. Opening an existing file verifies it under
+  the ADR 0019 v2 rules and resumes from its verified head; the head is adopted only after
+  every prior entry has been recomputed, because resuming from an unverified head would let
+  one altered entry silently anchor everything appended afterwards.
+  See `docs/adr/0020-audit-log-append-semantics.md`.
+  **Tampered or legacy logs are refused, not extended.** Both raise `ConfigError` — an
+  existing `GlasscageError`, so the CLI's existing handler turns it into `error: …` and exit
+  2 — and **nothing is written**: no partial entry, no sibling file, no backup. The message
+  names the path and says to write this run elsewhere. The consequence is deliberate: such a
+  path becomes unusable, because every softer option (rotate, migrate, repair, segment) is a
+  mechanism this repository does not have, and inventing one to smooth over a failed
+  integrity check would defeat the control.
+  **Also fixed:** a JSONL line that is valid JSON but not an object (a bare array, string or
+  number) reached a field access and raised `AttributeError`. `verify_file` already promised
+  *"a malformed line is reported as tampering rather than skipped"*; the guard now sits in
+  `check_entries` so both callers inherit one rule.
+  **Security posture is unchanged in both directions.** Resuming inherits ADR 0019 §8's
+  accepted limitation exactly — verification proves the entries present are internally
+  consistent, not that none were removed — and this change makes no truncation claim. It is
+  a strict improvement only in that a tampered log is no longer silently appended to.
+  **Unchanged:** `audit.sha256` and with it `evidence_hash` and `custody_hash`;
+  `AuditLog.verify()`'s signature and `bool` return; `ChainStatus`/`ChainResult`;
+  `ENTRY_VERSION` and the canonical serialization; no raw payload persisted across a resume;
+  zero dependencies; graph identity, `_finding_key`, SARIF, replay bundles and runner,
+  provenance, `runtime_coverage_ratio`, battery size, `Finding` field order/defaults/count,
+  discovery output, benchmark corpus and determinism — all verified by tree comparison. No
+  existing test was modified, and `cli.py` needed no change.
+- `docs/adr/0020-audit-log-append-semantics.md`.
+### Tests
+- 708 passing (+31). Audit-log append: two and three runs to one path verifying, the first
+  new entry linking to the previous head, prior entries loaded so the in-memory chain still
+  checks, line counts growing by the new entries only; every genesis case (no path, absent
+  file, empty file, blank lines); refusal for tampered and legacy logs asserted to write
+  nothing and to create no sibling file; non-object JSONL lines across array, string, number
+  and boolean; and the ADR 0019 contracts re-asserted intact — all eight tamper cases,
+  truncation still accepted both in memory and on disk after a resume, `verify()`'s bool
+  contract, entry shape, canonical form, the frozen `sha256`, and a canary proving no raw
+  payload is persisted across a resume.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
