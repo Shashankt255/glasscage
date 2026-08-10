@@ -648,6 +648,52 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   contract, entry shape, canonical form, the frozen `sha256`, and a canary proving no raw
   payload is persisted across a resume.
 
+### Fixed
+- **`--scope`, `--rate` and `--audit-log` were unenforced on `--orchestrate` and
+  `--validate`** (`cli.py`): all three controls are enforced only when present —
+  `send()` reads `if self.scope is not None` / `if self.rate is not None`, and `_record()`
+  writes the chain only `if self.audit is not None` — and all three default to `None`.
+  `main()` attached them below the `--orchestrate` and `--validate` branches, both of which
+  construct the target, build an `Engine` over it and `return 0` before that point. On
+  exactly the two paths that send traffic, none of the three existed. Measured on
+  `v0.4.5-audit-append` against a local counting server with `--scope` naming a different
+  host: the normal path refused with `PermissionError` and sent **0** requests, while
+  `--orchestrate` sent **21** and `--validate` sent **63**, both exiting **0**. With
+  `--rate 0.5` over 21 requests the normal path took 40.05s and `--orchestrate` took 0.06s.
+  With `--audit-log` set, neither path created the file.
+  The allowlist is what stands between an authorised engagement and a host the operator
+  excluded. `--authorized` still gated both paths, so this was never an authorisation
+  bypass — it was a **scope-confinement bypass**, with rate limiting and chain of custody
+  lost alongside it and reported as success. That the custody log was absent on two paths
+  while PRs #19–#21 hardened that same log's integrity is the sharper point.
+  The controls are now attached **immediately after target construction**, before any
+  branch capable of driving the target. **Ordering only:** no enforcement point moves, no
+  error type changes, no exit code changes. An out-of-scope host still raises
+  `PermissionError` from `Scope.check()`; a tampered or legacy `--audit-log` still raises
+  `ConfigError` under ADR 0020. `--orchestrate` and `--validate` now behave as the normal
+  assessment path always did.
+  The wiring deliberately does **not** move above target construction, so `--arch-template`,
+  `--discover`, `--benchmark`, `--diff`, `--validate-adapters` and MCP-manifest-only mode
+  are unaffected and no custody log is opened for a run that cannot happen.
+  **Unchanged:** every control's semantics; `audit.sha256`, `evidence_hash`, `custody_hash`,
+  `ENTRY_VERSION` and the canonical serialization; `ChainStatus`/`ChainResult`; findings,
+  graph identity, `_finding_key`, SARIF, replay, provenance, `runtime_coverage_ratio`,
+  battery size, `Finding` field order/defaults/count, discovery output, benchmark corpus and
+  determinism — all verified against `v0.4.5-audit-append`. No existing test was modified.
+  See `docs/adr/0021-operational-controls-precede-traffic.md`.
+- `docs/adr/0021-operational-controls-precede-traffic.md`.
+### Tests
+- 731 passing (+23). CLI-level throughout, because the defect was one of ordering inside
+  `main()` and the existing suite exercised `orchestrator.orchestrate(target, …)` directly,
+  below the wiring, which is why it stayed green: request counts measured server-side for
+  scope refusal on `--orchestrate`, `--validate` and the normal path; custody logs written,
+  verifying, and carrying exactly one entry per request on all three, including resumption
+  across two `--orchestrate` runs; `--rate` throttling asserted against elapsed time on both
+  a driving branch and the normal path; a tampered log refused on both new paths with no
+  traffic sent, no bytes changed and no sibling file; every pre-target path asserted to send
+  nothing and to open no custody log; and the source ordering itself pinned relative to each
+  driving branch, so the position cannot silently regress.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added

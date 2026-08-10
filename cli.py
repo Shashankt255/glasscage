@@ -299,6 +299,20 @@ def main(argv=None):
                  "--mcp-manifest, --benchmark, or --diff")
         return 2
 
+    # ADR 0021: operational safety + chain of custody, attached HERE - immediately after
+    # the target exists and before any branch capable of driving it. `--orchestrate` and
+    # `--validate` each build an Engine over this target and return before the reporting
+    # path, so wiring these controls further down left them unenforced on exactly the two
+    # paths that send traffic: `--scope` refused nothing, `--rate` throttled nothing and
+    # `--audit-log` wrote nothing, all while exiting 0. Ordering only - the enforcement
+    # points, error types and exit codes are unchanged.
+    from glasscage import audit as audit_mod
+    if args.scope:
+        target.scope = audit_mod.Scope(args.scope)
+    if args.rate:
+        target.rate = audit_mod.RateLimiter(args.rate)
+    target.audit = audit_mod.AuditLog(args.audit_log)
+
     # Stage C/D: multi-tool orchestration mode
     if args.orchestrate:
         from glasscage import orchestrator
@@ -333,13 +347,7 @@ def main(argv=None):
               f"{args.out}_VALIDATION_REPORT.md")
         return 0
 
-    # operational safety + chain of custody
-    from glasscage import audit as audit_mod, schema as schema_mod
-    if args.scope:
-        target.scope = audit_mod.Scope(args.scope)
-    if args.rate:
-        target.rate = audit_mod.RateLimiter(args.rate)
-    target.audit = audit_mod.AuditLog(args.audit_log)
+    from glasscage import schema as schema_mod
 
     # schema-confirmed tool surface (falls back to a bundled sample in demo)
     schema_tools = None
