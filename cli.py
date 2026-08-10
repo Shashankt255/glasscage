@@ -468,7 +468,13 @@ def main(argv=None):
           f"impact-confirmed {s.get('impact_confirmed_count',0)} | "
           f"chains {len(results.get('chains',[]))} ===")
     if target.audit is not None:
-        print(f"Audit chain verified: {target.audit.verify()} ({len(target.audit.entries)} entries)")
+        # ADR 0019: the three-state result, so "cannot be verified because the log predates
+        # the integrity format" reads differently from "was altered". `verify()` returns a
+        # bool and cannot express that distinction.
+        _chain = target.audit.check()
+        _head = f", head {_chain.head[:12]}" if _chain.head else ""
+        print(f"Audit chain: {_chain.status.value} ({_chain.entries} entries{_head})"
+              + (f" - {_chain.detail}" if _chain.detail else ""))
     ev = "" if args.no_evidence else f", {evidence_dir}/"
     har = f", {args.out}.har" if (args.har and target.exchanges) else ""
     ex = (", " + ", ".join(extra)) if extra else ""

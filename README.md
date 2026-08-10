@@ -146,8 +146,10 @@ Applied a senior-review pass. Highlights:
 - **Adaptive attacker** (`--adaptive`): mutation loop replacing a single fixed string.
 - **Schema-confirmed blast radius** (`--schema`): OpenAPI/function/MCP ingestion;
   self-reported tools never inflate the score. See `schema.py`.
-- **Chain of custody**: hashed+timestamped exchanges, tamper-evident audit log,
-  HAR export (`--har`, `--audit-log`). Scope allowlist (`--scope`) + rate limit (`--rate`).
+- **Chain of custody**: hashed+timestamped exchanges, hash-chained audit log that detects
+  alteration of any recorded field (it stores payload *digests*, not the payloads, and
+  truncation needs an anchor kept outside the log), HAR export (`--har`, `--audit-log`).
+  Scope allowlist (`--scope`) + rate limit (`--rate`).
 - **Architecture assessment** (`--architecture`): defense-in-depth questionnaire,
   because architecture is what contains a compromised model.
 - **Honesty**: see `METHODOLOGY_AND_LIMITATIONS.md` for what it does and does NOT prove.

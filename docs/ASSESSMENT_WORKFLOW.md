@@ -52,7 +52,9 @@ python -m glasscage --config target.json --authorized \
 
 - Default: secrets are redacted in all artifacts; the custody hash is computed on the
   **original** before redaction, so integrity survives sanitisation.
-- `--audit-log` writes a hash-chained record of what was sent/received.
+- `--audit-log` writes a hash-chained record of what was sent/received, as sha256 digests
+  rather than the payloads. Altering an entry is detected; removing the tail is not, so
+  record the final entry hash the run prints if that matters to the engagement.
 - For engagements that must retain live secrets, use `--store-raw --encrypt-evidence`
   on a sandboxed host (requires `cryptography`; see [INSTALL.md](INSTALL.md)).
 

@@ -15,7 +15,8 @@ target the operator configures (and web/LLM features only if explicitly enabled)
 2. **Elicited secrets** — the disclosure probe intentionally causes the target to reveal
    secrets; these appear in responses.
 3. **Assessment artifacts** — reports, JSON, HAR, evidence SVGs, replay bundles.
-4. **Audit/chain-of-custody log** — hash-chained record of what was sent/received.
+4. **Audit/chain-of-custody log** — hash-chained record of *what was sent/received*, held
+   as sha256 digests rather than the payloads themselves.
 
 ## Trust boundaries (of the tool)
 - Operator ↔ CLI (trusted operator, authorized use enforced by `--authorized`).
@@ -28,7 +29,7 @@ target the operator configures (and web/LLM features only if explicitly enabled)
 |---|---|---|
 | Elicited secrets persisted in cleartext | Default redaction of secret-shaped content in all artifacts; raw only via `--store-raw`; optional at-rest encryption (`--encrypt-evidence`, `crypto` extra) | **Implemented** |
 | Target auth leaking into shareable artifacts | Replay bundles strip headers; config not embedded in reports | Implemented |
-| Tampering with evidence | Hash-chained audit log; per-finding evidence hash computed on the ORIGINAL before redaction | Implemented (integrity, not secrecy) |
+| Tampering with evidence | Hash-chained audit log — each entry's digest covers its own recorded fields, so altering any of them is detected; per-finding evidence hash computed on the ORIGINAL before redaction | Implemented (integrity, not secrecy). Does **not** detect truncation of the log's tail, which needs an anchor kept outside the log; logs written before the integrity format report as unverifiable rather than valid (ADR 0019) |
 | Malicious/compromised plugin | Plugins load only with `--allow-plugins` + a printed trust warning; version-gated | Implemented (NO sandbox — plugins run as the operator) |
 | Malicious target response causing report XSS | All model-derived text is HTML-escaped before embedding; SVG content escaped | Implemented; URL-scheme allowlist for links is **Roadmap** |
 | Supply-chain compromise of the tool | Zero runtime deps; SBOM generation (`tools/gen_sbom.py`); pinned CI tools | Implemented (SBOM); **release signing is Roadmap** |

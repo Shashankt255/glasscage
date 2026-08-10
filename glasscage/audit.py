@@ -8,7 +8,8 @@ self-drawn reconstruction rather than a tamper-evident capture. This module adds
   * Scope    - an explicit host allowlist; requests outside it are refused.
   * RateLimiter - minimum inter-request interval (be a polite tester).
   * AuditLog - append-only JSONL of every payload sent, with sha256 + timestamp,
-               chained (each entry hashes the previous) so tampering is evident.
+               chained: each entry hashes its own fields and the previous entry's
+               digest, so altering a recorded field is detectable (ADR 0019).
   * capture  - hash + timestamp raw request/response for evidentiary integrity.
   * har_export - standard HAR so raw exchanges load in any HTTP tooling.
 """
@@ -18,7 +19,10 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from enum import Enum
+from typing import Optional
 from urllib.parse import urlparse
 
 
@@ -31,6 +35,117 @@ def sha256(*parts: str) -> str:
     for p in parts:
         h.update((p or "").encode("utf-8"))
     return h.hexdigest()
+
+
+ENTRY_VERSION = 2
+
+# ADR 0019: the canonical serialization of an audit entry. Frozen - specified once here
+# and used by both the writer and every verifier, so all implementations agree.
+#
+#   for each field, in exactly this order:  <utf8-byte-length> ":" <value>
+#   concatenated, with no separator between fields
+#
+# Length-prefixing makes the form self-delimiting: `audit.sha256` concatenates its parts
+# without a separator, so sha256("ab", "c") == sha256("a", "bc"). Feeding it one
+# pre-delimited string instead of several parts removes that ambiguity without altering
+# `sha256` itself, whose output is frozen by `evidence_hash` and `custody_hash`.
+_CANONICAL_FIELDS = ("v", "prev", "ts", "url", "prompt_sha256", "response_sha256", "ok")
+
+
+def _canonical_scalar(value) -> str:
+    """One field's canonical text. Booleans are lower-cased so the encoding does not
+    depend on Python's `str(True)`, which no other language reproduces."""
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    return str(value)
+
+
+def canonical_entry(entry: dict) -> str:
+    """The canonical serialization of one entry (ADR 0019). Deterministic and
+    self-delimiting; raises KeyError if a required field is absent."""
+    return "".join(
+        f"{len(s.encode('utf-8'))}:{s}"
+        for s in (_canonical_scalar(entry[name]) for name in _CANONICAL_FIELDS))
+
+
+class ChainStatus(str, Enum):
+    """Outcome of verifying a chain (ADR 0019).
+
+    Three states, because `bool` cannot distinguish "this chain was altered" from "this
+    chain predates the integrity format and cannot be checked either way".
+    """
+
+    VERIFIED = "verified"
+    TAMPERED = "tampered"
+    LEGACY_UNVERIFIABLE = "legacy_unverifiable"
+
+
+@dataclass
+class ChainResult:
+    """A chain verification result. `head` is the final entry hash, which an operator can
+    record elsewhere: a forward chain can always be recomputed end to end by whoever can
+    write the file, so truncation is only detectable against an external anchor."""
+
+    status: ChainStatus
+    entries: int
+    head: Optional[str] = None
+    detail: str = ""
+
+    @property
+    def verified(self) -> bool:
+        return self.status is ChainStatus.VERIFIED
+
+
+def check_entries(entries) -> ChainResult:
+    """Verify a sequence of audit entries (ADR 0019).
+
+    Each entry is recomputed from its own canonical form, so altering any recorded field -
+    url, timestamp, either payload digest, or the ok flag - is detected. The previous
+    formula hashed the raw payloads, which the entry never stores, so nothing could be
+    recomputed and only a broken `prev` link was ever caught.
+    """
+    prev = "0" * 64
+    for i, e in enumerate(entries or []):
+        if e.get("v") != ENTRY_VERSION:
+            return ChainResult(
+                ChainStatus.LEGACY_UNVERIFIABLE, len(entries or []), None,
+                f"entry {i} predates the integrity format (ADR 0019); its contents "
+                "cannot be verified either way")
+        try:
+            expected = sha256(canonical_entry(e))
+        except KeyError as missing:
+            return ChainResult(ChainStatus.TAMPERED, len(entries or []), None,
+                               f"entry {i} is missing the required field {missing}")
+        if e["prev"] != prev:
+            return ChainResult(ChainStatus.TAMPERED, len(entries or []), None,
+                               f"entry {i} does not link to its predecessor")
+        if e["entry_hash"] != expected:
+            return ChainResult(ChainStatus.TAMPERED, len(entries or []), None,
+                               f"entry {i} does not match its recorded digest")
+        prev = e["entry_hash"]
+    return ChainResult(ChainStatus.VERIFIED, len(entries or []), prev if entries else None)
+
+
+def verify_file(path: str) -> ChainResult:
+    """Verify a JSONL audit log written by `--audit-log` (ADR 0019).
+
+    The on-disk log previously had no reader at all; `AuditLog.verify()` only ever checked
+    the in-memory list. A malformed line is reported as tampering rather than skipped.
+    """
+    entries = []
+    with open(path, encoding="utf-8") as fh:
+        for i, line in enumerate(fh):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entries.append(json.loads(line))
+            except json.JSONDecodeError:
+                return ChainResult(ChainStatus.TAMPERED, len(entries), None,
+                                   f"line {i + 1} is not valid JSON")
+    return check_entries(entries)
 
 
 class Scope:
@@ -72,25 +187,38 @@ class AuditLog:
         self.entries: list[dict] = []
 
     def record(self, url: str, prompt: str, response: str, ok: bool) -> dict:
-        ts = now_iso()
-        digest = sha256(self.prev, ts, url, prompt, response)
-        entry = {"ts": ts, "url": url, "prompt_sha256": sha256(prompt),
+        # ADR 0019: the digest covers the fields the entry retains, so any of them can be
+        # recomputed later. The raw prompt and response are deliberately still not stored -
+        # this is the one artifact that has never held a payload, which is why `redaction`
+        # has nothing to do here.
+        entry = {"v": ENTRY_VERSION, "ts": now_iso(), "url": url,
+                 "prompt_sha256": sha256(prompt),
                  "response_sha256": sha256(response), "ok": ok,
-                 "prev": self.prev, "entry_hash": digest}
-        self.prev = digest
+                 "prev": self.prev}
+        entry["entry_hash"] = sha256(canonical_entry(entry))
+        self.prev = entry["entry_hash"]
         self.entries.append(entry)
         if self.path:
             with open(self.path, "a", encoding="utf-8") as fh:
                 fh.write(json.dumps(entry) + "\n")
         return entry
 
+    def check(self) -> ChainResult:
+        """Verify this chain, distinguishing verified / tampered / legacy (ADR 0019).
+
+        The API new code should use. `verify()` below is retained only for callers written
+        against the previous contract.
+        """
+        return check_entries(self.entries)
+
     def verify(self) -> bool:
-        prev = "0" * 64
-        for e in self.entries:
-            if e["prev"] != prev:
-                return False
-            prev = e["entry_hash"]
-        return True
+        """Compatibility API (ADR 0019). True only for a fully verified chain.
+
+        A legacy chain returns False: `bool` cannot separate "altered" from "predates the
+        format", and reporting an unverifiable chain as verified is the defect this ADR
+        corrects. Use `check()` to tell the two apart.
+        """
+        return self.check().status is ChainStatus.VERIFIED
 
 
 def har_export(exchanges: list[dict], path: str) -> None:

@@ -172,6 +172,17 @@ print(glasscage.__version__)"`.
 
 ### `--audit-log PATH`
 - **Purpose:** hash-chained chain-of-custody log.
+- **What it records:** one JSONL entry per request — timestamp, URL, outcome, and the
+  sha256 **digests** of the request and response. The payloads themselves are never
+  written, which is why this is the one artifact redaction has nothing to do to.
+- **What the chain proves:** each entry's digest covers its own recorded fields and the
+  previous entry's digest, so altering any recorded field is detected. Confirming what a
+  payload *was* requires the original to hash against — the log cannot reconstruct it.
+- **What it does not prove:** truncation of the log's tail. A forward chain can be
+  recomputed by anyone who can write the file; detecting a removed tail needs the final
+  entry hash recorded somewhere else. The run prints it for that purpose.
+- **Older logs:** entries written before the integrity format report as *unverifiable*
+  rather than valid, and cannot be upgraded (ADR 0019).
 
 ---
 

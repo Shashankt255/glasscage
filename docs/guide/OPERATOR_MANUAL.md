@@ -70,7 +70,7 @@ assertion that you own the system or hold **written** permission to test it.
 | `--evidence-password PW` | Implemented | or `GLASSCAGE_EVIDENCE_PASSWORD` |
 | `--no-evidence` | Implemented | skip SVG evidence cards (faster) |
 | `--har` | Implemented | HTTP archive (redacted unless `--store-raw`) |
-| `--audit-log PATH` | Implemented | hash-chained custody log |
+| `--audit-log PATH` | Implemented | hash-chained custody log; records payload digests, not payloads. Detects an altered entry, not a truncated tail (ADR 0019) |
 
 ### Output
 | Flag | Maturity | Notes |

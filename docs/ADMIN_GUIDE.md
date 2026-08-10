@@ -28,7 +28,7 @@ enable `--judge`.
 | Raw evidence only on explicit consent (`--store-raw`) | **Implemented** |
 | Encrypted evidence at rest (`crypto` extra, real Fernet) | **Implemented — optional** |
 | Chain of custody (hash computed pre-redaction) | **Implemented** |
-| Hash-chained audit log | **Implemented** |
+| Hash-chained audit log | **Implemented** — detects alteration of any recorded field; stores digests, not payloads; tail truncation needs an external anchor (ADR 0019) |
 | Replay bundles strip auth headers | **Implemented** |
 | Config validation with typed errors | **Implemented** |
 | TLS certificate verification (stdlib defaults) | **Implemented** |
