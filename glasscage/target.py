@@ -102,12 +102,22 @@ class HTTPChatTarget:
         ts = datetime.now(timezone.utc).isoformat()
         start = time.perf_counter()
         resp_obj = None
+        # ADR 0023: this try/except decides only WHAT was exchanged. It must not enclose
+        # the custody call. `_record` used to sit inside it, so a failure raised by custody
+        # itself was caught below as though it were a transport fault: a fabricated
+        # ok=False response was built from the audit error text and a SECOND exchange was
+        # recorded for one network call. Each handler now assigns the outcome and nothing
+        # more; recording happens once, after the block - the shape `RestDriver.drive` has
+        # always had (ADR 0008 §1: recording stays with whoever owns the transport).
+        # `status` and `body_text` are deliberately not pre-initialised: a future branch
+        # that forgets one must fail loudly rather than record default metadata.
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 raw_bytes = resp.read()
                 status_code = resp.status
             latency = (time.perf_counter() - start) * 1000
-            raw = json.loads(raw_bytes.decode("utf-8", errors="replace"))
+            body_text = raw_bytes.decode("utf-8", "replace")
+            raw = json.loads(body_text)
             try:
                 text = _dig(raw, self.response_path)
             except (KeyError, IndexError, ValueError) as e:
@@ -117,19 +127,17 @@ class HTTPChatTarget:
                 if not isinstance(text, str):
                     text = json.dumps(text)
                 resp_obj = ChatResponse(text, raw, latency, ok=True)
-            self._record(ts, data, status_code, raw_bytes.decode("utf-8", "replace"),
-                         latency, resp_obj)
-            return resp_obj
+            status = status_code
         except urllib.error.HTTPError as e:
             latency = (time.perf_counter() - start) * 1000
             resp_obj = ChatResponse("", None, latency, ok=False, error=f"HTTP {e.code}: {e.reason}")
-            self._record(ts, data, e.code, str(e.reason), latency, resp_obj)
-            return resp_obj
+            status, body_text = e.code, str(e.reason)
         except Exception as e:  # noqa: BLE001 - report any transport error to caller
             latency = (time.perf_counter() - start) * 1000
             resp_obj = ChatResponse("", None, latency, ok=False, error=str(e))
-            self._record(ts, data, 0, str(e), latency, resp_obj)
-            return resp_obj
+            status, body_text = 0, str(e)
+        self._record(ts, data, status, body_text, latency, resp_obj)
+        return resp_obj
 
     def _record(self, ts, req_bytes, status, resp_text, ms, resp_obj) -> None:
         req_body = req_bytes.decode("utf-8", "replace") if isinstance(req_bytes, bytes) else str(req_bytes)
