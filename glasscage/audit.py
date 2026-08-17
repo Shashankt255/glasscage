@@ -254,11 +254,24 @@ class AuditLog:
                  "response_sha256": sha256(response), "ok": ok,
                  "prev": self.prev}
         entry["entry_hash"] = sha256(canonical_entry(entry))
-        self.prev = entry["entry_hash"]
-        self.entries.append(entry)
+        # ADR 0024: durable before visible. The append happens BEFORE `prev` and `entries`
+        # advance, so the in-memory chain can never claim more than the file holds. The
+        # previous order committed in memory first, so a failed write left `prev` pointing
+        # at an entry that was never persisted; the next successful record then chained
+        # from that unpersisted hash and wrote a gap. Measured on
+        # `v0.4.8-transport-custody-exception`, an intermittent write fault produced 19
+        # entries for 21 exchanges whose on-disk chain read `tampered` - "entry 4 does not
+        # link to its predecessor" - while the CLI reported `verified (21 entries)`. The
+        # integrity control was accusing a file the tool itself had gapped.
+        # A failed write now commits nothing: the `OSError` propagates, the file stays a
+        # verifiable prefix, and the next successful record chains from the last persisted
+        # entry. Ordering only - the entry, its linkage, the canonical form, the hashes and
+        # the return value are unchanged, and a `path=None` log is bit-identical.
         if self.path:
             with open(self.path, "a", encoding="utf-8") as fh:
                 fh.write(json.dumps(entry) + "\n")
+        self.prev = entry["entry_hash"]
+        self.entries.append(entry)
         return entry
 
     def check(self) -> ChainResult:

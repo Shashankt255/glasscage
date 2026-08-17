@@ -177,7 +177,11 @@ class TestCustodyFailureDoesNotDoubleRecord(_TransportCase):
         self.assertEqual(len(t.exchanges), 1, "custody failure re-entered the transport")
 
     def test_audit_write_failure_records_one_entry_not_two(self):
-        """The damaging case: this produced 2 entries, the second fabricated."""
+        """The damaging case: this produced 2 exchanges, the second fabricated.
+
+        Entry count amended for ADR 0024: custody is committed durably before it becomes
+        visible, so a failed write commits nothing in memory either. The transport
+        assertions below are unchanged - one network call is still one exchange."""
         p = os.path.join(self.tmp, "chain.jsonl")
         t = self.target(p)
         self.failing_write(p)
@@ -185,7 +189,7 @@ class TestCustodyFailureDoesNotDoubleRecord(_TransportCase):
             t.send("hi")
         self.assertEqual(self.calls, 1)
         self.assertEqual(len(t.exchanges), 1)
-        self.assertEqual(len(t.audit.entries), 1)
+        self.assertEqual(len(t.audit.entries), 0)
 
     def test_no_fabricated_response_is_recorded(self):
         """A failing custody backend must not become a recorded 'exchange'.
@@ -204,13 +208,18 @@ class TestCustodyFailureDoesNotDoubleRecord(_TransportCase):
             self.assertNotEqual(x["status"], 0)
 
     def test_the_recorded_entry_is_the_real_exchange(self):
+        """Amended for ADR 0024: a failed write leaves no entry to inspect, so the
+        assertion moves to the exchange - which still carries the real response - and to
+        the absence of any in-memory-only custody."""
         p = os.path.join(self.tmp, "chain.jsonl")
         t = self.target(p)
         self.failing_write(p)
         with self.assertRaises(OSError):
             t.send("hi")
-        self.assertEqual(t.audit.entries[0]["response_sha256"],
-                         sha256('{"response": "hello"}'))
+        self.assertEqual(t.exchanges[0]["response_body"], '{"response": "hello"}')
+        self.assertEqual(t.audit.entries, [])
+        self.assertEqual(sha256('{"response": "hello"}'),
+                         sha256(t.exchanges[0]["response_body"]))
 
     def test_custody_failure_does_not_repeat_the_network_call(self):
         class Boom(AuditLog):
@@ -286,7 +295,9 @@ class TestRecoveryAfterCustodyFailure(_TransportCase):
         t.send("second")
         self.assertEqual(self.calls, 2)
         self.assertEqual(len(t.exchanges), 2)
-        self.assertEqual(len(t.audit.entries), 2)
+        # Amended for ADR 0024: the first exchange committed nothing, so only the second
+        # is in custody. The transport assertions above are unchanged.
+        self.assertEqual(len(t.audit.entries), 1)
         self.assertIs(t.audit.check().status, ChainStatus.VERIFIED)
 
 

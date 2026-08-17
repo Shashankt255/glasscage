@@ -799,6 +799,59 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   the twenty-three fail against `v0.4.7-harness-transport-custody`, which is what makes them
   evidence rather than coverage.
 
+### Fixed
+- **A failed audit write corrupted the on-disk custody chain and the CLI still called it
+  verified** (`audit.py`): `AuditLog.record` advanced `self.prev` and appended to
+  `self.entries` **before** writing the line. A failed write therefore left the in-memory
+  chain pointing at an entry that was never persisted, and the next successful record
+  chained from that unpersisted hash — writing a **gap** into the file.
+  Measured on `v0.4.8-transport-custody-exception`: one failed write left in-memory **2**
+  against on-disk **1**; failure-then-success produced an on-disk chain reading
+  **`tampered` — "entry 1 does not link to its predecessor"**. End to end, an intermittent
+  write fault over 21 exchanges wrote 19 entries whose on-disk chain read **`tampered`**
+  while the CLI reported **`verified (21 entries)`** at **exit 0**, because `cli.py` prints
+  the in-memory chain and nothing reconciled it against the file. ADR 0020 then refused to
+  append to that file, so the custody path became permanently unusable.
+  One cause, two shapes: an **intermittent** fault corrupted the chain, a **sustained** one
+  truncated it silently. The corrupted case is the serious one — ADR 0019's control
+  correctly reported `tampered` on a file **the tool itself had gapped**, the same class of
+  harm PR #21 corrected, reintroduced by a different mechanism.
+  The append now happens **before** the in-memory advance (**INV-25**: the in-memory chain
+  never advances past what is durably on disk; after any `record()` the entry count equals
+  the file's and `prev` equals its head). A failed write commits nothing — the `OSError`
+  propagates unchanged, the file stays a **verifiable prefix**, and a later record chains
+  from the last persisted entry. `AuditLog.check()` and `verify_file()` now agree by
+  construction.
+  **Ordering only.** The entry, its `prev` linkage, the canonical form, the digests and the
+  return value are unchanged; a `path=None` log is bit-identical. `engine.py` was evaluated
+  as a scope and **rejected**: the corruption happens inside `record()` before the engine
+  sees anything, so it fixes nothing there.
+  **Behavioural change, intended:** after a failed write there is now no in-memory entry for
+  that exchange. Three assertions in `tests/test_chat_transport_custody.py` encoded the old
+  count and were amended; their transport-exchange assertions were left untouched, because
+  one network call is still one exchange and PR #24's contract is unaffected.
+  **Accepted limitations, unchanged:** a write exhausting the disk mid-line can still leave
+  a malformed line, which ADR 0019 already reports as tampering; and a failed write still
+  only surfaces as a `"probe … crashed"` note with the run exiting 0. Whether a custody
+  failure should be fatal is a policy question about `engine.py`/`cli.py`, deliberately not
+  decided here. `fsync` is not introduced — power-loss durability is a different failure
+  model.
+  See `docs/adr/0024-durable-before-visible-audit-commit.md`.
+- `docs/adr/0024-durable-before-visible-audit-commit.md`.
+### Tests
+- 801 passing (+24). INV-25 pinned directly: memory equals disk after success and after
+  failure, `prev` never advances on a failed write, a failure on the very first record
+  leaves genesis, and no in-memory-only entry survives. The corruption this closes is
+  asserted three ways — the on-disk chain verifies after failure-then-success, the later
+  entry chains from the last persisted entry, and every link is walked to prove no gap was
+  written. Intermittent faults (writes 5–6) and sustained faults are both asserted never to
+  produce a tampered chain, and persisted entries are asserted to equal successful
+  `record()` calls. ADR 0020 resume is re-checked across instances and specifically after a
+  failure, including that the file **remains appendable** — a gapped file was unusable
+  forever. Unchanged contracts re-asserted: `path=None` bit-identical, the `OSError`
+  propagates with `errno` intact, `record()` returns exactly the persisted entry, entry
+  shape and digest, `prev` advancing on success, no raw payload, and `ok=False` recorded.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
