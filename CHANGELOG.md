@@ -742,6 +742,63 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   entries, still verify and advance the head (ADR 0020 resume); and `--harness` without
   `--audit-log`, `--demo` and a real `--config` chat target are each asserted unchanged.
 
+### Fixed
+- **A failing custody backend made the chat transport record a fabricated second exchange**
+  (`target.py`): ADR 0008 §1 puts recording with the transport owner. `RestDriver.drive`,
+  `ReferenceAgent.send` and `_MockTarget.send` all let the transport `try/except` decide
+  *what was exchanged* and then record once, after it. `HTTPChatTarget.send()` instead
+  called `_record()` from **inside** the `try` whose broad `except Exception` also calls
+  `_record()` — three custody sites, all within the handler structure. A failure raised by
+  custody itself was therefore caught as a transport fault, an `ok=False` `ChatResponse` was
+  fabricated from the audit error text, and a **second** exchange was recorded for one
+  network call. `AuditLog.record` advances `prev` and appends to `entries` before its file
+  write, so a write failure escapes with the chain already advanced.
+  Measured on `v0.4.7-harness-transport-custody`, one network call: `audit.record` raising
+  gave **2 exchanges / 0 entries**; a failing audit write gave **2 exchanges / 2 entries**
+  with the chain still `VERIFIED` — entry 1 carrying the digest of
+  `[Errno 28] No space left on device` and exchange 1 carrying that OS error text as the
+  response body, status 0. The integrity control cannot catch this: the chain is internally
+  consistent, so only the *content* is false. Over a full run with the disk filling
+  mid-assessment: **18 network calls, 32 HAR entries, 4 audit entries on disk,
+  `Audit chain: verified (32 entries)`, exit 0.**
+  Each handler now assigns the outcome only; `_record` is called **once** after the block,
+  followed by a single return. `status` and `body_text` are deliberately not
+  pre-initialised, so a future branch that forgets one fails loudly rather than recording
+  default metadata. A custody failure now propagates instead of being re-interpreted as a
+  transport fault.
+  **Not a redesign:** this is the shape `RestDriver.drive` has always had; ADR 0008 is
+  applied, not amended. **Not a regression from PR #23**, which touched only `refagent.py`.
+  **Recorded values are byte-unchanged** on every path that already worked: success records
+  the decoded body with the response status, `HTTPError` records `e.reason` with `e.code`,
+  any other fault records `str(e)` with status 0. Connection-refused, non-JSON body,
+  HTTP 500 and `response_path` failure each still produce exactly one exchange and one
+  entry.
+  **Known limitation, not closed here:** an audit-write failure still leaves the in-memory
+  chain ahead of the file while `engine.py` isolates the per-probe exception, so a failing
+  custody backend still yields a silently incomplete on-disk log. That has a separate root
+  cause and needs `audit.py`/`engine.py`, both outside this PR's scope.
+  **Unchanged:** `audit.py`, `cli.py`, `engine.py`, `targets/**` and `refagent.py`; the
+  audit format, canonical serialization, `ENTRY_VERSION`, `ChainStatus`/`ChainResult`,
+  `AuditLog.verify()` and append/resume; scope, rate and authorization; graph identity,
+  SARIF, replay bundle and runner, provenance, `runtime_coverage_ratio`, discovery output,
+  benchmark determinism and the zero-dependency boundary.
+  See `docs/adr/0023-transport-custody-exception-boundary.md`.
+- `docs/adr/0023-transport-custody-exception-boundary.md`.
+### Tests
+- 776 passing (+23). Network calls are counted server-side, never inferred: one call is one
+  exchange and one entry, with the entry's digests matching the prompt actually sent and the
+  body actually returned; five calls stay one-to-one. Both custody-failure modes are pinned
+  — `audit.record` raising, and a real audit-write `OSError` — each asserted to leave one
+  exchange, one entry, one network call, no fabricated `ok=False` entry and no OS error text
+  in any exchange body. Transport failures are re-asserted unchanged (refused connection,
+  non-JSON body, HTTP 500 with its status, `response_path` failure), a later exchange after
+  a custody failure still records once and verifies, and the audit semantics are re-checked
+  (no raw payload, ADR 0020 resume across two targets on one path, file count equals network
+  calls, out-of-scope refusal records nothing, no-audit targets still record exchanges).
+  Three tests pin the ordering in source, so the position cannot silently regress. Seven of
+  the twenty-three fail against `v0.4.7-harness-transport-custody`, which is what makes them
+  evidence rather than coverage.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
