@@ -55,10 +55,52 @@ def build(findings, probes_run) -> dict:
 
 
 def statement(cov: dict) -> str:
+    """The exported coverage claim (ADR 0028).
+
+    This string is what the HTML export renders as its `Coverage:` line, so it is an
+    operator-facing claim. It used to read "Tested N techniques across 10/13 taxonomy
+    categories" — a count that includes categories reached only by questionnaire or
+    configuration review. Runtime coverage on the same run was 7/13. PR #28 corrected the
+    markdown renderer; this is the same correction for the shared statement.
+
+    The runtime figures are read from the coverage dict when present, exactly as supplied
+    by `coverage_provenance`; nothing is recomputed and no value is hard-coded. A legacy
+    coverage dict (`--no-aakg`) carries none of them, so the runtime sentence is omitted
+    rather than guessed, and the graph-derived count is still not called "tested".
+    """
     tested = ", ".join(cov["categories_tested"]) or "none"
     missed = ", ".join(cov["categories_not_tested"]) or "none"
-    return (f"Tested {cov['techniques_run']} techniques across "
-            f"{len(cov['categories_tested'])}/{len(CANONICAL)} taxonomy categories "
-            f"({tested}). NOT tested this run: {missed}. "
-            f"'Passed' means the target resisted the specific inputs tried in this "
-            f"run - it is NOT a proof of robustness against adaptive attackers.")
+    graph_n = len(cov["categories_tested"])
+
+    parts = []
+    prov = cov.get("coverage_provenance") or {}
+    if prov:
+        universe = prov.get("universe") or 0
+        runtime = len(prov.get("runtime_tested") or [])
+        ratio = cov.get("runtime_coverage_ratio")
+        if ratio is None:
+            ratio = round(runtime / universe, 2) if universe else 0.0
+        parts.append(
+            f"Runtime-tested coverage: {runtime}/{universe} ({ratio}) — categories where a "
+            f"payload was actually sent: "
+            f"{', '.join(prov.get('runtime_tested') or []) or 'none'}. "
+            f"Configuration-review only: "
+            f"{', '.join(prov.get('config_review_only') or []) or 'none'}. "
+            f"Questionnaire only: "
+            f"{', '.join(prov.get('questionnaire_only') or []) or 'none'}. "
+            f"Not tested: {', '.join(prov.get('not_tested') or []) or 'none'}.")
+
+    # Contextual, mixed provenance. Deliberately not called "tested": this count includes
+    # categories carrying a finding that no payload established.
+    parts.append(
+        f"Graph-derived coverage (contextual, mixed provenance): {graph_n}/{len(CANONICAL)} "
+        f"taxonomy categories with a mapped finding ({tested}); "
+        f"ran {cov['techniques_run']} techniques. No mapped finding this run: {missed}.")
+
+    caveat = cov.get("coverage_ratio_caveat")
+    if caveat:
+        parts.append(caveat)
+
+    parts.append("'Passed' means the target resisted the specific inputs tried in this "
+                 "run - it is NOT a proof of robustness against adaptive attackers.")
+    return " ".join(parts)
