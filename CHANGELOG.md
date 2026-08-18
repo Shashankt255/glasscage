@@ -997,6 +997,56 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   missing ratio is derived rather than crashing, and `--no-aakg` is unaffected. Fifteen of
   the twenty-three fail against `v0.5.1-mcp-manifest-shape`.
 
+### Fixed
+- **The HTML export still called a provenance-mixed count "Tested"** (`coverage.py`):
+  PR #28 corrected the AAKG markdown renderer and recorded, as an explicit accepted
+  limitation, that HTML was unchanged. HTML does not use that renderer — it embeds
+  `coverage.statement(cov)` as `DATA.coverage`, which the page shows as its `Coverage:`
+  line. On `v0.5.2-coverage-honesty` that read **"Tested 19 techniques across 10/13 taxonomy
+  categories"**, where 10/13 counts every category with a mapped finding, including those
+  reached only by questionnaire or configuration review. Runtime coverage on the same run is
+  **7/13 (0.54)**. The word "Tested" was attached to the larger figure, with no runtime
+  number and no caveat — the same overstatement PR #28 removed from markdown, still being
+  exported.
+  All three callers were traced first: HTML (`report.py:213`), the legacy `--no-aakg`
+  markdown path (`report.py:100`), and an existing test asserting the return is a `str`.
+  Both dict shapes were confirmed by instrumenting real runs — the AAKG dict carries
+  `coverage_provenance`, `runtime_coverage_ratio` and `coverage_ratio_caveat`; the legacy
+  dict carries none of them.
+  `statement()` now leads with `Runtime-tested coverage: 7/13 (0.54)` and the four
+  provenance buckets, keeps the graph-derived count as
+  `Graph-derived coverage (contextual, mixed provenance): 10/13 taxonomy categories with a
+  mapped finding`, and appends the caveat and the existing "'Passed' means…" disclaimer.
+  Values are read from the dict — the ratio is derived from provenance only when absent, and
+  that derivation is guarded so a zero universe yields `0.0`. **A legacy dict omits the
+  runtime sentence rather than guessing**, and still does not call the mixed count "tested".
+  Only `statement()` changed; `compute()` and every other function in the file are
+  untouched.
+  **Unchanged and verified:** `posture_score` 42.7 / `risk_index` 57.3 (and 24.8 / 75.2 on
+  the `--no-aakg` path); the PR #28 markdown section; JSON, SARIF, the replay bundle and
+  runner, and the audience views — all byte-identical; every frozen probe; the four surface
+  entry counts; append/resume; PR #26 exit codes.
+  **Accepted limitations:** `posture.coverage_ratio` still appears in the HTML `DATA` block
+  as an unused reported field, and `coverage_ratio`'s internal semantics are unchanged —
+  this governs presentation only. Both would need a production file beyond `coverage.py`.
+  See `docs/adr/0028-exported-coverage-claims-state-their-provenance.md`.
+- `docs/adr/0028-exported-coverage-claims-state-their-provenance.md`.
+### Tests
+- 890 passing (+20). The exported claim is pinned from the real HTML `DATA` block: the
+  runtime figure and ratio appear, the graph-derived count survives as contextual, the
+  provenance buckets and caveat appear, the runtime figure precedes the graph-derived one,
+  the disclaimer is retained, and `Tested N techniques across N/13` is asserted **absent** by
+  regex. Values are proven read rather than hard-coded — a substituted provenance of 1/9 at
+  ratio 0.11 renders as such, a missing ratio is derived from the buckets, and the
+  executable body of `statement()` is asserted to contain no `0.54` or `7/13` literal (the
+  docstring, which cites the measured example, is excluded). Legacy and degenerate paths:
+  a legacy dict omits the runtime claim and still avoids "Tested", the real `--no-aakg` run
+  produces valid HTML and a correct legacy markdown statement, a zero universe renders `0/0`
+  without `ZeroDivisionError`, empty categories render `none`, and the `str` contract
+  `test_stage_e5` relies on is re-asserted. Nothing-else-moves: posture and risk asserted
+  directly, the PR #28 markdown section asserted intact, and JSON/SARIF asserted free of the
+  statement. Thirteen of the twenty fail against `v0.5.2-coverage-honesty`.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
