@@ -76,9 +76,39 @@ def _finding(status, title, severity, owasp_id, tool, evidence, conf) -> Finding
     )
 
 
-def _iter_tools(manifest: dict):
-    tools = manifest.get("tools", manifest if isinstance(manifest, list) else [])
-    for t in tools:
+def _iter_tools(manifest):
+    """Yield (name, description, schema) for each tool in a manifest.
+
+    ADR 0026: the shape is checked BEFORE any field access. `manifest.get(...)` used to be
+    evaluated first, so the `isinstance(manifest, list)` fallback beside it was unreachable
+    and every non-object input - including the bare list the fallback was written to
+    accept - raised `AttributeError` through both `analyze_manifest` and `snapshot`.
+
+    A top-level list is the `tools/list` payload itself and is accepted, which is what that
+    fallback always intended. Anything else that is not an object is refused with
+    `ConfigError`, naming the type received - the same rule `targets/discovery.py` already
+    applies to the same input.
+    """
+    from .errors import ConfigError
+
+    if isinstance(manifest, list):
+        tools = manifest
+    elif isinstance(manifest, dict):
+        tools = manifest.get("tools", [])
+        if not isinstance(tools, list):
+            raise ConfigError(
+                f"MCP manifest 'tools' must be a list, got {type(tools).__name__}")
+    else:
+        raise ConfigError(
+            f"MCP manifest must be an object or a list of tools, got "
+            f"{type(manifest).__name__}")
+
+    for i, t in enumerate(tools):
+        # A non-object entry carries no fields to read. Refused rather than skipped, so a
+        # malformed tool cannot silently shrink the analysed surface.
+        if not isinstance(t, dict):
+            raise ConfigError(
+                f"MCP manifest tool {i} must be an object, got {type(t).__name__}")
         name = t.get("name", "<unnamed>")
         desc = t.get("description", "") or ""
         schema = json.dumps(t.get("inputSchema", t.get("input_schema", {})))

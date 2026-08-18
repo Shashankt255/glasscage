@@ -903,6 +903,51 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   entry still fails closed. Seven of the twenty-five fail against
   `v0.4.9-durable-audit-commit`, which is what makes them evidence rather than coverage.
 
+### Fixed
+- **A manifest that was not a JSON object crashed instead of being refused** (`mcp.py`):
+  `_iter_tools` read `manifest.get("tools", manifest if isinstance(manifest, list) else [])`.
+  `.get()` is evaluated **before** the default beside it, so the `isinstance` fallback was
+  unreachable dead code and every non-object input raised `AttributeError` — including the
+  bare list that fallback was written to accept. Both entry points route through it, so
+  `--mcp-manifest` and `--mcp-baseline` were equally affected.
+  Measured on `v0.5.0-custody-completeness`, ten shapes through both `analyze_manifest` and
+  `snapshot`: **eight crashed** — list of tools, empty list, string, number, boolean, null,
+  a list containing a non-object, and a dict whose `tools` was not a list. Only the two
+  object forms worked.
+  `AttributeError` is not part of this repository's error contract, and
+  `targets/discovery.py` already refused the identical input correctly with
+  `ConfigError(... got {type}.__name__)` — the codebase held the right answer in one place
+  and the wrong one in another.
+  The shape is now established before any field access. **A top-level list is accepted** as
+  the `tools/list` payload, which is what the dead fallback always intended;
+  `snapshot([t])` and `snapshot({"tools": [t]})` are asserted to agree. **An object keeps
+  its exact previous behaviour**, including a manifest with no `tools` key — findings and
+  snapshots verified byte-identical to `v0.5.0`. **Anything else is refused with
+  `ConfigError` naming the type received**, matching `discovery.py`. **A malformed list
+  element is refused, not skipped**, so a bad entry cannot silently shrink the analysed
+  surface. **An empty list is valid** and yields no tool findings.
+  Evaluation-order fix only — the parser is not redesigned and the detectors are untouched.
+  **Unchanged:** every other module; the analysis, `Finding` shape and object-manifest
+  output; PR #26's exit-code semantics (a refusal is a `GlasscageError`, so the CLI renders
+  `error: …` and exit 2); all frozen invariants.
+  **Not in scope:** MCP-manifest-only mode still discards `--rest-config`/`--harness`
+  (ADR 0021 follow-up), and runtime MCP interaction remains static-manifest-only.
+  See `docs/adr/0026-mcp-manifest-shape-contract.md`.
+- `docs/adr/0026-mcp-manifest-shape-contract.md`.
+### Tests
+- 847 passing (+21). Accepted shapes: object with tools, object without tools, top-level
+  list, empty list, empty `tools` list, and an assertion that the list and object spellings
+  of the same manifest analyse identically. Refused shapes, through **both**
+  `analyze_manifest` and `snapshot` so `--mcp-baseline` is covered as well as
+  `--mcp-manifest`: string, number, float, boolean and null, each asserted to name the
+  received type; a list containing a non-object, asserted to name the offending index; a
+  dict whose `tools` is not a list; and every refusal asserted to be a `GlasscageError` so
+  the CLI's handler applies. One test sweeps nine JSON shapes and fails if any
+  `AttributeError` escapes. Through the CLI: a list manifest is accepted, a scalar is
+  refused without a traceback, `--mcp-baseline` refuses a scalar, and a rug-pull diff runs
+  across two list-shaped manifests with the change detected. The large majority fail against
+  `v0.5.0-custody-completeness`, which is what makes them evidence rather than coverage.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
