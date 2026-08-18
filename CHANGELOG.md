@@ -852,6 +852,57 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   propagates with `errno` intact, `record()` returns exactly the persisted entry, entry
   shape and digest, `prev` advancing on success, no raw payload, and `ok=False` recorded.
 
+### Fixed
+- **A run that lost custody still reported success** (`cli.py`): PR #25 made the
+  `Audit chain: verified (N)` line true about the file, but nothing told the operator what
+  was missing. A failing audit backend surfaced only as `"probe … crashed"` notes inside the
+  report JSON, and the run exited **0**. Measured on `v0.4.9-durable-audit-commit` with the
+  audit backend failing from write 5: **18 network calls, 18 exchanges, 4 audit entries**
+  (equal to disk, chain `verified`), **exit 0** — a security tool reporting a successful
+  assessment while knowing its evidence trail was 78% incomplete.
+  The signal already existed and did not need inventing. `exchanges` holds exactly one
+  record per exchange the transport performed (ADR 0022/0023) and, after ADR 0024, the chain
+  holds exactly what reached disk; measured across every surface when custody succeeds —
+  `--config` 21/21, `--demo` 21/21, `--harness` 25/25, `--rest-config` 6/6 — and breaking by
+  exactly the number lost when it does not.
+  The CLI now reconciles the two at run exit, emits **exactly one** deterministic diagnostic
+  on **stderr** naming the shortfall, and returns **exit 3**. Exit 2 already means *refused*
+  (`GlasscageError`, `ap.error`); a run that completed with incomplete custody is a
+  different outcome scripts must be able to tell apart.
+  **Custody loss is established by reconciliation, never inferred from failure.** A refused
+  connection, an HTTP 500, a non-JSON body and a `response_path` failure each append one
+  exchange **and** one entry, so all reconcile to zero and exit 0 — an assessment of a broken
+  target is still a sound assessment. The diagnostic says so explicitly, so it cannot be
+  misread as target failure.
+  **Artifacts are still written** before the check: the findings are valid and withholding
+  them would destroy sound work. **The engine is not touched** — execution is not aborted at
+  the first failure and per-probe isolation is unchanged; aborting mid-run would need
+  `engine.py` and would kill a long assessment over a transient blip.
+  **Accepted limitations:** a custody failure during recon runs outside the engine's
+  per-probe handler and still propagates as an uncaught `OSError` — pre-existing, deliberately
+  preserved, now pinned by test so it cannot drift; and reconciliation reports *how many*
+  exchanges were lost, not *which*, because the lost exchanges left no durable record.
+  **Unchanged:** `audit.py`, `engine.py`, `target.py`, `refagent.py`, `targets/**`; ADR 0024
+  durable-before-visible ordering, memory/disk agreement, chain verification, ADR 0020
+  append/resume, exactly-once transport custody on all four surfaces, ADR 0021 control
+  ordering, and replay/provenance/SARIF.
+  See `docs/adr/0025-custody-completeness-at-run-exit.md`.
+- `docs/adr/0025-custody-completeness-at-run-exit.md`.
+### Tests
+- 826 passing (+25). The failure path is exercised end to end — real CLI, real socket, real
+  `AuditLog`, a real `OSError` on the append — asserting that an exchange actually occurred,
+  that custody entries are actually absent from the file, that the shortfall is detected,
+  that exactly one diagnostic reaches stderr (and not stdout) naming `N of M`, that it blames
+  custody rather than the target, that the exit status is non-zero, stable across runs and
+  distinguishable from a refusal, and that the report/HTML/JSON are still written and the
+  surviving chain still verifies. No counter is mocked. Negative paths prove the check is a
+  reconciliation and not a failure detector: complete custody, HTTP 500, non-JSON body,
+  refused connection, `response_path` failure, out-of-scope refusal, zero-exchange run,
+  `--audit-log` absent, and the `--demo` (21) and `--harness` (25) surfaces all exit 0 with no
+  diagnostic. The recon-time propagation is pinned, and a boundary case proves a single lost
+  entry still fails closed. Seven of the twenty-five fail against
+  `v0.4.9-durable-audit-commit`, which is what makes them evidence rather than coverage.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added
