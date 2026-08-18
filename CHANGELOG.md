@@ -948,6 +948,55 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   across two list-shaped manifests with the change detected. The large majority fail against
   `v0.5.0-custody-completeness`, which is what makes them evidence rather than coverage.
 
+### Fixed
+- **The report presented a provenance-mixed coverage figure as a measurement**
+  (`aakg/report.py`): `aakg/coverage.py` already computed `runtime_coverage_ratio`, a
+  `coverage_provenance` breakdown and a `coverage_ratio_caveat` — and **none of them reached
+  any artifact.** An audit of every output of a `--demo` run (markdown, HTML, JSON, SARIF,
+  all five audience views, CLI stdout) found them in none of them. What the operator read
+  was `## Coverage (graph-derived) [Measured]` / `**OWASP**: 10/13 tested`, where 10/13
+  counts every category with a mapped finding — including those reached only by
+  questionnaire or configuration review. **7/13** had a payload actually sent. The larger
+  number was labelled a measurement, with no caveat, while the project's own
+  `ASSESSMENT_WORKFLOW.md` already said *"Quote runtime coverage (7/13), not
+  `coverage_ratio`, externally."*
+  The report now leads with `OWASP runtime-tested: 7/13 (0.54)` tagged **Measured**, lists
+  all four provenance buckets by category name, and keeps the graph-derived counts under
+  `### Coverage (graph-derived) — contextual, mixed provenance` tagged **Observed**, worded
+  as "categories with a mapped finding" rather than bare "tested", with the caveat rendered
+  beside them. All three values are read from the coverage dict the renderer already
+  receives — nothing is recomputed and no upstream module changed.
+  **An earlier hypothesis was disproved before any code was written:** the inflated ratio
+  does **not** inflate the score. Substituting 0.54 for 0.77 leaves `posture_score` **42.7**
+  and `risk_index` **57.3** identical, because `risk_index` is computed at
+  `aakg/posture.py:47` and `cov_ratio` is only read at line 53 for reporting. This is a
+  reporting fix, not a scoring fix, and both scores are asserted unchanged.
+  **Unchanged:** `posture_score`, `risk_index`, `coverage_ratio`'s meaning, OWASP runtime
+  coverage itself (still 7/13), JSON, SARIF, the five audience views, HTML, replay bundle
+  and runner, provenance data, dependency set and every frozen probe. No new
+  machine-readable output contract was added.
+  **Accepted limitations:** `coverage_ratio` still counts mixed provenance wherever consumed
+  internally — this governs presentation only; `posture.coverage_ratio` still reports the
+  inflated value as an unused field; and the HTML `DATA` block still embeds it, which would
+  need a production file beyond the renderer.
+  See `docs/adr/0027-coverage-reporting-states-its-provenance.md`.
+- `docs/adr/0027-coverage-reporting-states-its-provenance.md`.
+### Tests
+- 870 passing (+23). The measured claim is pinned: the runtime ratio is rendered, tagged
+  `Measured`, precedes the graph-derived block, and is **read from the coverage dict** — a
+  substituted ratio of 0.11 must appear, so it cannot be hard-coded. All four provenance
+  buckets are asserted present and named by category, including the questionnaire-only and
+  configuration-review-only ones the old report hid. The caveat is asserted present and not
+  truncated. The graph-derived block is asserted to remain available, to carry `Observed`
+  rather than `[Measured]`, to be marked mixed-provenance, to say "categories with a mapped
+  finding", and to be ordered after the runtime figure so the two cannot be conflated.
+  Nothing-else-moves: `posture_score` 42.7 and `risk_index` 57.3 asserted directly, JSON
+  asserted to carry **no** coverage block, SARIF asserted free of the new keys, HTML asserted
+  still renderable, and the audience views asserted unaffected. Degenerate inputs: absent
+  coverage renders no section, a zero universe renders `0/0` without `ZeroDivisionError`, a
+  missing ratio is derived rather than crashing, and `--no-aakg` is unaffected. Fifteen of
+  the twenty-three fail against `v0.5.1-mcp-manifest-shape`.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added

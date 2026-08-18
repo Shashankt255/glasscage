@@ -143,15 +143,44 @@ def to_markdown(g, results, target_name: str = "target") -> str:
         L.append(f"- Secrets reachable: {', '.join(br['secrets'])}")
     L.append("")
 
-    # Coverage (taxonomy)
+    # Coverage. ADR 0027: the runtime-tested figure is the measured claim; the
+    # graph-derived taxonomy counts mix provenance and are contextual only.
     tc = coverage.get("taxonomy_coverage")
-    if tc:
-        L.append(tag("## Coverage (graph-derived)", EC.MEASURED))
-        for fam, c in tc.items():
-            L.append(f"- **{fam}**: {c['tested']}/{c['universe']} tested "
-                     f"(demonstrated {len(c['demonstrated'])}, hypothesized "
-                     f"{len(c['hypothesized'])}, not-assessable {len(c['not_assessable'])})")
-        L.append("")
+    prov = coverage.get("coverage_provenance") or {}
+    rt_ratio = coverage.get("runtime_coverage_ratio")
+    if tc or prov:
+        L.append("## Coverage")
+        # 1. The measured claim: a payload was actually sent for these categories.
+        if prov:
+            universe = prov.get("universe") or 0
+            runtime = len(prov.get("runtime_tested") or [])
+            ratio = rt_ratio if rt_ratio is not None else (
+                round(runtime / universe, 2) if universe else 0.0)
+            L.append(tag(f"- **OWASP runtime-tested: {runtime}/{universe} "
+                         f"({ratio})**", EC.MEASURED))
+            L.append(f"  - runtime-tested: "
+                     f"{', '.join(prov.get('runtime_tested') or []) or 'none'}")
+            L.append(f"  - configuration-review only: "
+                     f"{', '.join(prov.get('config_review_only') or []) or 'none'}")
+            L.append(f"  - questionnaire only: "
+                     f"{', '.join(prov.get('questionnaire_only') or []) or 'none'}")
+            L.append(f"  - not tested: "
+                     f"{', '.join(prov.get('not_tested') or []) or 'none'}")
+            L.append("")
+        # 2. Context, not a measurement: these counts include findings obtained without
+        #    sending a payload, so the section is not tagged Measured.
+        if tc:
+            L.append(tag("### Coverage (graph-derived) — contextual, mixed provenance",
+                         EC.OBSERVED))
+            for fam, c in tc.items():
+                L.append(f"- **{fam}**: {c['tested']}/{c['universe']} categories with a "
+                         f"mapped finding (demonstrated {len(c['demonstrated'])}, "
+                         f"hypothesized {len(c['hypothesized'])}, not-assessable "
+                         f"{len(c['not_assessable'])})")
+            caveat = coverage.get("coverage_ratio_caveat")
+            if caveat:
+                L.append(f"- *{caveat}*")
+            L.append("")
 
     # Prioritized remediation
     L.append(tag("## (impact figures below are graph-derived estimates)", EC.ESTIMATED))
