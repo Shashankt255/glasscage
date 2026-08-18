@@ -487,6 +487,31 @@ def main(argv=None):
     har = f", {args.out}.har" if (args.har and target.exchanges) else ""
     ex = (", " + ", ".join(extra)) if extra else ""
     print(f"Wrote {args.out}.md, {args.out}.html, {args.out}.json{ev}{har}{ex}")
+
+    # ADR 0025: custody completeness at run exit. `exchanges` holds exactly one record per
+    # exchange the transport actually performed (ADR 0022/0023), and after ADR 0024 the
+    # audit chain holds exactly what reached disk. A shortfall between them therefore means
+    # custody was lost - and only that. It is not inferred from any failure: a refused
+    # connection, an HTTP 500 and a `response_path` failure each still append one exchange
+    # AND one entry, so they reconcile to zero.
+    #
+    # Reported here, after every artifact is written, because the assessment itself is
+    # sound; what cannot be vouched for is the evidence trail. Previously a failing audit
+    # backend surfaced only as a `probe ... crashed` note and the run exited 0 - measured on
+    # `v0.4.9-durable-audit-commit`, 18 exchanges with 4 in custody still exited 0.
+    # Exit 3 is used rather than 2, which already means "refused" (`GlasscageError`,
+    # `ap.error`); a run that completed with incomplete custody is a different outcome.
+    _lost = 0
+    if target.audit is not None:
+        _lost = len(target.exchanges) - len(target.audit.entries)
+    if _lost > 0:
+        print(f"error: custody incomplete - {_lost} of {len(target.exchanges)} exchange(s) "
+              f"were not recorded in the audit chain. The target was assessed and the "
+              f"report above is complete; what failed is chain of custody, so this run's "
+              f"evidence cannot be vouched for in full. The audit log holds "
+              f"{len(target.audit.entries)} entries and verifies as far as it goes; the "
+              f"missing exchanges are not recoverable from it.", file=sys.stderr)
+        return 3
     return 0
 
 
