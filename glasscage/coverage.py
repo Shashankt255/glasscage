@@ -90,6 +90,23 @@ def statement(cov: dict) -> str:
             f"{', '.join(prov.get('questionnaire_only') or []) or 'none'}. "
             f"Not tested: {', '.join(prov.get('not_tested') or []) or 'none'}.")
 
+    # ADR 0029: the sentence above is a CAPABILITY - it is registry-derived and reads the
+    # same whether the target answered or refused. This one is the measurement of this run.
+    # Omitted entirely when the key is absent, so a synthetic or legacy dict is not padded
+    # with a figure no run produced.
+    run_block = cov.get("run_measured_coverage") or {}
+    if run_block:
+        vouched = "" if run_block.get("custody_complete", True) else (
+            " NOT VOUCHED: custody was incomplete for this run, so the delivered exchanges "
+            "behind this figure cannot be attested in full.")
+        parts.append(
+            f"Measured runtime coverage this run: {run_block.get('measured_count', 0)}/"
+            f"{run_block.get('universe', 0)} ({run_block.get('run_coverage_ratio', 0.0)}) — "
+            f"categories that actually delivered a payload to this target: "
+            f"{', '.join(run_block.get('measured_categories') or []) or 'none'}. "
+            f"The runtime figure above is capability (categories with a runtime-capable "
+            f"probe), not a measurement of this run.{vouched}")
+
     # Contextual, mixed provenance. Deliberately not called "tested": this count includes
     # categories carrying a finding that no payload established.
     parts.append(
@@ -104,3 +121,47 @@ def statement(cov: dict) -> str:
     parts.append("'Passed' means the target resisted the specific inputs tried in this "
                  "run - it is NOT a proof of robustness against adaptive attackers.")
     return " ".join(parts)
+
+
+# --- run-derived measured coverage (ADR 0029) -------------------------------
+# `coverage_provenance.summarize()` classifies the *registry*: it answers "which
+# categories have a probe that would send a payload". That is a capability, and it reads
+# the same whether the target answered every request or refused all of them. The figures
+# below answer a different question - "which categories actually delivered a payload to
+# THIS target on THIS run" - and are computed from delivered exchanges, never from the
+# registry, the findings, or the posture. The two are reported side by side and neither
+# redefines the other.
+
+def is_delivered(exchange: dict) -> bool:
+    """True when this exchange record shows a response actually came back.
+
+    Every transport records `status` (`target.HTTPChatTarget._record`,
+    `targets/rest.py`, `refagent`), and every one of them writes 0 when the payload never
+    reached the target - a refused connection, a timeout, a DNS failure. A non-zero status
+    is an HTTP status line, which the target could only have produced after receiving the
+    request; that includes 4xx/5xx, where the payload was delivered and rejected. A scope
+    refusal raises before any record is written, so it cannot appear here at all.
+    """
+    try:
+        return int(exchange.get("status") or 0) > 0
+    except (AttributeError, TypeError, ValueError):
+        return False
+
+
+def run_measured(delivered_categories, custody_complete: bool = True) -> dict:
+    """Assemble the run-derived block from the categories that delivered a payload.
+
+    `delivered_categories` is whatever the engine observed; it is filtered to CANONICAL
+    so a plugin probe carrying an off-taxonomy id cannot inflate the count, and it is a
+    set, so a category with nine probes counts once. The denominator is `len(CANONICAL)`
+    - the same 13 the capability figure uses - so the two are directly comparable.
+    """
+    cats = sorted({c for c in (delivered_categories or ()) if c in CANONICAL})
+    universe = len(CANONICAL)
+    return {
+        "universe": universe,
+        "measured_categories": cats,
+        "measured_count": len(cats),
+        "run_coverage_ratio": round(len(cats) / universe, 2) if universe else 0.0,
+        "custody_complete": bool(custody_complete),
+    }
