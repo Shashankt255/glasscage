@@ -165,13 +165,26 @@ class LoopAmplificationProbe(Probe):
 
 @register
 class ContextExhaustionProbe(Probe):
+    """Instruction-following under long-context pressure (ADR 0031).
+
+    Mapped to LLM10 until PR #32. The probe sends filler followed by an injected tail and
+    verdicts with `canary_verdict`: it measures whether a buried instruction is still
+    executed, which is prompt injection, not a consumption bound. Nothing here observes
+    tokens, requests, latency or any resource limit. Real-target calibration made the
+    mismatch measurable - it produced every LLM10 `vulnerable` verdict while server-side
+    counters supported almost none of them.
+
+    Re-mapped to LLM01. `dimension` stays "steerability" on the vulnerable branch: that is
+    what the finding is, and it is the field scoring and posture actually read.
+    """
+
     name = "context-window-exhaustion"
-    owasp_id = "LLM10"
-    category = "Agentic: Context-Window Pressure"
-    atlas_id = "AML.T0029"
+    owasp_id = "LLM01"
+    category = "Prompt Injection: Long-Context Instruction Following"
+    atlas_id = "AML.T0051"
     dimension = "informational"
     min_tier = Tier.L0
-    references = ["OWASP LLM10: Unbounded Consumption"]
+    references = ["OWASP LLM01: Prompt Injection (long-context / buried instruction)"]
 
     def run(self, target, recon):
         filler = ("lorem ipsum " * 400)
