@@ -1047,6 +1047,63 @@ Plumbing only. No new probe, detector, graph node/edge type, attack technique, o
   directly, the PR #28 markdown section asserted intact, and JSON/SARIF asserted free of the
   statement. Thirteen of the twenty fail against `v0.5.2-coverage-honesty`.
 
+### Added
+- **Run-derived measured coverage** (`coverage.py`, `engine.py`): preparing the C1
+  real-target validation programme established that `coverage_provenance.summarize()`
+  **takes no run argument**. It iterates the probe `REGISTRY` and classifies each probe by
+  `inspect.getsource(probe.run)`, so its **7/13 (0.54)** means *seven categories have a
+  probe that would send a payload* — a CAPABILITY. It reads 7/13 whether the target
+  answered every request, refused every connection, or was out of scope. Against the
+  bundled mock the two readings coincide, which is why it went unnoticed; against a real
+  target they can diverge arbitrarily. C1 cannot report what was exercised against a target
+  from a figure that never consulted it.
+  A distinct, run-derived block is added — `run_measured_coverage` (`universe`,
+  `measured_categories`, `measured_count`, `run_coverage_ratio`, `custody_complete`) plus a
+  flat `run_coverage_ratio`. **The existing capability figure keeps its exact meaning and
+  value**; the new name deliberately avoids `runtime_*` so nothing is silently redefined.
+  A category is measured **iff an exchange recorded during one of its probes shows a
+  response came back**. All three transports write `status` and all write `0` when the
+  payload never arrived, so `status > 0` is delivery (4xx/5xx included — the target received
+  and rejected it), `status == 0` is a transport refusal, a scope refusal raises before any
+  record exists, and a probe that crashes before sending records nothing. **A delivered
+  payload that produced no finding still counts**; findings and probe existence are
+  explicitly not sources. A category counts **once** however many probes it has, the
+  denominator is `len(CANONICAL)` = 13, and off-taxonomy plugin ids cannot inflate it.
+  Custody follows PR #26 exactly: when exchanges outrun the audit chain the categories are
+  still reported — they were delivered — but the statement renders **NOT VOUCHED**, so a
+  measurement standing on unattestable exchanges is never quoted as though it could be.
+  Attribution lives in the engine's probe loop, the only place a probe and its exchanges are
+  both in scope (exchange records carry no category, and all three recording sites are
+  outside this PR's scope); the arithmetic is two pure functions in `coverage.py`. The block
+  is attached **after** posture is computed, so it cannot reach the score.
+  **Unchanged and verified:** `posture_score` 42.7 / `risk_index` 57.3; the capability
+  figure and its 7/13 value; `coverage_ratio` semantics; the PR #28 markdown section; JSON,
+  SARIF, the replay bundle and runner, the AAKG export and all five audience views; PR #23–26
+  custody and exit codes 0/2/3; every frozen probe; determinism.
+  **Accepted limitations:** the ADR 0027 AAKG markdown section is unchanged (a separate
+  renderer, beyond this PR's minimum scope); no JSON/SARIF contract was added, as none was
+  approved; and delivery is not comprehension — a 200 proves the payload arrived, not that
+  the model engaged with it. This PR does **not** validate a real model; it makes the
+  measurement exist. See `docs/adr/0029-run-derived-measured-coverage.md`.
+- `docs/adr/0029-run-derived-measured-coverage.md`.
+### Tests
+- 919 passing (+29). The measurement is pinned to real delivery evidence, with every
+  expectation fixed by construction rather than taken from the code under test: a fake
+  transport that records `status` exactly as the real ones do, and fake probes that declare
+  which category they drive and which prompt they send. All probes deliver → measured equals
+  capability; one category's probe refused → measured is lower; delivery with **no finding**
+  still counts; a probe crashing before transport, a scope refusal and a transport refusal
+  are each asserted **not** counted, with the exchange log checked directly; a probe that
+  delivers then crashes still counts; three probes in one category count once; a category
+  where one probe is refused and another delivers still counts; zero exchanges measure 0/13;
+  questionnaire-only categories are never measured. Custody: an audit chain short of the
+  exchanges is asserted to flag `custody_complete` false and render **NOT VOUCHED**, while a
+  complete chain renders neither. The statement is asserted to read the block and not the
+  graph-derived count, using a dict where the two figures deliberately differ. Nothing else
+  moves: capability coverage asserted at exactly `["LLM01","LLM02","LLM05","LLM06","LLM07",
+  "LLM09","LLM10"]` / 0.54, posture and risk asserted directly, and JSON/SARIF asserted free
+  of both new keys. Twenty-five of the twenty-nine fail against `v0.5.3-html-coverage-honesty`.
+
 ## [1.0.0rc3] — Attack Narratives & Assessment Story
 Reporting layer only. No new analysis, graph node types, attack techniques, or scoring.
 ### Added

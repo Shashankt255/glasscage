@@ -71,6 +71,9 @@ class Engine:
         # ADR 0002: optional Surface/ApplicationTarget to route probe traffic through.
         # None keeps the pre-existing single-target path exactly as it was.
         self.surface = surface
+        # ADR 0029: categories that actually delivered a payload on this run. Populated
+        # from exchange records in `_assess_surface`, never from probes or findings.
+        self._delivered_categories: set[str] = set()
 
     def _report_identity(self) -> str:
         """What the report header names (ADR 0011, discharging ADR 0005's deferral).
@@ -142,12 +145,24 @@ class Engine:
                     assessed_tier=target_tier.name, required_tier=required.name,
                     prompt="(tier-gated)", response_excerpt=""))
                 continue
+            # ADR 0029: bracket the probe with the transport's own exchange log. Only the
+            # transports append here, and only after a response exists, so the slice below
+            # is exactly what this probe put on the wire. A probe that raises before
+            # sending adds nothing; a scope refusal raises inside `send` before any record
+            # is written; a refused connection records `status` 0. Read after the
+            # try/except so a probe that crashes *after* delivering still counts what it
+            # actually delivered.
+            _exch = getattr(probe_target, "exchanges", None)
+            _before = len(_exch) if _exch is not None else 0
             try:
                 for f in runner.run(probe, probe_target, recon):
                     f.assessed_tier = target_tier.name
                     out.append(f)
             except Exception as e:  # noqa: BLE001
                 recon.notes.append(f"probe {probe.name} crashed: {e}")
+            if _exch is not None and any(coverage_mod.is_delivered(x)
+                                         for x in _exch[_before:]):
+                self._delivered_categories.add(probe.owasp_id)
         # ADR 0017: the attackers are prompt-shaped - both drive through `target.send()` -
         # so they are CHAT-only, exactly as a probe declaring `surface_kinds = (CHAT,)`.
         # They were invoked regardless of the driven kind, which on a REST surface meant a
@@ -237,6 +252,7 @@ class Engine:
         # ADR 0011: every resolved CHAT surface is driven, in `chat_surfaces_of()` order,
         # all validated before any traffic.
         probe_targets = self._probe_targets()
+        self._delivered_categories = set()   # ADR 0029: per-run, reset on every run()
 
         from .tal import TargetCapabilities, Tier
         from .stats import TrialRunner
@@ -371,6 +387,17 @@ class Engine:
             chains = chain_mod.build(findings, trust_model) if self.build_chains else []
             posture = posture_mod.compute(findings, recon, trust_model, chains, cov,
                                           adaptive_success)
+        # ADR 0029: attached AFTER posture is computed, so the measurement cannot reach
+        # the score even accidentally - `posture_score` and `risk_index` are already fixed
+        # by this line. Attached on both branches: a run-derived measurement is meaningful
+        # with or without the graph.
+        _custody_ok = all(
+            len(getattr(t, "exchanges", ()) or ()) == len(getattr(t.audit, "entries", ()) or ())
+            for t in probe_targets if getattr(t, "audit", None) is not None)
+        cov["run_measured_coverage"] = coverage_mod.run_measured(
+            self._delivered_categories, custody_complete=_custody_ok)
+        cov["run_coverage_ratio"] = cov["run_measured_coverage"]["run_coverage_ratio"]
+
         summary["posture_score"] = posture["posture_score"]
         summary["risk_index"] = posture["risk_index"]
 
