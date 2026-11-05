@@ -7,10 +7,11 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from glasscage.evidence_confidence import EvidenceClass as EC, from_state, tag, legend
-from glasscage.engine import Engine
-from glasscage.refagent import ReferenceAgent
 from glasscage import schema
+from glasscage.engine import Engine
+from glasscage.evidence_confidence import EvidenceClass as EC
+from glasscage.evidence_confidence import from_state
+from glasscage.refagent import ReferenceAgent
 
 _TOOLS = schema.ingest({"functions": [{"name": "get_secret", "description": "vault", "parameters": {}}]})
 

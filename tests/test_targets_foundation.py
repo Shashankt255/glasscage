@@ -9,6 +9,7 @@ dependency-direction guard (targets must not import engine/probes/aakg).
 
 import unittest
 
+from glasscage.target import ChatResponse
 from glasscage.targets import (
     Action,
     ApplicationTarget,
@@ -22,7 +23,6 @@ from glasscage.targets import (
     SurfaceCandidate,
     SurfaceKind,
 )
-from glasscage.target import ChatResponse, HTTPChatTarget
 
 
 class _StubTarget:

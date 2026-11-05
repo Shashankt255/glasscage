@@ -4,12 +4,18 @@
 Usage: python tools/profile_run.py [--top N]
 Prints the hottest functions and peak memory for an end-to-end graph run.
 """
-import argparse, cProfile, io, pstats, sys, tracemalloc
+import argparse
+import cProfile
+import io
+import pstats
+import sys
+import tracemalloc
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from glasscage import schema
 from glasscage.engine import Engine
 from glasscage.refagent import ReferenceAgent
-from glasscage import schema
 
 TOOLS = schema.ingest({"functions": [
     {"name": "get_secret", "description": "vault", "parameters": {}},

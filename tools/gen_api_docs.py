@@ -4,7 +4,10 @@
 Usage: python tools/gen_api_docs.py
 Writes docs/api/<module>.txt for each public module.
 """
-import importlib, pkgutil, pydoc, sys
+import importlib
+import pkgutil
+import pydoc
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -12,7 +15,8 @@ sys.path.insert(0, str(ROOT))
 OUT = ROOT / "docs" / "api"
 OUT.mkdir(parents=True, exist_ok=True)
 
-import glasscage  # noqa: E402
+import glasscage
+
 
 def modules():
     yield "glasscage"
@@ -26,7 +30,7 @@ for name in sorted(set(modules())):
     try:
         mod = importlib.import_module(name)
         text = pydoc.render_doc(mod, renderer=pydoc.plaintext)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         text = f"(could not document {name}: {e})"
     (OUT / f"{name}.txt").write_text(text)
     index.append(f"- [{name}](api/{name}.txt)")

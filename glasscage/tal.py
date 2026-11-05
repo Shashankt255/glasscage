@@ -44,7 +44,7 @@ class Tier(IntEnum):
                 3: "L3 provider-native"}[int(self)]
 
 
-def parse_tier(value) -> "Tier":
+def parse_tier(value) -> Tier:
     if isinstance(value, Tier):
         return value
     if isinstance(value, int):

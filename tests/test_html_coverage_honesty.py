@@ -34,7 +34,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import cli
 from glasscage import coverage as legacy_cov
-from glasscage import report as legacy_report
 
 _TOOLS = ("categories_tested", "categories_not_tested", "categories_not_assessable",
           "known_gaps", "techniques_run", "coverage_ratio")
@@ -92,7 +91,7 @@ class _HtmlCase(unittest.TestCase):
     def html_coverage(self, out):
         with open(out + ".html", encoding="utf-8") as fh:
             html = fh.read()
-        m = re.search(r"const DATA = (\{.*?\});", html, re.S)
+        m = re.search(r"const DATA = (\{.*?\});", html, re.DOTALL)
         self.assertIsNotNone(m, "HTML has no DATA block")
         return json.loads(m.group(1)).get("coverage", ""), html
 
@@ -150,7 +149,7 @@ class TestValuesAreRead(_HtmlCase):
                             "glasscage", "coverage.py")
         with open(path, encoding="utf-8") as fh:
             body = fh.read().split("def statement(")[1]
-        doc = re.search(r'""".*?"""', body, re.S)
+        doc = re.search(r'""".*?"""', body, re.DOTALL)
         code = body[doc.end():] if doc else body
         self.assertNotIn("0.54", code)
         self.assertNotIn("7/13", code)

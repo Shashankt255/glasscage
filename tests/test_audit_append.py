@@ -28,8 +28,14 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from glasscage.audit import (AuditLog, ChainStatus, canonical_entry, check_entries,
-                             sha256, verify_file)
+from glasscage.audit import (
+    AuditLog,
+    ChainStatus,
+    canonical_entry,
+    check_entries,
+    sha256,
+    verify_file,
+)
 from glasscage.errors import ConfigError, GlasscageError
 
 _URL = "https://bot.example/chat"
@@ -53,8 +59,7 @@ def _v1_entry():
 
 def _write(path, entries):
     with open(path, "w", encoding="utf-8") as fh:
-        for e in entries:
-            fh.write(json.dumps(e) + "\n")
+        fh.writelines(json.dumps(e) + "\n" for e in entries)
 
 
 # ---------------- resume ----------------
@@ -153,9 +158,8 @@ class TestRefusal(unittest.TestCase):
         return p
 
     def test_tampered_log_is_refused(self):
-        with tempfile.TemporaryDirectory() as d:
-            with self.assertRaises(ConfigError) as ctx:
-                AuditLog(self._tampered_log(d))
+        with tempfile.TemporaryDirectory() as d, self.assertRaises(ConfigError) as ctx:
+            AuditLog(self._tampered_log(d))
         self.assertIn("does not verify", str(ctx.exception))
 
     def test_legacy_log_is_refused(self):
@@ -193,9 +197,8 @@ class TestRefusal(unittest.TestCase):
 
     def test_refusal_is_a_glasscage_error(self):
         """So the CLI's existing handler turns it into `error: ...` and exit 2."""
-        with tempfile.TemporaryDirectory() as d:
-            with self.assertRaises(GlasscageError):
-                AuditLog(self._tampered_log(d))
+        with tempfile.TemporaryDirectory() as d, self.assertRaises(GlasscageError):
+            AuditLog(self._tampered_log(d))
 
     def test_no_recovery_mechanism_is_offered(self):
         """ADR 0020: refuse and name the path. Nothing rotates, migrates or repairs."""
@@ -222,10 +225,9 @@ class TestNonObjectLines(unittest.TestCase):
 
     def test_bare_string_and_number_lines(self):
         for body in ('"hello"\n', "42\n", "true\n", "null\n"):
-            with self.subTest(body=body.strip()):
-                with tempfile.TemporaryDirectory() as d:
-                    self.assertIs(verify_file(self._file(d, body)).status,
-                                  ChainStatus.TAMPERED)
+            with self.subTest(body=body.strip()), tempfile.TemporaryDirectory() as d:
+                self.assertIs(verify_file(self._file(d, body)).status,
+                              ChainStatus.TAMPERED)
 
     def test_check_entries_handles_a_non_object_directly(self):
         r = check_entries([[1, 2, 3]])

@@ -24,9 +24,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .types import EdgeType, NodeType
+from ..evidence_confidence import EvidenceClass as EC
+from ..evidence_confidence import from_state
 from . import narrative as narr_mod
-from ..evidence_confidence import EvidenceClass as EC, from_state
+from .types import EdgeType, NodeType
 
 _NOT_DEMONSTRATED = "Not demonstrated."
 
@@ -45,7 +46,7 @@ class Section:
         L += self.body or [_NOT_DEMONSTRATED]
         if self.citations:
             L.append("")
-            L.append(f"_Cited: {', '.join('`%s`' % c for c in self.citations[:6])}_")
+            L.append(f"_Cited: {', '.join(f'`{c}`' for c in self.citations[:6])}_")
         return "\n".join(L)
 
     def to_dict(self) -> dict:
@@ -91,7 +92,7 @@ def _findings_by_state(g):
 
 def build_story(g, results, target_name: str = "target") -> StoryModel:
     posture = results.get("posture") or {}
-    coverage = results.get("coverage") or {}
+    _coverage = results.get("coverage") or {}
     chains = results.get("chains") or []
     trust = results.get("trust") or {}
     br = results.get("blast") or {}
@@ -239,7 +240,7 @@ def build_story(g, results, target_name: str = "target") -> StoryModel:
         if not outs:
             continue
         for e in outs:
-            d = g.node(e.dst)
+            _d = g.node(e.dst)
             rcbody.append(f"- `{f.id}` enables `{e.dst}` ({e.state.value}) — "
                           f"{e.provenance or 'see finding evidence'}")
             rccite.append(e.id)

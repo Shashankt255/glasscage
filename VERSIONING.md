@@ -20,8 +20,12 @@ benchmark corpus schema; the Indicative Risk Index heuristic.
 
 ## Deprecation
 Deprecated APIs emit a warning for one minor release before removal. Removal is a major
-bump. The legacy `--no-aakg` engines (`posture/coverage/chain/trust`) are deprecated and
-scheduled for removal in the next major.
+bump.
+
+The legacy `--no-aakg` engines `posture.py`, `trust.py`, and `chain.py` are deprecated
+and scheduled for removal in the next major. **`coverage.py` is not deprecated** — its
+`statement()`, `build()`, `is_delivered()`, and `run_measured()` functions remain active
+on the default (AAKG) path and are required by the HTML report and scoring pipeline.
 
 ## Pre-1.0 / RC
 Release candidates may change any Experimental surface without a major bump.

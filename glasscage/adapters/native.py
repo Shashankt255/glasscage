@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import time
 
-from .base import ExternalToolAdapter, AdapterResult
+from .base import AdapterResult, ExternalToolAdapter
 
 
 class NativeAdapter(ExternalToolAdapter):

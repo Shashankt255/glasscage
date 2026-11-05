@@ -16,9 +16,9 @@ cannot emit network IOCs; that is stated in the view rather than faked.
 
 from __future__ import annotations
 
-from .types import EdgeType, NodeType
-from . import narrative as narr_mod
 from ..evidence_confidence import EvidenceClass as EC
+from . import narrative as narr_mod
+from .types import NodeType
 
 AUDIENCES = ("executive", "security", "developer", "incident_response", "compliance")
 
@@ -42,9 +42,9 @@ def executive(story, narratives) -> str:
     L.append("**Risk summary**")
     L += [f"- {b}" if not b.startswith(("-", "*", "**")) else b
           for b in _sec(story, "findings")[:3]]
-    L.append(f"- Overall rating: see the Indicative Risk Index — an **uncalibrated "
-             f"heuristic [Estimated]**, useful for prioritization, not an absolute "
-             f"measure of risk.")
+    L.append("- Overall rating: see the Indicative Risk Index — an **uncalibrated "
+             "heuristic [Estimated]**, useful for prioritization, not an absolute "
+             "measure of risk.")
     L.append("")
     L.append(f"**What an attacker could reach**  [{_cls(story,'business_impact').value}]")
     L += _sec(story, "business_impact")
@@ -162,7 +162,7 @@ def incident_response(story, narratives, g=None) -> str:
 def compliance(story, narratives, g=None) -> str:
     L = ["### Compliance View", "",
          "_Control failures and framework mappings, taken from graph mappings only._", ""]
-    L.append("**Control failures observed**  [%s]" % _cls(story, "trust").value)
+    L.append(f"**Control failures observed**  [{_cls(story, 'trust').value}]")
     body = [b for b in _sec(story, "trust") if "VIOLATION" in b or "Excessive" in b]
     L += body or ["- Not demonstrated. No trust-boundary violation recorded in the graph."]
     L.append("")

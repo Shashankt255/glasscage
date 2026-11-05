@@ -12,7 +12,6 @@ Run: python -m unittest tests.test_diff_identity -v
 """
 
 import dataclasses
-import json
 import os
 import re
 import sys
@@ -39,8 +38,8 @@ _MANIFEST = {"tools": [
 
 
 def _finding(**kw):
-    base = dict(probe_name="p", title="t", owasp_id="LLM01", category="c",
-                status=Status.VULNERABLE, severity=Severity.HIGH)
+    base = {"probe_name": "p", "title": "t", "owasp_id": "LLM01", "category": "c",
+            "status": Status.VULNERABLE, "severity": Severity.HIGH}
     base.update(kw)
     return Finding(**base)
 

@@ -26,8 +26,17 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from glasscage.audit import Scope
 from glasscage.errors import ConfigError, TargetError
 from glasscage.targets import (
-    ApplicationTarget, HttpAction, RestDriver, RestTarget, Surface, SurfaceCandidate,
-    SurfaceKind, SurfaceTarget, bind_candidate, discover_openapi, drivable_surfaces_of,
+    ApplicationTarget,
+    HttpAction,
+    RestDriver,
+    RestTarget,
+    Surface,
+    SurfaceCandidate,
+    SurfaceKind,
+    SurfaceTarget,
+    bind_candidate,
+    discover_openapi,
+    drivable_surfaces_of,
 )
 from glasscage.targets import discovery as discovery_mod
 

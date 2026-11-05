@@ -179,7 +179,7 @@ class TestEndToEndInvariants(unittest.TestCase):
 
     def _coverage_line(self):
         import re
-        m = re.search(r"const DATA\s*=\s*(\{.*?\});", self.html, re.S)
+        m = re.search(r"const DATA\s*=\s*(\{.*?\});", self.html, re.DOTALL)
         return json.loads(m.group(1))["coverage"]
 
     def test_20_posture_and_risk_unchanged(self):
@@ -215,12 +215,12 @@ class TestEndToEndInvariants(unittest.TestCase):
 
 class TestSiblingProbesUnmodified(unittest.TestCase):
     def test_26_loop_amplification_unchanged(self):
-        p = [x for x in REGISTRY if x.name == "loop-amplification"][0]
+        p = next(x for x in REGISTRY if x.name == "loop-amplification")
         self.assertEqual(p.owasp_id, "LLM10")
         self.assertEqual(p.category, "Agentic: Retry / Loop Amplification")
 
     def test_27_unbounded_consumption_review_unchanged(self):
-        p = [x for x in REGISTRY if x.name == "unbounded-consumption-review"][0]
+        p = next(x for x in REGISTRY if x.name == "unbounded-consumption-review")
         self.assertEqual(p.owasp_id, "LLM10")
         self.assertEqual(p.category, "Unbounded Consumption")
 

@@ -21,8 +21,8 @@ import json
 import time
 from collections import defaultdict
 
-from .probes import CANARY_INJECT, canary_verdict, detect_secret, is_refusal
 from .models import Status
+from .probes import CANARY_INJECT, canary_verdict, detect_secret, is_refusal
 
 INDIRECT = "GLSSCG-INDIRECT-OK"
 TEXT_DETECTORS = ("injection", "disclosure", "refusal", "indirect")

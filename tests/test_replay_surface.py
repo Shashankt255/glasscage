@@ -32,9 +32,16 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 import cli
 from glasscage.audit import Scope
 from glasscage.errors import ConfigError
-from glasscage.targets import (ApplicationTarget, ChatSurface, RestTarget, Surface,
-                               SurfaceKind, bind_candidate, discover_openapi,
-                               rest_surface_from_target)
+from glasscage.targets import (
+    ApplicationTarget,
+    ChatSurface,
+    RestTarget,
+    Surface,
+    SurfaceKind,
+    bind_candidate,
+    discover_openapi,
+    rest_surface_from_target,
+)
 
 _SPEC = {"paths": {"/users": {"get": {}}}}
 _CFG = {"url": "https://api.example/v1"}

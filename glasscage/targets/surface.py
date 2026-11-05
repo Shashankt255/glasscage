@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # avoid an import cycle at runtime; Driver is only needed for typing
     from .driver import Action, Driver, Observation
@@ -48,7 +48,7 @@ class SurfaceCandidate:
     id: str
     kind: SurfaceKind
     locator: Any
-    io_schema: Optional[dict] = None
+    io_schema: dict | None = None
     source: str = ""  # which discoverer proposed it (evidence/provenance)
 
 
@@ -64,11 +64,11 @@ class Surface:
     id: str
     kind: SurfaceKind
     locator: Any
-    driver: "Driver"
-    io_schema: Optional[dict] = None
+    driver: Driver
+    io_schema: dict | None = None
     metadata: dict = field(default_factory=dict)
 
-    def drive(self, action: "Action") -> "Observation":
+    def drive(self, action: Action) -> Observation:
         """Exercise this surface with an action, via the bound driver."""
         return self.driver.drive(self, action)
 

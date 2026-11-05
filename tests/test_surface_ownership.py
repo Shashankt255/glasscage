@@ -177,7 +177,7 @@ class TestRefusalDiscipline(unittest.TestCase):
         shim = SurfaceTarget(ChatSurface(agent))       # origin omitted
         self.assertTrue(shim.send("hello").ok)
         with self.assertRaises(AttributeError):
-            shim.url
+            _ = shim.url
 
 
 if __name__ == "__main__":

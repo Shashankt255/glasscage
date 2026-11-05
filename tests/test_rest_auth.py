@@ -34,7 +34,12 @@ from glasscage.recon import run_recon
 from glasscage.refagent import ReferenceAgent
 from glasscage.target import HTTPChatTarget
 from glasscage.targets import (
-    ApplicationTarget, AuthContext, ChatSurface, HttpAction, RestTarget, SurfaceTarget,
+    ApplicationTarget,
+    AuthContext,
+    ChatSurface,
+    HttpAction,
+    RestTarget,
+    SurfaceTarget,
     rest_surface_from_target,
 )
 
@@ -309,7 +314,7 @@ class TestRepresentationIsSafe(unittest.TestCase):
 
     def test_application_target_repr_hides_material(self):
         app = ApplicationTarget(base_url="https://x.example", auth=_auth())
-        for rendered in (repr(app), str(app), f"{app}", "%s" % (app,)):
+        for rendered in (repr(app), str(app), f"{app}"):
             self.assertNotIn(_TOKEN, rendered)
             self.assertNotIn(_COOKIE, rendered)
 
@@ -350,9 +355,9 @@ class TestAuthParity(unittest.TestCase):
         driven, surface = _rest_target(auth=None)
         driven.scope = supplied.scope
         with mock.patch("urllib.request.urlopen",
-                        side_effect=AssertionError("no request may be issued")):
-            with self.assertRaises(TargetError):
-                SurfaceTarget(surface, origin=supplied)
+                        side_effect=AssertionError("no request may be issued")), \
+             self.assertRaises(TargetError):
+            SurfaceTarget(surface, origin=supplied)
 
     def test_matching_auth_is_accepted(self):
         auth = _auth()

@@ -21,7 +21,7 @@ from glasscage.audit import AuditLog, sha256
 from glasscage.engine import Engine
 from glasscage.refagent import ReferenceAgent
 from glasscage.target import ChatResponse
-from glasscage.targets import ChatDriver, ChatSurface, Observation, PromptAction
+from glasscage.targets import ChatSurface, Observation, PromptAction
 
 _TS = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[0-9.:+\-]*")
 

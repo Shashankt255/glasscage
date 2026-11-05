@@ -1,7 +1,6 @@
 """P0-1 secure evidence handling: redaction is default, raw only on consent.
 Run: python -m unittest tests.test_evidence_security -q
 """
-import glob
 import os
 import sys
 import tempfile
@@ -9,11 +8,10 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from glasscage import redaction
+from glasscage import redaction, schema
 from glasscage.engine import Engine
-from glasscage.refagent import ReferenceAgent
-from glasscage import schema
 from glasscage.errors import ConfigError
+from glasscage.refagent import ReferenceAgent
 
 _SECRET = "sk-REF00011122233344455"          # harness leaks this when disclosure fires
 _TOOLS = schema.ingest({"functions": [{"name": "get_secret", "description": "vault", "parameters": {}}]})

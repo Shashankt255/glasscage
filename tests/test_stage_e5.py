@@ -10,10 +10,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from cli import _MockTarget
 from glasscage import schema
+from glasscage.aakg import build as B
+from glasscage.aakg import coverage as GC
+from glasscage.aakg import posture as GP
+from glasscage.aakg import remediation as GR
+from glasscage.aakg import report as GRPT
 from glasscage.engine import Engine
 from glasscage.refagent import ReferenceAgent
-from glasscage.aakg import build as B
-from glasscage.aakg import posture as GP, coverage as GC, remediation as GR, report as GRPT
 
 _TOOLS = schema.ingest({"functions": [
     {"name": "get_secret", "description": "vault secret", "parameters": {}},

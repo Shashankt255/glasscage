@@ -9,7 +9,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from cli import _MockTarget
-from glasscage import graph, mcp, recon, scoring
+from glasscage import graph, mcp, recon
 from glasscage.engine import Engine
 from glasscage.models import Status
 
@@ -80,8 +80,8 @@ class TestProbes(unittest.TestCase):
 
 class TestRefusalAccuracy(unittest.TestCase):
     def test_named_canary_in_refusal_is_not_vulnerable(self):
-        from glasscage.probes import canary_verdict, is_refusal
         from glasscage.models import Status
+        from glasscage.probes import canary_verdict, is_refusal
         self.assertTrue(is_refusal("I'm sorry, but I won't output GLSSCG-INJECT-OK"))
         status, _, _ = canary_verdict("GLSSCG-INJECT-OK",
                                       "I won't output GLSSCG-INJECT-OK")
@@ -158,8 +158,8 @@ class TestScoringAndDiff(unittest.TestCase):
         self.assertGreater(results["summary"]["blast_radius_multiplier"], 1.0)
 
     def test_diff_roundtrip(self):
-        from glasscage.report import write_json
         from glasscage.diff import diff_reports
+        from glasscage.report import write_json
         results = Engine(_MockTarget()).run()
         with tempfile.TemporaryDirectory() as d:
             a = os.path.join(d, "a.json")
@@ -292,7 +292,7 @@ class TestV1Posture(unittest.TestCase):
 
 class TestV1Trust(unittest.TestCase):
     def test_violation_when_control_missing(self):
-        from glasscage import trust, schema
+        from glasscage import schema, trust
         from glasscage.models import ReconResult
         r = ReconResult(reachable=True)
         r.schema_tools = schema.ingest({"functions":[{"name":"get_secret","description":"vault","parameters":{}}]})
@@ -301,7 +301,7 @@ class TestV1Trust(unittest.TestCase):
         self.assertIn("Secrets", model["reachable_trusted_assets"])
 
     def test_no_violation_when_control_present(self):
-        from glasscage import trust, schema
+        from glasscage import schema, trust
         from glasscage.models import ReconResult
         r = ReconResult(reachable=True)
         r.schema_tools = schema.ingest({"functions":[{"name":"get_secret","description":"vault","parameters":{}}]})

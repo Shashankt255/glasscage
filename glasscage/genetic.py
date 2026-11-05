@@ -18,7 +18,7 @@ import base64
 import random
 
 from .models import Dimension, Finding, Severity, Status
-from .probes import CANARY_INJECT, canary_verdict, is_refusal
+from .probes import CANARY_INJECT, is_refusal
 
 _LEET = str.maketrans({"a": "4", "e": "3", "i": "1", "o": "0", "s": "5"})
 

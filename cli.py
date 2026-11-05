@@ -1,6 +1,6 @@
+#!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2025-2026 The GLASSCAGE Authors
-#!/usr/bin/env python3
 """GLASSCAGE CLI.
 
 Examples:
@@ -22,7 +22,8 @@ import os
 import sys
 
 from glasscage import mcp as mcp_mod
-from glasscage.diff import diff_reports, render as render_diff
+from glasscage.diff import diff_reports
+from glasscage.diff import render as render_diff
 from glasscage.engine import Engine
 from glasscage.plugins import load_plugins
 from glasscage.report import write_json
@@ -256,8 +257,8 @@ def main(argv=None):
                   "Python with your privileges and are NOT sandboxed; only load code you "
                   "trust.", file=sys.stderr)
             return 2
-        print("WARNING: loading plugins from '%s'. Plugins run as arbitrary code with "
-              "your privileges (no sandbox). Only load trusted plugins." % args.plugins,
+        print(f"WARNING: loading plugins from '{args.plugins}'. Plugins run as arbitrary code with "
+              "your privileges (no sandbox). Only load trusted plugins.",
               file=sys.stderr)
         n = load_plugins(args.plugins)
         print(f"Loaded {n} plugin module(s).", file=sys.stderr)
@@ -375,8 +376,12 @@ def main(argv=None):
     # already carries them; `surface=None` leaves every other invocation unchanged.
     surface = None
     if args.rest_config:
-        from glasscage.targets import (ApplicationTarget, SurfaceKind, bind_candidate,
-                                       discover_openapi)
+        from glasscage.targets import (
+            ApplicationTarget,
+            SurfaceKind,
+            bind_candidate,
+            discover_openapi,
+        )
         app = ApplicationTarget(base_url=target.url)
         for candidate in discover_openapi(_load(args.rest_spec)):
             app.add_candidate(candidate)
@@ -428,6 +433,7 @@ def main(argv=None):
         audit_mod.har_export(target.exchanges, f"{args.out}.har")
     if args.encrypt_evidence and evidence_dir:
         import os as _os
+
         from glasscage import redaction
         pw = args.evidence_password or _os.environ.get("GLASSCAGE_EVIDENCE_PASSWORD")
         if not pw:
@@ -517,6 +523,7 @@ def main(argv=None):
 
 if __name__ == "__main__":
     import sys as _sys
+
     from glasscage.errors import GlasscageError
     try:
         raise SystemExit(main())

@@ -24,7 +24,11 @@ from glasscage.engine import Engine
 from glasscage.errors import TargetError
 from glasscage.refagent import ReferenceAgent
 from glasscage.targets import (
-    ApplicationTarget, ChatDriver, ChatSurface, Observation, Surface, SurfaceKind,
+    ApplicationTarget,
+    ChatDriver,
+    Observation,
+    Surface,
+    SurfaceKind,
 )
 
 _TS = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[0-9.:+\-]*")

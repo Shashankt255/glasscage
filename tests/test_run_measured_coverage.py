@@ -31,8 +31,8 @@ from glasscage import coverage as cov_mod
 from glasscage import coverage_provenance as cp
 from glasscage.engine import Engine
 from glasscage.models import Finding, Severity, Status
-from glasscage.target import ChatResponse
 from glasscage.tal import TargetCapabilities
+from glasscage.target import ChatResponse
 
 REFUSE = "REFUSE-THIS-PAYLOAD"
 

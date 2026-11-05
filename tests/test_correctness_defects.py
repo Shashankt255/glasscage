@@ -33,8 +33,15 @@ from glasscage.engine import Engine
 from glasscage.errors import TargetError
 from glasscage.models import Finding, Severity, Status
 from glasscage.refagent import ReferenceAgent
-from glasscage.targets import (ApplicationTarget, ChatSurface, RestTarget, SurfaceTarget,
-                               bind_candidate, discover_openapi, rest_surface_from_target)
+from glasscage.targets import (
+    ApplicationTarget,
+    ChatSurface,
+    RestTarget,
+    SurfaceTarget,
+    bind_candidate,
+    discover_openapi,
+    rest_surface_from_target,
+)
 
 _REST_SRC = os.path.join(os.path.dirname(__file__), "..", "glasscage", "targets", "rest.py")
 _SPEC = {"paths": {"/u": {"get": {}}}}
@@ -64,8 +71,8 @@ def _rest_app(scope_hosts=("api.example",)):
 
 
 def _finding(**kw):
-    base = dict(probe_name="p", title="t", owasp_id="LLM02", category="c",
-                status=Status.VULNERABLE, severity=Severity.HIGH)
+    base = {"probe_name": "p", "title": "t", "owasp_id": "LLM02", "category": "c",
+            "status": Status.VULNERABLE, "severity": Severity.HIGH}
     base.update(kw)
     return Finding(**base)
 
@@ -95,9 +102,9 @@ class TestRestWordingIsCorrect(unittest.TestCase):
         t = RestTarget("https://api.example/v1")
         surface = rest_surface_from_target(t, "GET", "/u")
         with mock.patch("urllib.request.urlopen",
-                        side_effect=AssertionError("no request may be issued")):
-            with self.assertRaises(TargetError) as ctx:
-                SurfaceTarget(surface, origin=t)
+                        side_effect=AssertionError("no request may be issued")), \
+             self.assertRaises(TargetError) as ctx:
+            SurfaceTarget(surface, origin=t)
         self.assertIn("holds no scope", str(ctx.exception))
 
     def test_empty_scope_is_still_refused(self):

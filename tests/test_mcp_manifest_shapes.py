@@ -62,7 +62,7 @@ class _ShapeCase(unittest.TestCase):
         try:
             with contextlib.redirect_stdout(so), contextlib.redirect_stderr(se):
                 rc = cli.main(list(argv))
-        except BaseException as e:          # noqa: BLE001 - recorded, not swallowed
+        except BaseException as e:
             rc, exc = None, e
         return rc, so.getvalue(), se.getvalue(), exc
 
@@ -104,16 +104,14 @@ class TestRefusedShapes(_ShapeCase):
 
     def test_scalars_are_refused_by_analyze_manifest(self):
         for v in self.SCALARS:
-            with self.subTest(value=v):
-                with self.assertRaises(ConfigError):
-                    mcp.analyze_manifest(v)
+            with self.subTest(value=v), self.assertRaises(ConfigError):
+                mcp.analyze_manifest(v)
 
     def test_scalars_are_refused_by_snapshot(self):
         """`--mcp-baseline` travels this path."""
         for v in self.SCALARS:
-            with self.subTest(value=v):
-                with self.assertRaises(ConfigError):
-                    mcp.snapshot(v)
+            with self.subTest(value=v), self.assertRaises(ConfigError):
+                mcp.snapshot(v)
 
     def test_the_error_names_the_received_type(self):
         for v, want in (("s", "str"), (42, "int"), (True, "bool"), (None, "NoneType")):
@@ -141,9 +139,8 @@ class TestRefusedShapes(_ShapeCase):
     def test_refusals_are_glasscage_errors(self):
         """So the CLI's handler renders `error: ...` and exit 2."""
         for v in ("s", 1, [_TOOL, "bad"], {"tools": 7}):
-            with self.subTest(value=v):
-                with self.assertRaises(GlasscageError):
-                    mcp.analyze_manifest(v)
+            with self.subTest(value=v), self.assertRaises(GlasscageError):
+                mcp.analyze_manifest(v)
 
     def test_no_attribute_error_escapes_for_any_json_shape(self):
         """The defect: every one of these raised AttributeError."""

@@ -26,15 +26,13 @@ Run: python -m unittest tests.test_chat_transport_custody -v
 """
 
 import builtins
-import contextlib
-import io
+import http.server
 import json
 import os
 import socketserver
 import sys
 import tempfile
 import threading
-import http.server
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))

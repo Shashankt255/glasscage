@@ -14,43 +14,51 @@ path (no `surface=`) is unchanged.
 from __future__ import annotations
 
 from .application import ApplicationTarget, AuthContext
+from .binding import bind_candidate
 from .chat import ChatDriver, ChatSurface, chat_surface_from_target
 from .compat import (
-    SurfaceTarget, chat_surface_of, chat_surfaces_of, drivable_surfaces_of,
+    SurfaceTarget,
+    chat_surface_of,
+    chat_surfaces_of,
+    drivable_surfaces_of,
 )
-from .rest import RestDriver, RestTarget, canonical_request, rest_surface_from_target
-from .binding import bind_candidate
 from .discovery import discover, discover_mcp, discover_openapi
 from .driver import (
-    Action, Driver, HttpAction, Observation, PromptAction, ToolCallAction,
+    Action,
+    Driver,
+    HttpAction,
+    Observation,
+    PromptAction,
+    ToolCallAction,
 )
+from .rest import RestDriver, RestTarget, canonical_request, rest_surface_from_target
 from .surface import Surface, SurfaceCandidate, SurfaceKind
 
 __all__ = [
+    "Action",
     "ApplicationTarget",
     "AuthContext",
-    "SurfaceTarget",
-    "chat_surface_of",
-    "chat_surfaces_of",
-    "drivable_surfaces_of",
+    "ChatDriver",
+    "ChatSurface",
+    "Driver",
+    "HttpAction",
+    "Observation",
+    "PromptAction",
     "RestDriver",
     "RestTarget",
-    "rest_surface_from_target",
-    "canonical_request",
-    "bind_candidate",
-    "discover",
-    "discover_openapi",
-    "discover_mcp",
     "Surface",
     "SurfaceCandidate",
     "SurfaceKind",
-    "Driver",
-    "Observation",
-    "Action",
-    "PromptAction",
-    "HttpAction",
+    "SurfaceTarget",
     "ToolCallAction",
-    "ChatDriver",
-    "ChatSurface",
+    "bind_candidate",
+    "canonical_request",
     "chat_surface_from_target",
+    "chat_surface_of",
+    "chat_surfaces_of",
+    "discover",
+    "discover_mcp",
+    "discover_openapi",
+    "drivable_surfaces_of",
+    "rest_surface_from_target",
 ]

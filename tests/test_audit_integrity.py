@@ -27,8 +27,15 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from glasscage.audit import (AuditLog, ChainStatus, ENTRY_VERSION, canonical_entry,
-                             check_entries, sha256, verify_file)
+from glasscage.audit import (
+    ENTRY_VERSION,
+    AuditLog,
+    ChainStatus,
+    canonical_entry,
+    check_entries,
+    sha256,
+    verify_file,
+)
 
 _URL = "https://bot.example/chat"
 

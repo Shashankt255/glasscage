@@ -134,23 +134,20 @@ class TestScopeIsStillRequired(unittest.TestCase):
     def test_rest_run_without_scope_is_refused(self):
         """Refused by `require_scope` at SurfaceTarget construction — cli.py adds no
         refusal logic of its own."""
-        with _Run(None, patch=False) as r:
-            with self.assertRaises(TargetError) as ctx:
-                r.go(r.rest_argv("--authorized"))
+        with _Run(None, patch=False) as r, self.assertRaises(TargetError) as ctx:
+            r.go(r.rest_argv("--authorized"))
         self.assertIn("scope", str(ctx.exception).lower())
 
     def test_refusal_precedes_any_request(self):
-        with _Run(None, patch=False) as r:      # urlopen raises if called
-            with self.assertRaises(TargetError):
-                r.go(r.rest_argv("--authorized"))
+        with _Run(None, patch=False) as r, self.assertRaises(TargetError):
+            r.go(r.rest_argv("--authorized"))
 
     def test_the_cli_cannot_produce_an_empty_scope(self):
         """`--scope` takes `nargs="+"`, so a bare `--scope` is an argparse error. The
         empty-allowlist branch of ADR 0012 R1 is therefore unreachable from the CLI, and
         the absent-scope refusal above is the only one an operator can hit."""
-        with _Run(None, patch=False) as r:
-            with self.assertRaises(SystemExit):
-                r.go(r.rest_argv("--authorized", "--scope"))
+        with _Run(None, patch=False) as r, self.assertRaises(SystemExit):
+            r.go(r.rest_argv("--authorized", "--scope"))
 
 
 # ---------------- --authorized ----------------
@@ -170,9 +167,8 @@ class TestAuthorizedGate(unittest.TestCase):
         `--rest-config` flag at all, argparse would exit with "unrecognized arguments"
         and a bare assertRaises could not tell the two apart."""
         err = io.StringIO()
-        with _Run(None, patch=False) as r:
-            with redirect_stderr(err), self.assertRaises(SystemExit):
-                r.go(["--rest-config", r.cfg_path, "--out", r.out, "--authorized"])
+        with _Run(None, patch=False) as r, redirect_stderr(err), self.assertRaises(SystemExit):
+            r.go(["--rest-config", r.cfg_path, "--out", r.out, "--authorized"])
         self.assertIn("--rest-spec", err.getvalue())
         self.assertNotIn("unrecognized", err.getvalue())
 
@@ -238,9 +234,8 @@ class TestExistingInvocationsUnchanged(unittest.TestCase):
         self.assertEqual({f["surface_id"] for f in data["findings"]}, {""})
 
     def test_no_target_still_errors(self):
-        with _Run(None, patch=False) as r:
-            with self.assertRaises(SystemExit):
-                r.go(["--out", r.out])
+        with _Run(None, patch=False) as r, self.assertRaises(SystemExit):
+            r.go(["--out", r.out])
 
 
 # ---------------- gating visibility (EIA risk R-1) ----------------

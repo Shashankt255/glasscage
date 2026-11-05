@@ -11,11 +11,11 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from cli import _MockTarget
+from glasscage.aakg import EdgeState, EdgeType, NodeType, PropertyGraph
 from glasscage.adapters import REGISTRY
 from glasscage.adapters.base import AdapterResult
 from glasscage.config import validate_target_config
 from glasscage.errors import ConfigError
-from glasscage.aakg import PropertyGraph, NodeType, EdgeType, EdgeState
 
 
 def _rand_json(rng):
@@ -80,7 +80,7 @@ class TestConfigFuzz(unittest.TestCase):
                 validate_target_config(cfg)
             except ConfigError:
                 pass  # expected class of failure
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 self.fail(f"unexpected error type {type(e).__name__} for {cfg}: {e}")
 
 

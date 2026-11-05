@@ -159,9 +159,9 @@ class TestDiscoverRefusal(unittest.TestCase):
     def test_malformed_document_raises_config_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             bad = _write(tmp, "bad.json", {"not": "a spec"})
-            with contextlib.redirect_stdout(io.StringIO()):
-                with self.assertRaises(ConfigError):
-                    cli.main(["--discover", bad, "--out", os.path.join(tmp, "x")])
+            with contextlib.redirect_stdout(io.StringIO()), \
+                 self.assertRaises(ConfigError):
+                cli.main(["--discover", bad, "--out", os.path.join(tmp, "x")])
 
 
 if __name__ == "__main__":

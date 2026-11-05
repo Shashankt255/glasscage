@@ -57,7 +57,7 @@ def canonical_request(action: HttpAction, url: str) -> str:
         body_s = body
     else:
         body_s = json.dumps(body, sort_keys=True, separators=(",", ":"))
-    return "\n".join([line, head, "", body_s])
+    return f"{line}\n{head}\n\n{body_s}"
 
 
 class RestTarget:
@@ -158,7 +158,7 @@ class RestDriver:
                               latency_ms=(time.perf_counter() - start) * 1000,
                               request=canonical, response=body,
                               custody_hash=sha256(canonical, body))
-        except Exception as e:  # noqa: BLE001 - report any transport error to the caller
+        except Exception as e:
             body = str(e)
             obs = Observation(ok=False, text="", error=body,
                               latency_ms=(time.perf_counter() - start) * 1000,

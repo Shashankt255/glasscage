@@ -27,9 +27,9 @@ import json
 import shutil
 import time
 
-from .base import ExternalToolAdapter, AdapterResult
-from ..models import Finding, Severity, Status
 from .. import taxonomy
+from ..models import Finding, Severity, Status
+from .base import AdapterResult, ExternalToolAdapter
 
 
 def _py_module(mod: str) -> bool:
@@ -180,11 +180,10 @@ class _ExternalAdapter(ExternalToolAdapter):
     parser = None
 
     def available(self) -> bool:
-        if self.module and _py_module(self.module):
-            return True
-        if self.binary and shutil.which(self.binary):
-            return True
-        return False
+        return bool(
+            (self.module and _py_module(self.module))
+            or (self.binary and shutil.which(self.binary))
+        )
 
     def run(self, target, options=None):
         options = options or {}
@@ -198,7 +197,7 @@ class _ExternalAdapter(ExternalToolAdapter):
                                      findings=findings,
                                      raw_summary={"parsed_from": path, "count": len(findings)},
                                      elapsed_ms=round((time.perf_counter()-start)*1000, 1))
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 return AdapterResult(tool=self.name, available=True, error=f"parse error: {e}",
                                      elapsed_ms=round((time.perf_counter()-start)*1000, 1))
         # Live run requires the tool installed. Not attempted if unavailable.
@@ -221,7 +220,8 @@ class GarakAdapter(_ExternalAdapter):
     parser = staticmethod(parse_garak)
     def version(self):
         try:
-            import garak; return getattr(garak, "__version__", "unknown")
+            import garak
+            return getattr(garak, "__version__", "unknown")
         except Exception:
             return None
 

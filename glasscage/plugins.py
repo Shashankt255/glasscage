@@ -72,7 +72,7 @@ def load_plugins(directory: str, strict: bool = False) -> int:
                 hook(REGISTRY)
             loaded += 1
             _log.info("loaded plugin %s", path.name)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             if strict:
                 raise PluginError(f"failed to load {path.name}: {e}") from e
             _log.error("skipping plugin %s: %s", path.name, e)

@@ -4,13 +4,19 @@
 Usage: python tools/benchmark_perf.py [--json]
 Measures engine run time and per-stage graph analysis across increasing tool counts.
 """
-import argparse, json, statistics, sys, time
+import argparse
+import json
+import statistics
+import sys
+import time
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from glasscage import schema
+from glasscage.aakg import blast, paths, trust_graph
+from glasscage.aakg import build as B
 from glasscage.engine import Engine
 from glasscage.refagent import ReferenceAgent
-from glasscage import schema
-from glasscage.aakg import build as B, paths, trust_graph, blast
 
 
 def _tools(n):

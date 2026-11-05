@@ -1,11 +1,25 @@
 GLASSCAGE
-Copyright 2025-2026 The GLASSCAGE Authors
+Copyright 2025-2026 Shashank Tandon and The GLASSCAGE Authors
+
+This product includes software originally designed and implemented by
+Shashank Tandon (https://github.com/Shashankt255).
+
+The following are original works by Shashank Tandon:
+  - The AI Attack Knowledge Graph (AAKG) architecture and its graph-native
+    coverage, posture, and reporting engines
+  - Architecture decisions ADRs 0001-0032
+  - The evidence confidence classification and coverage provenance model
+  - The chain-of-custody audit mechanism
+  - The probe framework and attacker pipeline
 
 This product is licensed under the Apache License, Version 2.0 (the "License");
 you may not use this product except in compliance with the License. You may obtain
 a copy of the License in the accompanying LICENSE file or at:
 
     http://www.apache.org/licenses/LICENSE-2.0
+
+This NOTICE file must be included in all copies or substantial portions of the
+Software, as required by Section 4(d) of the Apache License 2.0.
 
 GLASSCAGE has zero runtime dependencies (Python standard library only). Optional
 features use the following third-party packages only when their extras are installed;

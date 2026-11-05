@@ -17,10 +17,14 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from .types import EdgeType, NodeType
-from . import paths as paths_mod, trust_graph, blast as blast_mod, remediation as rem_mod
+from ..evidence_confidence import EvidenceClass as EC
+from ..evidence_confidence import from_state, legend, tag
+from . import blast as blast_mod
 from . import narrative as narr_mod
-from ..evidence_confidence import EvidenceClass as EC, from_state, tag, legend
+from . import paths as paths_mod
+from . import remediation as rem_mod
+from . import trust_graph
+from .types import NodeType
 
 
 def _findings_by_state(g):

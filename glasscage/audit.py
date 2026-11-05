@@ -23,7 +23,6 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
 from urllib.parse import urlparse
 
 from .errors import ConfigError
@@ -93,7 +92,7 @@ class ChainResult:
 
     status: ChainStatus
     entries: int
-    head: Optional[str] = None
+    head: str | None = None
     detail: str = ""
 
     @property
@@ -183,7 +182,7 @@ class Scope:
     """Explicit allowlist of hosts that may be tested."""
 
     def __init__(self, allowed_hosts: list[str] | None = None):
-        self.allowed = set(h.lower() for h in (allowed_hosts or []))
+        self.allowed = {h.lower() for h in (allowed_hosts or [])}
 
     def check(self, url: str) -> None:
         if not self.allowed:

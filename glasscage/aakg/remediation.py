@@ -15,8 +15,9 @@ complementary (not duplicated) - this engine answers "what should I fix first".
 
 from __future__ import annotations
 
+from . import paths as paths_mod
+from . import trust_graph
 from .types import EdgeState, EdgeType, NodeType
-from . import paths as paths_mod, trust_graph, blast as blast_mod
 
 # Mitigation catalog: key -> (human title, which edges it neutralizes).
 # A neutralizer is a predicate over an Edge given the graph.
@@ -56,7 +57,7 @@ def prioritize(g) -> list[dict]:
     present = {m.id.split(":", 1)[1] for m in g.find(NodeType.MITIGATION)}
     all_paths = paths_mod.build_paths(g)
     trust = trust_graph.analyze(g)
-    hv_assets = set(trust["reachable_trusted_assets"])
+    _hv_assets = set(trust["reachable_trusted_assets"])
     violations = trust["violations"]
 
     recs = []

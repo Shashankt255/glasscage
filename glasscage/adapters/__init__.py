@@ -17,11 +17,10 @@ Status:
   fuzzyai  Roadmap        (interface defined; requires FuzzyAI installed)
 """
 
-from .base import ExternalToolAdapter, AdapterResult
-from .native import NativeAdapter
+from .base import AdapterResult, ExternalToolAdapter
+from .external import DeepTeamAdapter, FuzzyAIAdapter, GarakAdapter, PromptfooAdapter, PyRITAdapter
 from .fake import FakeAdapter
-from .external import (GarakAdapter, PyRITAdapter, PromptfooAdapter,
-                       DeepTeamAdapter, FuzzyAIAdapter)
+from .native import NativeAdapter
 
 REGISTRY = {
     "native": NativeAdapter, "fake": FakeAdapter, "garak": GarakAdapter,
@@ -29,6 +28,15 @@ REGISTRY = {
     "deepteam": DeepTeamAdapter, "fuzzyai": FuzzyAIAdapter,
 }
 
-__all__ = ["ExternalToolAdapter", "AdapterResult", "NativeAdapter", "FakeAdapter",
-           "GarakAdapter", "PyRITAdapter", "PromptfooAdapter", "DeepTeamAdapter",
-           "FuzzyAIAdapter", "REGISTRY"]
+__all__ = [
+                       "REGISTRY",
+                       "AdapterResult",
+                       "DeepTeamAdapter",
+                       "ExternalToolAdapter",
+                       "FakeAdapter",
+                       "FuzzyAIAdapter",
+                       "GarakAdapter",
+                       "NativeAdapter",
+                       "PromptfooAdapter",
+                       "PyRITAdapter",
+]

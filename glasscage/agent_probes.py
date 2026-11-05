@@ -14,7 +14,7 @@ actually routed, memory actually persisted) and marks the finding impact-confirm
 from __future__ import annotations
 
 from .models import Severity, Status
-from .probes import Probe, register, canary_verdict, CANARY_INJECT, _excerpt
+from .probes import CANARY_INJECT, Probe, _excerpt, canary_verdict, register
 from .tal import Tier
 
 

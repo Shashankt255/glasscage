@@ -5,13 +5,17 @@ Usage: python tools/gen_sbom.py > sbom.json
 Reports the package, its (zero) runtime dependencies, declared optional extras, and
 the enumerated first-party modules. Does not invent transitive deps.
 """
-import json, sys, hashlib, pkgutil
-from pathlib import Path
+import hashlib
+import json
+import pkgutil
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-import glasscage  # noqa: E402
+import glasscage
+
 
 def _sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()

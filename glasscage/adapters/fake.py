@@ -4,8 +4,8 @@
 
 from __future__ import annotations
 
-from .base import ExternalToolAdapter, AdapterResult
 from ..models import Finding, Severity, Status
+from .base import AdapterResult, ExternalToolAdapter
 
 
 class FakeAdapter(ExternalToolAdapter):

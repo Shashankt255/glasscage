@@ -9,10 +9,11 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from glasscage.stats import wilson
+from glasscage.aakg import build as B
+from glasscage.aakg import paths as P
 from glasscage.engine import Engine
 from glasscage.refagent import ReferenceAgent
-from glasscage.aakg import build as B, paths as P
+from glasscage.stats import wilson
 
 
 class TestWilsonProperties(unittest.TestCase):

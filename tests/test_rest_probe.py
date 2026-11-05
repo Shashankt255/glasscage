@@ -26,7 +26,12 @@ from glasscage.probes import SECRET_PATTERNS, all_probes, detect_secret
 from glasscage.recon import run_recon
 from glasscage.refagent import ReferenceAgent
 from glasscage.targets import (
-    ChatSurface, HttpAction, RestTarget, SurfaceKind, SurfaceTarget, canonical_request,
+    ChatSurface,
+    HttpAction,
+    RestTarget,
+    SurfaceKind,
+    SurfaceTarget,
+    canonical_request,
     rest_surface_from_target,
 )
 

@@ -16,8 +16,8 @@ Emits the legacy coverage dict keys (so report/HTML shims keep working) plus a n
 
 from __future__ import annotations
 
-from ..coverage import CANONICAL, KNOWN_GAPS
 from .. import taxonomy
+from ..coverage import CANONICAL, KNOWN_GAPS
 from .types import EdgeType, NodeType
 
 _FAMILIES = {
@@ -56,7 +56,7 @@ def _category_status(g, tax_node) -> str:
 def compute(g) -> dict:
     tax_cov = {}
     for ntype, universe in _FAMILIES.items():
-        present = {n.label or n.id.split(":", 1)[1] for n in g.nodes(ntype)}
+        _present = {n.label or n.id.split(":", 1)[1] for n in g.nodes(ntype)}
         buckets = {"demonstrated": [], "hypothesized": [], "not_assessable": [],
                    "untested": []}
         for cat in universe:

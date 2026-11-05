@@ -10,8 +10,6 @@ No network: urllib.request.urlopen is patched throughout.
 Run: python -m unittest tests.test_rest_driver -v
 """
 
-import io
-import json
 import os
 import sys
 import unittest
@@ -23,9 +21,22 @@ from glasscage.audit import AuditLog, RateLimiter, Scope
 from glasscage.errors import ConfigError, TargetError
 from glasscage.refagent import ReferenceAgent
 from glasscage.targets import (
-    ApplicationTarget, ChatSurface, HttpAction, Observation, PromptAction, RestDriver,
-    RestTarget, Surface, SurfaceKind, SurfaceTarget, ToolCallAction, canonical_request,
-    chat_surface_of, chat_surfaces_of, drivable_surfaces_of, rest_surface_from_target,
+    ApplicationTarget,
+    ChatSurface,
+    HttpAction,
+    Observation,
+    PromptAction,
+    RestDriver,
+    RestTarget,
+    Surface,
+    SurfaceKind,
+    SurfaceTarget,
+    ToolCallAction,
+    canonical_request,
+    chat_surface_of,
+    chat_surfaces_of,
+    drivable_surfaces_of,
+    rest_surface_from_target,
 )
 
 _HOST = "api.example"
@@ -104,17 +115,17 @@ class TestFailClosedScope(unittest.TestCase):
     def test_refusal_precedes_any_request(self):
         s = rest_surface_from_target(_target(scope_hosts=None), "GET", "/u")
         with mock.patch("urllib.request.urlopen",
-                        side_effect=AssertionError("no request may be issued")):
-            with self.assertRaises(TargetError):
-                SurfaceTarget(s, origin=s.driver.target)
+                        side_effect=AssertionError("no request may be issued")), \
+             self.assertRaises(TargetError):
+            SurfaceTarget(s, origin=s.driver.target)
 
     def test_out_of_scope_host_is_refused_before_the_socket(self):
         t = _target(scope_hosts=["allowed.example"])
         s = rest_surface_from_target(t, "GET", "/u")
         with mock.patch("urllib.request.urlopen",
-                        side_effect=AssertionError("socket must not open")):
-            with self.assertRaises(PermissionError):
-                s.drive(HttpAction(method="GET", path="/u"))
+                        side_effect=AssertionError("socket must not open")), \
+             self.assertRaises(PermissionError):
+            s.drive(HttpAction(method="GET", path="/u"))
 
     def test_scope_receives_the_full_absolute_url(self):
         t = _target()

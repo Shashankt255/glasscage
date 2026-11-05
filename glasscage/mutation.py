@@ -51,7 +51,9 @@ class AdaptiveAttacker:
             from . import judge
             if not judge.available():
                 return []
-            import anthropic, json
+            import json
+
+            import anthropic
             client = anthropic.Anthropic()
             msg = client.messages.create(
                 model="claude-sonnet-4-6", max_tokens=400,

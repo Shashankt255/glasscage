@@ -39,10 +39,10 @@ def to_markdown(target_name: str, recon: ReconResult, findings: list[Finding],
                 coverage: dict | None = None, architecture: dict | None = None,
                 trust: dict | None = None, chains: list | None = None,
                 posture: dict | None = None) -> str:
-    from . import graph as graph_mod
-    from . import coverage as coverage_mod
-    from . import trust as trust_mod
     from . import chain as chain_mod
+    from . import coverage as coverage_mod
+    from . import graph as graph_mod
+    from . import trust as trust_mod
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     L: list[str] = []
     L.append(f"# GLASSCAGE AI Security Assessment: {target_name}")
@@ -171,10 +171,10 @@ def to_html(target_name: str, recon: ReconResult, findings: list[Finding],
             posture: dict | None = None, narratives=None, story=None) -> str:
     """Render the interactive report. `narratives`/`story` are optional; when absent
     the output is exactly as before (backward compatible)."""
-    from . import graph as graph_mod
-    from . import coverage as coverage_mod
-    from . import trust as trust_mod
     from . import chain as chain_mod
+    from . import coverage as coverage_mod
+    from . import graph as graph_mod
+    from . import trust as trust_mod
 
     mermaid = (graph_mod.to_mermaid(graph)
                if graph and graph.get("nodes") and len(graph["nodes"]) > 1 else "")

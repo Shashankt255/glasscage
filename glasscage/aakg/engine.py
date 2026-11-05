@@ -186,7 +186,7 @@ class PropertyGraph:
         return json.dumps(self.to_dict(), indent=indent, sort_keys=True)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "PropertyGraph":
+    def from_dict(cls, data: dict) -> PropertyGraph:
         g = cls()
         for nd in data.get("nodes", []):
             g.add_node(Node(id=nd["id"], ntype=NodeType(nd["ntype"]),

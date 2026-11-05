@@ -84,7 +84,7 @@ def _curl_from_canonical(prompt: str) -> str:
 
 
 def _curl(target, prompt: str) -> str:
-    from .target import _inject, PROMPT_PLACEHOLDER  # local import to avoid cycle
+    from .target import _inject  # local import to avoid cycle
     body = _inject(target.body_template, prompt)
     parts = [f"curl -sS -X {target.method} '{target.url}' \\"]
     headers = {"Content-Type": "application/json", **target.headers}

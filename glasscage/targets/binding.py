@@ -24,14 +24,14 @@ is refused rather than bound to a driver that does not exist.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from ..errors import ConfigError
 from .rest import RestDriver
 from .surface import Surface, SurfaceCandidate, SurfaceKind
 
 
-def _bind_rest(candidate: SurfaceCandidate, target: Any, surface_id: Optional[str]) -> Surface:
+def _bind_rest(candidate: SurfaceCandidate, target: Any, surface_id: str | None) -> Surface:
     """Bind a REST candidate to a `RestDriver` over the supplied target.
 
     The candidate's `locator` is carried through unchanged rather than rebuilt from its
@@ -60,7 +60,7 @@ _BINDERS = {SurfaceKind.REST: _bind_rest}
 
 
 def bind_candidate(candidate: SurfaceCandidate, target: Any,
-                   surface_id: Optional[str] = None) -> Surface:
+                   surface_id: str | None = None) -> Surface:
     """Promote one discovered candidate to a `Surface` bound to `target`.
 
     The bound surface keeps the candidate's id, so a finding's `surface_id` traces back to

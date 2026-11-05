@@ -20,14 +20,14 @@ Run: python -m unittest tests.test_cli_safety_wiring -v
 """
 
 import contextlib
+import http.server
 import io
 import json
 import os
-import sys
-import threading
-import http.server
 import socketserver
+import sys
 import tempfile
+import threading
 import time
 import unittest
 

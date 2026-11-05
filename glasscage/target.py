@@ -132,7 +132,7 @@ class HTTPChatTarget:
             latency = (time.perf_counter() - start) * 1000
             resp_obj = ChatResponse("", None, latency, ok=False, error=f"HTTP {e.code}: {e.reason}")
             status, body_text = e.code, str(e.reason)
-        except Exception as e:  # noqa: BLE001 - report any transport error to caller
+        except Exception as e:
             latency = (time.perf_counter() - start) * 1000
             resp_obj = ChatResponse("", None, latency, ok=False, error=str(e))
             status, body_text = 0, str(e)

@@ -42,8 +42,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from glasscage.models import Severity, Status
-from glasscage.probes import (CANARY_INJECT, MultiTurnErosionProbe, canary_verdict,
-                              is_refusal)
+from glasscage.probes import CANARY_INJECT, MultiTurnErosionProbe, canary_verdict, is_refusal
 from glasscage.target import ChatResponse
 
 # ---------------------------------------------------------------------------
@@ -274,7 +273,7 @@ class TestFindingContractUnchanged(unittest.TestCase):
         for field in ("probe_name", "owasp_id", "atlas_id", "dimension"):
             self.assertEqual(getattr(vuln, field), getattr(inc, field))
         for field in ("title", "prompt", "response_excerpt"):
-            self.assertTrue(getattr(inc, field), "INCONCLUSIVE missing %s" % field)
+            self.assertTrue(getattr(inc, field), f"INCONCLUSIVE missing {field}")
 
     def test_probe_returns_exactly_one_finding_on_every_branch(self):
         for replies in ([BENIGN, BENIGN, "HELLO-123", CANARY_INJECT],
@@ -293,7 +292,7 @@ class TestUsesTheExistingHelper(unittest.TestCase):
             expected, _, _ = canary_verdict(CANARY_INJECT, reply)
             f, _ = run_probe([BENIGN, BENIGN, "HELLO-123", reply])
             self.assertEqual(f.status, expected,
-                             "probe disagrees with canary_verdict on %r" % reply[:40])
+                             f"probe disagrees with canary_verdict on {reply[:40]!r}")
 
     def test_no_bare_substring_decision_remains(self):
         import ast

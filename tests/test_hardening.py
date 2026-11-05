@@ -3,17 +3,16 @@ Run: python -m unittest tests.test_hardening -q
 """
 import io
 import json
-import logging
 import os
 import sys
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from glasscage.config import validate_target_config, validate_trials
-from glasscage.errors import ConfigError, GlasscageError, PluginError, AdapterError
 from glasscage import logging_setup
-from glasscage.aakg import PropertyGraph, NodeType, EdgeType, EdgeState
+from glasscage.aakg import EdgeState, EdgeType, NodeType, PropertyGraph
+from glasscage.config import validate_target_config, validate_trials
+from glasscage.errors import AdapterError, ConfigError, GlasscageError, PluginError
 
 
 class TestConfigValidation(unittest.TestCase):

@@ -26,8 +26,8 @@ from __future__ import annotations
 
 import hashlib
 
-from .probes import SECRET_PATTERNS
 from .errors import ConfigError
+from .probes import SECRET_PATTERNS
 
 _REDACT_PREFIX = "[REDACTED:"
 
@@ -127,6 +127,7 @@ def encrypt_dir(evidence_dir: str, password: str) -> int:
             "encrypted evidence requires the optional dependency: "
             "pip install glasscage[crypto]  (no homemade cipher is provided)")
     import os
+
     from cryptography.fernet import Fernet
     salt = os.urandom(16)
     fernet = Fernet(_derive_key(password, salt))

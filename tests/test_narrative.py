@@ -16,10 +16,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from cli import _MockTarget
 from glasscage import schema
+from glasscage.aakg import narrative as N
+from glasscage.aakg import story as S
+from glasscage.aakg import views as V
 from glasscage.engine import Engine
-from glasscage.refagent import ReferenceAgent
-from glasscage.aakg import narrative as N, story as S, views as V
 from glasscage.evidence_confidence import EvidenceClass as EC
+from glasscage.refagent import ReferenceAgent
 
 _TOOLS = schema.ingest({"functions": [
     {"name": "get_secret", "description": "vault secret", "parameters": {}},
@@ -319,6 +321,7 @@ class TestIntegration(unittest.TestCase):
 
     def test_json_includes_narratives_and_story(self):
         import tempfile
+
         from glasscage import report
         eng, res, g = _run()
         p = os.path.join(tempfile.mkdtemp(), "o.json")
@@ -330,6 +333,7 @@ class TestIntegration(unittest.TestCase):
 
     def test_json_backward_compatible_without_narratives(self):
         import tempfile
+
         from glasscage import report
         eng, res, g = _run()
         p = os.path.join(tempfile.mkdtemp(), "o.json")
@@ -349,6 +353,7 @@ class TestIntegration(unittest.TestCase):
 
     def test_sarif_unaffected(self):
         import tempfile
+
         from glasscage import sarif
         eng, res, g = _run()
         p = os.path.join(tempfile.mkdtemp(), "o.sarif")

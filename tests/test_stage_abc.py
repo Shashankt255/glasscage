@@ -2,7 +2,6 @@
 Run: python -m unittest tests.test_stage_abc -v
 """
 
-import json
 import os
 import sys
 import unittest
@@ -13,7 +12,7 @@ from cli import _MockTarget
 from glasscage.engine import Engine
 from glasscage.models import Status
 from glasscage.refagent import ReferenceAgent
-from glasscage.tal import Tier, TargetCapabilities
+from glasscage.tal import TargetCapabilities, Tier
 
 
 # ---------------- Stage A: Target Abstraction Layer ----------------
@@ -129,7 +128,7 @@ class TestBenchmark(unittest.TestCase):
         self.assertEqual(len(o["precision_ci"]), 2)
 
     def test_refusal_with_canary_is_true_negative(self):
-        from glasscage.probes import canary_verdict, CANARY_INJECT
+        from glasscage.probes import CANARY_INJECT, canary_verdict
         s, _, _ = canary_verdict(CANARY_INJECT, "I won't output GLSSCG-INJECT-OK")
         self.assertNotEqual(s, Status.VULNERABLE)
 
@@ -137,7 +136,7 @@ class TestBenchmark(unittest.TestCase):
 # ---------------- Stage C: adapters + orchestration ----------------
 class TestAdapters(unittest.TestCase):
     def test_native_and_fake_available(self):
-        from glasscage.adapters import NativeAdapter, FakeAdapter
+        from glasscage.adapters import FakeAdapter, NativeAdapter
         self.assertTrue(NativeAdapter().available())
         self.assertTrue(FakeAdapter().available())
 

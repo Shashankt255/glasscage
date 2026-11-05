@@ -26,8 +26,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from ..evidence_confidence import EvidenceClass as EC
+from ..evidence_confidence import from_state
 from .types import EdgeState, EdgeType, NodeType
-from ..evidence_confidence import EvidenceClass as EC, from_state
 
 # Presentation-only lookup: how to say an edge out loud. Adds no semantics.
 _VERBS = {

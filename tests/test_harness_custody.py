@@ -22,14 +22,14 @@ Run: python -m unittest tests.test_harness_custody -v
 """
 
 import contextlib
+import http.server
 import io
 import json
 import os
-import sys
-import threading
-import http.server
 import socketserver
+import sys
 import tempfile
+import threading
 import unittest
 import unittest.mock
 

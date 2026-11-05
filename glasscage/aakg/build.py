@@ -20,7 +20,6 @@ import re
 
 from .engine import PropertyGraph
 from .types import EdgeState, EdgeType, NodeType
-from .. import taxonomy
 
 _WS = re.compile(r"\s+")
 

@@ -43,7 +43,7 @@ def validate_adapters(genuine_outputs: dict | None = None) -> dict:
     """genuine_outputs: {framework: path_to_REAL_tool_output}. Absent -> fixture/pending."""
     genuine_outputs = genuine_outputs or {}
     results = []
-    for tool in _FIXTURES:
+    for tool, fixture_file in _FIXTURES.items():
         installed = REGISTRY[tool]().available()
         genuine = genuine_outputs.get(tool)
         if genuine and os.path.exists(genuine):
@@ -55,7 +55,7 @@ def validate_adapters(genuine_outputs: dict | None = None) -> dict:
                     "source": genuine, "parsed_findings": len(findings),
                     "status": "validated against genuine tool output",
                 })
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 results.append({
                     "framework": tool, "level": "genuine", "installed": installed,
                     "evidence_class": EC.OBSERVED.value, "source": genuine,
@@ -63,7 +63,7 @@ def validate_adapters(genuine_outputs: dict | None = None) -> dict:
                 })
             continue
         # only the representative fixture is available
-        fx = os.path.join(_FIXTURE_DIR, _FIXTURES[tool])
+        fx = os.path.join(_FIXTURE_DIR, fixture_file)
         try:
             n = len(_parse(tool, fx))
             results.append({
@@ -73,7 +73,7 @@ def validate_adapters(genuine_outputs: dict | None = None) -> dict:
                 "status": ("parser conforms to REPRESENTATIVE fixture (format check only); "
                            "genuine validation Pending External Validation"),
             })
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             results.append({
                 "framework": tool, "level": "pending", "installed": installed,
                 "evidence_class": EC.PENDING_EXTERNAL_VALIDATION.value, "source": fx,

@@ -27,7 +27,7 @@ from . import mutation as mutation_mod
 from . import posture as posture_mod
 from . import probes as probes_mod
 from . import recon as recon_mod
-from . import remediation, repro, report, scoring
+from . import remediation, report, repro, scoring
 from . import trust as trust_mod
 from .models import Finding, ReconResult, Severity, Status
 
@@ -101,8 +101,7 @@ class Engine:
         """
         if self.surface is None:
             return [self.target]
-        from .targets.compat import (SurfaceTarget, chat_surfaces_of,
-                                     verify_application_scope)
+        from .targets.compat import SurfaceTarget, chat_surfaces_of, verify_application_scope
         surfaces = chat_surfaces_of(self.surface)
         verify_application_scope(self.surface, surfaces)
         return [SurfaceTarget(s, origin=self.target) for s in surfaces]
@@ -158,7 +157,7 @@ class Engine:
                 for f in runner.run(probe, probe_target, recon):
                     f.assessed_tier = target_tier.name
                     out.append(f)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 recon.notes.append(f"probe {probe.name} crashed: {e}")
             if _exch is not None and any(coverage_mod.is_delivered(x)
                                          for x in _exch[_before:]):
@@ -178,7 +177,7 @@ class Engine:
                 try:
                     out.extend(mutation_mod.run(probe_target, self.adaptive_budget,
                                                 use_llm=self.use_judge))
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     recon.notes.append(f"adaptive attacker crashed: {e}")
         if self.genetic:
             if driven_kind is not SurfaceKind.CHAT:
@@ -189,7 +188,7 @@ class Engine:
                 try:
                     out.extend(genetic_mod.run(probe_target, budget=self.genetic_budget,
                                                use_llm=self.use_judge))
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     recon.notes.append(f"genetic attacker crashed: {e}")
 
     @staticmethod
@@ -254,8 +253,8 @@ class Engine:
         probe_targets = self._probe_targets()
         self._delivered_categories = set()   # ADR 0029: per-run, reset on every run()
 
-        from .tal import TargetCapabilities, Tier
         from .stats import TrialRunner
+        from .tal import TargetCapabilities, Tier
         from .targets.surface import SurfaceKind
         runner = TrialRunner(trials=self.trials, seed=self.seed)
 
@@ -361,10 +360,13 @@ class Engine:
         # remediation are computed from the graph when enabled.
         aakg_stats, blast, remediation_priorities = None, None, None
         if self.use_aakg:
-            from .aakg import build as aakg_build, paths as aakg_paths
-            from .aakg import trust_graph as aakg_trust, blast as aakg_blast
-            from .aakg import coverage as aakg_cov, posture as aakg_posture
+            from .aakg import blast as aakg_blast
+            from .aakg import build as aakg_build
+            from .aakg import coverage as aakg_cov
+            from .aakg import paths as aakg_paths
+            from .aakg import posture as aakg_posture
             from .aakg import remediation as aakg_rem
+            from .aakg import trust_graph as aakg_trust
             graph_obj = aakg_build.build_graph(
                 recon, findings, self.mcp_manifest, self.architecture_answers,
                 target_tier=target_tier.name, ts=audit_mod.now_iso())
@@ -423,7 +425,8 @@ class Engine:
         # Reporting layer (renderer only; consumes the analysis above, adds none).
         narratives, story_obj = None, None
         if self.use_aakg and getattr(self, "_graph_obj", None) is not None:
-            from .aakg import narrative as narr_mod, story as story_mod
+            from .aakg import narrative as narr_mod
+            from .aakg import story as story_mod
             _results_for_story = {
                 "posture": posture, "coverage": cov, "chains": chains,
                 "trust": trust_model, "blast": blast,

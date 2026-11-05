@@ -70,7 +70,7 @@ class TestOpenAPIDiscovery(unittest.TestCase):
         self.assertTrue(all(c.source == "openapi" for c in found))
 
     def test_locator_carries_method_and_path(self):
-        post = [c for c in discover_openapi(_OPENAPI) if c.id == "rest:post:/v1/chat"][0]
+        post = next(c for c in discover_openapi(_OPENAPI) if c.id == "rest:post:/v1/chat")
         self.assertEqual(post.locator, {"method": "POST", "path": "/v1/chat"})
 
     def test_io_schema_preserves_request_body_and_parameters(self):
@@ -86,7 +86,7 @@ class TestOpenAPIDiscovery(unittest.TestCase):
         self.assertFalse([i for i in ids if "/broken" in i])
 
     def test_ref_is_passed_through_not_resolved(self):
-        post = [c for c in discover_openapi(_OPENAPI) if c.id == "rest:post:/v1/chat"][0]
+        post = next(c for c in discover_openapi(_OPENAPI) if c.id == "rest:post:/v1/chat")
         blob = json.dumps(post.io_schema)
         self.assertIn("$ref", blob)
 

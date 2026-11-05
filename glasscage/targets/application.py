@@ -14,7 +14,6 @@ in one place.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 from .surface import Surface, SurfaceCandidate, SurfaceKind
 
@@ -53,7 +52,7 @@ class ApplicationTarget:
     base_url: str = ""
     auth: AuthContext = field(default_factory=AuthContext)
     surfaces: list[Surface] = field(default_factory=list)
-    scope: Optional[object] = None  # audit.Scope-compatible; optional
+    scope: object | None = None  # audit.Scope-compatible; optional
     # Discovered but unbound (see `discovery`). Appended last so positional construction
     # of the four pre-existing fields is unaffected.
     candidates: list[SurfaceCandidate] = field(default_factory=list)

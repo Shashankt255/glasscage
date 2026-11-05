@@ -26,7 +26,6 @@ from glasscage.targets import (
     ChatDriver,
     ChatSurface,
     Observation,
-    PromptAction,
     Surface,
     SurfaceKind,
     SurfaceTarget,
@@ -382,7 +381,7 @@ class TestRegistryAndDelegation(unittest.TestCase):
         shim = SurfaceTarget(ChatSurface(agent), origin=agent)
         self.assertEqual(shim.name, agent.name)          # delegated
         with self.assertRaises(AttributeError):
-            shim.definitely_not_a_real_attribute
+            _ = shim.definitely_not_a_real_attribute
 
 
 if __name__ == "__main__":

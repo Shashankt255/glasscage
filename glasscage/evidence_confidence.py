@@ -33,7 +33,7 @@ class EvidenceClass(str, Enum):
     def rank(self) -> int:
         return _ORDER.index(self)
 
-    def at_most(self, ceiling: "EvidenceClass") -> "EvidenceClass":
+    def at_most(self, ceiling: EvidenceClass) -> EvidenceClass:
         """Clamp this class so it never exceeds the evidence ceiling."""
         return self if self.rank <= ceiling.rank else ceiling
 

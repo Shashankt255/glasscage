@@ -28,6 +28,7 @@ Run: python -m unittest tests.test_custody_completeness -v
 
 import builtins
 import contextlib
+import http.server
 import io
 import json
 import os
@@ -35,13 +36,12 @@ import socketserver
 import sys
 import tempfile
 import threading
-import http.server
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import cli
-from glasscage.audit import AuditLog, ChainStatus, verify_file
+from glasscage.audit import ChainStatus, verify_file
 
 _DIAG = "custody incomplete"
 
@@ -126,7 +126,7 @@ class _CliCase(unittest.TestCase):
         try:
             with contextlib.redirect_stdout(so), contextlib.redirect_stderr(se):
                 rc = cli.main(argv + list(extra))
-        except BaseException as e:          # noqa: BLE001 - recorded, not swallowed
+        except BaseException as e:
             rc, exc = None, e
         return rc, so.getvalue(), se.getvalue(), exc
 
@@ -261,8 +261,8 @@ class TestFailuresThatAreNotCustodyLoss(_CliCase):
         """ADR 0021: refused before any exchange, so completeness never applies."""
         a = self.audit()
         so, se = io.StringIO(), io.StringIO()
-        with self.assertRaises(PermissionError):
-            with contextlib.redirect_stdout(so), contextlib.redirect_stderr(se):
+        with self.assertRaises(PermissionError), \
+             contextlib.redirect_stdout(so), contextlib.redirect_stderr(se):
                 cli.main(["--config", self.cfg, "--authorized",
                           "--scope", "elsewhere.example", "--no-evidence",
                           "--out", os.path.join(self.tmp, "oos"), "--audit-log", a])

@@ -52,6 +52,16 @@ glasscage = ["py.typed", "adapters/fixtures/*"]
 line-length = 100
 target-version = "py310"
 
+[tool.ruff.lint]
+ignore = [
+  "RUF059",   # unused unpacked variable — _ convention is fine
+  "ISC004",   # implicit string concat in collections — all intentional multiline
+  "RUF012",   # mutable class default — patterns are by design, tests cover them
+  "SIM115",   # open-file-with-context-handler — too invasive for RC, revisit in 1.1
+  "BLE001",   # blind-except — some are intentional catch-all handlers
+  "S110",     # try-except-pass — intentional in optional-feature loading
+]
+
 [tool.mypy]
 python_version = "3.10"
 ignore_missing_imports = true

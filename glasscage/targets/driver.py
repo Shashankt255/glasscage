@@ -14,7 +14,7 @@ Drivers perform I/O; Surfaces do not. That keeps transport in one layer.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:  # typing-only import; no runtime cycle
     from .surface import Surface, SurfaceKind
@@ -82,12 +82,12 @@ class Observation:
     ok: bool
     text: str = ""
     latency_ms: float = 0.0
-    error: Optional[str] = None
-    trace: Optional[dict] = None
+    error: str | None = None
+    trace: dict | None = None
     request: Any = None
     response: Any = None
-    status: Optional[int] = None
-    custody_hash: Optional[str] = None
+    status: int | None = None
+    custody_hash: str | None = None
 
     @property
     def raw(self) -> Any:
@@ -100,7 +100,7 @@ class Observation:
         return self.response
 
     @classmethod
-    def failure(cls, error: str) -> "Observation":
+    def failure(cls, error: str) -> Observation:
         """Construct a failed observation. Drivers return this instead of raising, so a
         dead surface becomes a recordable non-result rather than crashing a probe loop."""
         return cls(ok=False, error=error)
@@ -111,11 +111,11 @@ class Driver(Protocol):
     """Exercises a Surface. Implementations live per kind (chat now; REST/GraphQL/etc.
     in later PRs). `runtime_checkable` so tests can assert conformance structurally."""
 
-    kind: "SurfaceKind"
+    kind: SurfaceKind
     # ADR 0005: every driver declares the target it drives. Ownership is verified from
     # this declaration, so a driver that cannot answer "what do you drive?" is refused
     # rather than trusted.
     target: Any
 
-    def drive(self, surface: "Surface", action: Action) -> Observation:
+    def drive(self, surface: Surface, action: Action) -> Observation:
         ...

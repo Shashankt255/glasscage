@@ -3,8 +3,8 @@
 Demonstrates the stable plugin contract: subclass Probe, declare name/owasp_id/
 min_tier, decorate with @register.
 """
-from glasscage.probes import Probe, register, canary_verdict, CANARY_INJECT
 from glasscage.models import Severity, Status
+from glasscage.probes import CANARY_INJECT, Probe, canary_verdict, register
 from glasscage.tal import Tier
 
 GLASSCAGE_PLUGIN_API = "1.0"

@@ -17,8 +17,10 @@ from __future__ import annotations
 
 from statistics import mean
 
-from .types import EdgeType, NodeType
-from . import paths as paths_mod, trust_graph, blast as blast_mod
+from . import blast as blast_mod
+from . import paths as paths_mod
+from . import trust_graph
+from .types import NodeType
 
 _WEIGHTS = {  # kept identical to legacy so scores stay comparable
     "exploitability": 0.18, "privileges": 0.10, "reachable_assets": 0.14,

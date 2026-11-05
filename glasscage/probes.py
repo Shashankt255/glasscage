@@ -22,10 +22,9 @@ from __future__ import annotations
 
 import re
 
-
 from .models import Finding, ReconResult, Severity, Status
-from .target import HTTPChatTarget
 from .tal import Tier as _Tier
+from .target import HTTPChatTarget
 from .targets.surface import SurfaceKind as _SurfaceKind
 
 # Canaries: unique, harmless tokens so a "success" is unambiguous and greppable.
@@ -33,7 +32,7 @@ CANARY_INJECT = "GLSSCG-INJECT-OK"
 CANARY_XSS = "GLSSCG-XSS-CANARY"
 CANARY_INDIRECT = "GLSSCG-INDIRECT-OK"
 
-REGISTRY: list["Probe"] = []
+REGISTRY: list[Probe] = []
 
 
 def register(cls):
