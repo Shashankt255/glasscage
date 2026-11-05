@@ -1,7 +1,8 @@
 ## Summary
 
 ## Checklist
-- [ ] Tests added/updated; `python -m unittest discover -s tests -q` passes (189+ tests)
+- [ ] I agree to the [Contributor License Agreement](../CLA.md)
+- [ ] Tests added/updated; `pytest -q` passes (997+ tests)
 - [ ] Fuzz + property tests pass (`tests.test_fuzz`, `tests.test_property`)
 - [ ] No new runtime dependencies (core is standard-library only)
 - [ ] Determinism preserved (stable ids, sorted traversal, exact round-trip)

@@ -3,6 +3,13 @@
 Thanks for helping. GLASSCAGE is stdlib-only in its core; do not add runtime
 dependencies to the core (optional features go behind extras).
 
+## Contributor License Agreement
+
+By submitting a pull request, you agree to the [Contributor License Agreement](CLA.md).
+This grants the project maintainers the right to relicense contributions in future
+versions (e.g., under BSL 1.1 for commercial releases), while prior versions remain
+under their original Apache-2.0 license.
+
 ## Ground rules
 - The architecture is frozen around the AI Attack Knowledge Graph. No new graph node/
   edge types, attack engines, or reporting redesigns without a maintainer RFC.
@@ -12,8 +19,8 @@ dependencies to the core (optional features go behind extras).
 
 ## Workflow
 1. Fork, branch from `main`.
-2. `python -m unittest discover -s tests -q` must pass (add tests for changes).
-3. `python -m unittest tests.test_fuzz tests.test_property` for core changes.
+2. `pytest -q` must pass — 997+ tests (add tests for changes).
+3. `pytest tests/test_fuzz.py tests/test_property.py -q` for core changes.
 4. Keep public APIs backward compatible (see `VERSIONING.md`).
 5. Open a PR with a clear description and, for behavior changes, a CHANGELOG entry.
 
