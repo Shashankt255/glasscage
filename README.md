@@ -186,4 +186,4 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md). By submitting a PR you agree to the
 
 Apache-2.0. See [`LICENSE`](LICENSE).
 
-Built by [Shashank Tandon](https://github.com/Shashankt255).
+Built by [Shashank Shekhar](https://github.com/Shashankt255).

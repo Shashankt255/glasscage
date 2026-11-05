@@ -18,7 +18,7 @@ By submitting a pull request to this repository, you agree to the following term
 
 ### 2. Grant of Copyright License
 
-You hereby grant to the GLASSCAGE project maintainers (Shashank Tandon and designated
+You hereby grant to the GLASSCAGE project maintainers (Shashank Shekhar and designated
 maintainers) a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable
 copyright license to reproduce, prepare derivative works of, publicly display, publicly
 perform, sublicense, and distribute Your Contributions and such derivative works.
