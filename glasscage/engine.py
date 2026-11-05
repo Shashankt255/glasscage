@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from . import agent_probes as _agent  # noqa: F401  (import registers agent probes)
 from . import architecture as arch_mod
+from . import system_prompt_review as spr_mod
 from . import audit as audit_mod
 from . import chain as chain_mod
 from . import coverage as coverage_mod
@@ -48,7 +49,9 @@ class Engine:
     def __init__(self, target, selected_probes=None, mcp_manifest=None,
                  use_judge=False, evidence_dir=None, capture_evidence=True,
                  schema_tools=None, adaptive=False, adaptive_budget=8,
-                 architecture_answers=None, genetic=False, genetic_budget=40,
+                 architecture_answers=None, model_card=None,
+                 system_prompt_text=None,
+                 genetic=False, genetic_budget=40,
                  build_chains=True, trials=1, seed=None, use_aakg=True,
                  store_raw=False, surface=None):
         self.target = target
@@ -61,6 +64,8 @@ class Engine:
         self.adaptive = adaptive
         self.adaptive_budget = adaptive_budget
         self.architecture_answers = architecture_answers
+        self.model_card = model_card
+        self.system_prompt_text = system_prompt_text
         self.genetic = genetic
         self.genetic_budget = genetic_budget
         self.build_chains = build_chains
@@ -313,6 +318,11 @@ class Engine:
             findings.extend(mcp_mod.analyze_manifest(self.mcp_manifest))
         if self.architecture_answers is not None:
             findings.extend(arch_mod.assess(self.architecture_answers))
+        if self.model_card is not None:
+            from . import model_card_review as mcr_mod
+            findings.extend(mcr_mod.analyze(self.model_card))
+        if self.system_prompt_text:
+            findings.extend(spr_mod.analyze(self.system_prompt_text))
 
         adaptive_success = any(
             f.status is Status.VULNERABLE and f.probe_name in ("adaptive-attacker", "genetic-attacker")

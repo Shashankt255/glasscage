@@ -178,8 +178,13 @@ def main(argv=None):
     ap.add_argument("--genuine-output", nargs="+", metavar="TOOL=PATH", default=[],
                     help="REAL tool output to validate a parser, e.g. garak=run.report.jsonl")
     ap.add_argument("--architecture", help="architecture answers JSON (see --arch-template)")
+    ap.add_argument("--system-prompt", metavar="FILE",
+                    help="path to a text file containing the target's system prompt for static analysis")
     ap.add_argument("--arch-template", action="store_true",
                     help="print a blank architecture answers template and exit")
+    ap.add_argument("--model-card", help="model card answers JSON (see --model-card-template)")
+    ap.add_argument("--model-card-template", action="store_true",
+                    help="print a blank model card template and exit")
     ap.add_argument("--har", action="store_true", help="export raw exchanges as HAR")
     ap.add_argument("--audit-log", help="path to append-only, hash-chained JSONL audit log")
     args = ap.parse_args(argv)
@@ -189,6 +194,11 @@ def main(argv=None):
     if args.arch_template:
         from glasscage import architecture
         print(json.dumps(architecture.template(), indent=2))
+        return 0
+
+    if getattr(args, "model_card_template", False):
+        from glasscage import model_card_review
+        print(json.dumps(model_card_review.template(), indent=2))
         return 0
 
     # Phase 1: surface inventory (standalone; needs no target and runs no assessment).
@@ -371,6 +381,22 @@ def main(argv=None):
         except Exception:
             pass
 
+    # model card (demo loads a sample to showcase)
+    model_card = None
+    if getattr(args, "model_card", None):
+        model_card = _load(args.model_card)
+    elif args.demo:
+        try:
+            model_card = _load(os.path.join(_here, "samples", "model_card_answers.json"))
+        except Exception:
+            pass
+
+    # system prompt text for static analysis
+    system_prompt_text = None
+    if args.system_prompt:
+        with open(args.system_prompt, encoding="utf-8") as fh:
+            system_prompt_text = fh.read()
+
     # ADR 0015: promote the discovered operations to bound surfaces and drive them. Built
     # after the operational controls above so the surfaces are bound to a target that
     # already carries them; `surface=None` leaves every other invocation unchanged.
@@ -393,7 +419,9 @@ def main(argv=None):
     engine = Engine(target, mcp_manifest=manifest, use_judge=args.judge,
                     evidence_dir=evidence_dir, capture_evidence=not args.no_evidence,
                     schema_tools=schema_tools, adaptive=args.adaptive,
-                    architecture_answers=arch_answers, genetic=args.genetic,
+                    architecture_answers=arch_answers,
+                    model_card=model_card,
+                    system_prompt_text=system_prompt_text, genetic=args.genetic,
                     trials=args.trials, seed=args.seed, use_aakg=not args.no_aakg,
                     store_raw=args.store_raw, surface=surface)
     results = engine.run()

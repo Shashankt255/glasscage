@@ -74,6 +74,14 @@ See [`docs/FIRST_RUN.md`](docs/FIRST_RUN.md) for configuration details and
 | MCP03 | tool-poisoning, rug-pull | Hidden instructions in tool metadata, definition drift |
 | MCP07 | SSRF/exfil | URL and path parameters reaching internal endpoints |
 
+**Static analysis (no target needed):**
+
+| Feature | Flag | What it checks |
+|---|---|---|
+| System prompt review | `--system-prompt FILE` | Embedded secrets, injection delimiters, over-permissive grants, missing refusal instructions, role confusion, sensitive data, prompt length, output constraints |
+| Model card review | `--model-card FILE` | Untrusted model source, unverified fine-tuning, safety alignment, training data review, PII in training, version pinning, public deployment risk |
+| Architecture review | `--architecture FILE` | Defense-in-depth controls across 15 categories |
+
 Runtime coverage: **7 of 13 OWASP LLM categories** tested with actual payloads.
 The remaining 6 are assessed via config review or architecture questionnaire — the
 report separates the two and never labels a config-review finding as "measured."
@@ -115,6 +123,8 @@ glasscage/
   targets/          REST, MCP, surface binding
   audit.py          Hash-chained append-only custody log
   coverage.py       Coverage provenance and evidence accounting
+  system_prompt_review.py  Static analysis of system prompts (8 checks)
+  model_card_review.py     Model provenance and data poisoning review (7 checks)
   report.py         HTML/JSON/SARIF report generation
   adapters/         garak/PyRIT/Promptfoo/DeepTeam output normalization
 ```

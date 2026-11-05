@@ -6,9 +6,9 @@ PR #28 corrected the markdown renderer. The HTML export takes a different path: 
 `coverage.statement(cov)` as `DATA.coverage`, which the page renders as its `Coverage:`
 line. That statement still read:
 
-    Tested 19 techniques across 10/13 taxonomy categories (LLM01, LLM02, LLM03, ...)
+    Tested 19 techniques across 11/13 taxonomy categories (LLM01, LLM02, LLM03, ...)
 
-10/13 counts every category carrying a mapped finding, including ones reached only by
+11/13 counts every category carrying a mapped finding, including ones reached only by
 questionnaire or configuration review. Runtime coverage on the same run is 7/13 (0.54).
 The word "Tested" was applied to the larger, mixed-provenance count, with no runtime figure
 and no caveat - the same overstatement PR #28 removed from markdown, still exported.
@@ -107,7 +107,7 @@ class TestExportedStatementIsHonest(_HtmlCase):
 
     def test_html_keeps_the_graph_derived_count_as_context(self):
         cov, _ = self.html_coverage(self.run_demo())
-        self.assertIn("10/13", cov)
+        self.assertIn("11/13", cov)
         self.assertIn("contextual, mixed provenance", cov)
 
     def test_tested_is_not_attached_to_the_mixed_count(self):

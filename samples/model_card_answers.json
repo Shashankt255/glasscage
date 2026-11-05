@@ -1,0 +1,14 @@
+{
+  "model_name": "DemoBot-7B",
+  "model_provider": "community",
+  "model_source": "huggingface",
+  "fine_tuned": true,
+  "fine_tune_dataset": "custom-qa-v2",
+  "fine_tune_source": "",
+  "rlhf_applied": "no",
+  "training_data_reviewed": "no",
+  "deployment": "cloud",
+  "access_level": "public",
+  "pii_in_training": "unknown",
+  "model_pinned_version": "no"
+}

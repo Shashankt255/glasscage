@@ -195,8 +195,8 @@ class TestEndToEndInvariants(unittest.TestCase):
 
     def test_23_graph_coverage_unchanged(self):
         cov = self._coverage_line()
-        self.assertIn("mixed provenance): 10/13", cov)
-        self.assertIn("LLM01, LLM02, LLM03, LLM05, LLM06, LLM07, LLM08, LLM09, LLM10, MCP03",
+        self.assertIn("mixed provenance): 11/13", cov)
+        self.assertIn("LLM01, LLM02, LLM03, LLM04, LLM05, LLM06, LLM07, LLM08, LLM09, LLM10, MCP03",
                       cov)
 
     def test_24_llm10_still_present_in_graph_coverage(self):

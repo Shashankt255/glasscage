@@ -7,10 +7,10 @@ breakdown and a `coverage_ratio_caveat`. None of them reached any artifact. The 
 markdown report rendered only the graph-derived taxonomy counts, under a `[Measured]` label:
 
     ## Coverage (graph-derived)  [Measured]
-    - **OWASP**: 10/13 tested (demonstrated 2, hypothesized 8, not-assessable 0)
+    - **OWASP**: 11/13 tested (demonstrated 2, hypothesized 9, not-assessable 0)
 
-10/13 counts every category with a mapped finding, including ones reached by questionnaire
-or configuration review. Only **7/13** had a payload actually sent. The operator was shown
+11/13 counts every category with a mapped finding, including ones reached by questionnaire,
+model-card review, or configuration review. Only **7/13** had a payload actually sent. The operator was shown
 the larger number, labelled as a measurement, with no caveat anywhere.
 
 Established during discovery and unchanged by this PR: the inflated ratio does **not** feed
@@ -127,7 +127,7 @@ class TestCaveatIsRendered(_ReportCase):
 class TestGraphDerivedIsContextual(_ReportCase):
     def test_graph_derived_counts_remain_available(self):
         s = self.section(self.md())
-        self.assertIn("10/13", s)
+        self.assertIn("11/13", s)
 
     def test_graph_derived_is_not_labelled_measured(self):
         """The defect: this block carried [Measured]."""
@@ -141,11 +141,11 @@ class TestGraphDerivedIsContextual(_ReportCase):
         self.assertIn("mixed provenance", s)
 
     def test_the_two_figures_are_distinguishable(self):
-        """7/13 and 10/13 must not be conflated into one claim."""
+        """7/13 and 11/13 must not be conflated into one claim."""
         s = self.section(self.md())
         self.assertIn("7/13", s)
-        self.assertIn("10/13", s)
-        self.assertLess(s.index("7/13"), s.index("10/13"))
+        self.assertIn("11/13", s)
+        self.assertLess(s.index("7/13"), s.index("11/13"))
 
     def test_graph_counts_no_longer_claim_bare_tested(self):
         s = self.section(self.md())
