@@ -4,9 +4,9 @@
 > application — and refuses to claim more than it proved.
 
 **Runtime coverage: 7 of 13 OWASP LLM categories** (see limitations). **Not a garak
-replacement** — garak has more probes; use both. Zero runtime dependencies. 192 tests.
+replacement** — garak has more probes; use both. Zero runtime dependencies. 997 tests.
 
-[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+[![CI](https://github.com/Shashankt255/glasscage/actions/workflows/ci.yml/badge.svg)](https://github.com/Shashankt255/glasscage/actions/workflows/ci.yml)
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 

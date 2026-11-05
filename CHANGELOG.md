@@ -3,7 +3,8 @@
 All notable changes. Versions prior to 1.0.0rc1 were internal stage-build milestones
 during development; the first public release candidate is **1.0.0rc1**.
 
-## [Unreleased] — Engine surface wiring (Phase 1)
+## [1.0.0rc4] — 2026-11-05 — Engine surface wiring, coverage honesty, custody hardening
+Previous: 1.0.0rc3. Incorporates PRs 14–34.
 Plumbing only. No new probe, detector, graph node/edge type, attack technique, or scoring.
 ### Added
 - `targets/compat.py`: `SurfaceTarget` presents a bound `Surface` through the `send(prompt)`

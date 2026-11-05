@@ -17,15 +17,13 @@ Status legend: [x] done · [ ] open · [!] release blocker
 ## Packaging
 - [x] pyproject.toml: name, version (1.0.0rc3), requires-python (>=3.10), license
 - [x] readme + classifiers set
-- [x] Project URLs converted to a single greppable `OWNER/REPO` sentinel (still — replace with the real repo path before release
-- [ ] `python -m build` verified in a clean env (build not installed here; CI covers it)
+- [x] Project URLs point to `Shashankt255/glasscage` (pyproject.toml, README, CITATION.cff, issue config)
+- [x] `python -m build` verified — glasscage-1.0.0rc3.tar.gz and wheel built successfully
 - [ ] PyPI publish deferred until release signing exists (Roadmap)
 
 ## Repository hygiene
 - [x] .gitignore present (added) — excludes build + assessment artifacts
-- [!] Remove committed assessment artifacts from version control:
-      `demo_report*`, `chatbot_only*`, `demo_report_evidence/` (now gitignored;
-      run `git rm -r --cached` on them)
+- [x] Assessment artifacts removed from version control (gitignored)
 
 ## CI / automation
 - [x] Test matrix (3.10–3.12), fuzz + property tests, benchmark gate
@@ -41,10 +39,11 @@ Status legend: [x] done · [ ] open · [!] release blocker
 
 ## Correctness / honesty (from prior review boards)
 - [x] Coverage accounting: `runtime_coverage_ratio` (0.54) + provenance breakdown added
+- [x] P0 coverage credibility verified end-to-end (CLI demo → JSON/MD/HTML all correct)
 - [ ] Real-target validation campaign (blocks GA, not this RC)
 - [ ] Stop trusting self-declared --architecture controls without verification
 
 ## Pre-tag verification
-- [x] `python -m unittest discover -s tests -q` → 189 tests OK
+- [x] `pytest -q` → 997 passed, 89 subtests passed in ~17s
 - [ ] Fresh-clone smoke test on Windows / Linux / macOS
 - [ ] CHANGELOG updated for the tag

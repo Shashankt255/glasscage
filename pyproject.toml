@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "glasscage"
-version = "1.0.0rc3"
+version = "1.0.0rc4"
 description = "GLASSCAGE - AI Application Security Assessment Platform (AI Attack Knowledge Graph)"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,10 +31,10 @@ rich = ["rich>=13"]                # optional pretty CLI output
 dev = ["pytest>=8", "ruff>=0.5", "mypy>=1.10", "build>=1.2"]
 
 [project.urls]
-Homepage = "https://github.com/OWNER/REPO"
-Documentation = "https://github.com/OWNER/REPO#documentation"
-Source = "https://github.com/OWNER/REPO"
-Issues = "https://github.com/OWNER/REPO/issues"
+Homepage = "https://github.com/Shashankt255/glasscage"
+Documentation = "https://github.com/Shashankt255/glasscage#documentation"
+Source = "https://github.com/Shashankt255/glasscage"
+Issues = "https://github.com/Shashankt255/glasscage/issues"
 
 [project.scripts]
 glasscage = "cli:main"
