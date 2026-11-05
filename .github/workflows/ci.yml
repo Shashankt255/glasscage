@@ -10,7 +10,7 @@ jobs:
       matrix: { python-version: ["3.10", "3.11", "3.12"] }
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: { python-version: "${{ matrix.python-version }}" }
       - name: Unit + integration tests (stdlib only)
         run: python -m unittest discover -s tests -q
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: { python-version: "3.11" }
       - run: pip install build
       - run: python -m build            # blocking: a broken package fails the build
@@ -37,7 +37,7 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: { python-version: "3.11" }
       - run: pip install ruff mypy
       - run: ruff check glasscage cli.py
@@ -46,8 +46,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: { python-version: "3.11" }
       - run: python tools/benchmark_perf.py --json > perf.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: perf, path: perf.json }
