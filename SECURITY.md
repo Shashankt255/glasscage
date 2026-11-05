@@ -14,17 +14,11 @@ own or are explicitly authorized to test. `--authorized` is required for live ta
 - Chain of custody: original evidence hashes are computed before redaction.
 
 ## Reporting a vulnerability
-> **RELEASE BLOCKER:** the address below is a PLACEHOLDER and MUST be replaced with a
-> monitored security contact before any public release. Shipping a disclosure policy
-> with a non-working address is worse than shipping none.
 
-**Report privately via GitHub Security Advisory** — the "Report a vulnerability"
-button under the repository's Security tab. This is the primary, always-available
-channel and needs no email setup.
+**Report privately via GitHub Security Advisory** — use the "Report a vulnerability"
+button under the repository's Security tab.
 
-If the maintainers publish a dedicated security email, it will be listed here; until
-then use the Security Advisory flow. Please do not file public issues for
-vulnerabilities.
+Please do not file public issues for security vulnerabilities.
 - Target response: acknowledge within 5 business days.
 - Coordinated disclosure: up to 90 days; we credit reporters unless anonymity is
   requested.
