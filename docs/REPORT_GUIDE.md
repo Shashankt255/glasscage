@@ -3,7 +3,6 @@
 How to read GLASSCAGE output correctly — and, just as importantly, **what you may not
 conclude from it**.
 
----
 
 ## 1. The one rule
 
@@ -11,7 +10,6 @@ conclude from it**.
 not been validated against real language models. Its value is prioritization and
 evidence linkage, not adjudication.
 
----
 
 ## 2. Read the evidence class first, the number second
 
@@ -29,7 +27,6 @@ exceeds its evidence.
 | **Hypothesized** | architecturally reachable | that it was ever shown to work |
 | **Pending External Validation** | the machinery exists; **no result is claimed** | **nothing at all** |
 
----
 
 ## 3. Executive Summary
 
@@ -47,7 +44,6 @@ Most consequential scenario: end-user → Secrets in 4 steps — hypothesized [H
 - **not assessable** means *unmeasured*, **not** *safe*. It is a gap in the
   assessment, not a clean bill of health.
 
----
 
 ## 4. Indicative Risk Index — contribution breakdown
 
@@ -68,7 +64,6 @@ one finding outranks another — never to justify an absolute risk statement.
 > without verification.** If you declared a control you do not actually have, this
 > number is falsely low.
 
----
 
 ## 5. Attack Paths & Narratives
 
@@ -91,7 +86,6 @@ one finding outranks another — never to justify an absolute risk statement.
 - Narratives **never** exceed `Demonstrated`; `Measured`/`Verified` require other
   evidence types.
 
----
 
 ## 6. Coverage — **read this before quoting any coverage number**
 
@@ -110,7 +104,6 @@ finding carries its id, regardless of how the finding was obtained.
 **Do not quote `coverage_ratio` to a customer or reviewer.** Quote 0.54 and the
 breakdown. Fix tracked as a P0 blocker.
 
----
 
 ## 7. Trust Boundary & Blast Radius
 
@@ -120,7 +113,6 @@ breakdown. Fix tracked as a P0 blocker.
 - **Blast radius** `basis` is `demonstrated` / `hypothesized` / `unconfirmed`. The
   `multiplier` is a **heuristic**, not a measurement.
 
----
 
 ## 8. Assessment Story — the honest sections
 
@@ -134,7 +126,6 @@ breakdown. Fix tracked as a P0 blocker.
   demonstrated." rather than speculate.
 - **Verification Checklist [Verified]** — the section to act on first.
 
----
 
 ## 9. Audience views
 
@@ -146,7 +137,6 @@ breakdown. Fix tracked as a P0 blocker.
 | `incident_response` | timeline, blast radius, containment order | IOCs — **GLASSCAGE produces none** and says so |
 | `compliance` | control gaps, five-framework matrix | recording unassessed areas as compliant |
 
----
 
 ## 10. What GLASSCAGE output can never tell you
 

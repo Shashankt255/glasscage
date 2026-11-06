@@ -7,7 +7,6 @@ Backward compatibility: no existing public signature was broken. `Engine(target)
 works unchanged; every new capability is an additive constructor kwarg, CLI flag, or
 result key. Existing 43 tests pass alongside 19 new Stage A–C tests (62 total).
 
----
 
 ## Stage A — Target Abstraction Layer (`tal.py`) — **Implemented**
 **Rationale.** Prior versions let stateless single-turn probes assert stateful/agentic
@@ -71,7 +70,6 @@ benchmark them. Stable, versioned `ExternalToolAdapter` interface (`ADAPTER_API_
 - Complexity: low (interface) / medium (each real normalization). Use:
   `--orchestrate native fake garak pyrit promptfoo`.
 
----
 
 ## Status summary
 
@@ -95,7 +93,6 @@ benchmark them. Stable, versioned `ExternalToolAdapter` interface (`ADAPTER_API_
 The **AI Attack Knowledge Graph** is deferred until after the abstraction layer,
 statistical engine, and validation framework — which are now complete.
 
----
 
 ## NEXT IMPLEMENTATION STAGE — Stage D (awaiting your go-ahead)
 Candidates, in suggested order:

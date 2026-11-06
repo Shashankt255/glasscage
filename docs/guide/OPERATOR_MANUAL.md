@@ -3,7 +3,6 @@
 For the person running assessments. Assumes you have read the
 [User Guide](USER_GUIDE.md) core concepts.
 
----
 
 ## 1. Authorization — non-negotiable
 
@@ -18,7 +17,6 @@ assertion that you own the system or hold **written** permission to test it.
 
 `--demo` and `--harness` need no authorization: they never leave the process.
 
----
 
 ## 2. Modes of operation — all **Implemented**
 
@@ -34,7 +32,6 @@ assertion that you own the system or hold **written** permission to test it.
 | Adapter validation | `--validate-adapters` | honest parser status |
 | Report diff | `--diff old.json new.json` | compare two runs |
 
----
 
 ## 3. Full flag reference
 
@@ -89,7 +86,6 @@ assertion that you own the system or hold **written** permission to test it.
 | `--log-level LEVEL` | Implemented | DEBUG/INFO/WARNING/ERROR |
 | `--log-json` | Implemented | structured JSON logs for SIEM |
 
----
 
 ## 4. Evidence handling — read before a client engagement
 
@@ -117,7 +113,6 @@ python -m glasscage --config t.json --authorized \
 > **Review artifacts before sharing.** Encryption refuses honestly if the `crypto`
 > extra is absent — GLASSCAGE ships no homemade cipher.
 
----
 
 ## 5. Reading exit codes
 
@@ -126,7 +121,6 @@ python -m glasscage --config t.json --authorized \
 | 0 | run completed |
 | 2 | refused: missing `--authorized`, missing `--allow-plugins`, bad config, unknown view |
 
----
 
 ## 6. Operational limits — plan around these
 
@@ -138,7 +132,6 @@ python -m glasscage --config t.json --authorized \
 - **Path enumeration** is bounded at depth 6 with no count cap; very dense agentic
   graphs may be slow.
 
----
 
 ## 7. Recommended engagement flow
 

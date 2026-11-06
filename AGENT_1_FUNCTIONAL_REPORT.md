@@ -5,7 +5,6 @@
 **Platform:** Linux 6.11.2-amd64, Python 3.13.15
 **Commit:** cca3f0d (worktree)
 
----
 
 ## Summary
 
@@ -19,7 +18,6 @@
 
 **Verdict: ALL FUNCTIONAL TESTS PASS. No blocking defects found.**
 
----
 
 ## Test Results
 
@@ -106,7 +104,6 @@
 | F41 | Adaptive adds findings | More findings than demo | 40 findings (demo=39, +1 adaptive-attacker) | PASS | Adaptive engine contributes findings |
 | F42 | Adaptive-specific finding present | adaptive-attacker probe | Present in findings | PASS | Finding: adaptive-attacker probe with hypothesized status |
 
----
 
 ## Notes
 
@@ -122,13 +119,11 @@
 
 6. **Determinism:** Two runs with `--seed 42` produce identical findings (same probe_name, status, severity tuples), confirming reproducibility.
 
----
 
 ## Defects Found
 
 **None.** All 42 tests pass. Two items noted as INFO for potential cosmetic improvements, none blocking.
 
----
 
 ## Test Artifacts
 

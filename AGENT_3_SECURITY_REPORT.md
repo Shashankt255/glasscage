@@ -5,7 +5,6 @@
 **Scope:** GLASSCAGE platform internals (not the targets it assesses)
 **Methodology:** Code review + automated test scripts (`/tmp/agent3/test_s*.py`)
 
----
 
 ## Executive Summary
 
@@ -20,11 +19,9 @@
 | Informational| 6     | S05, S07, S08, S10, S16, S17 |
 | Pass         | 9     | S01, S09, S13, S15, S17, S19, S20, S21, S22 |
 
----
 
 ## Findings
 
----
 
 ### S01 -- Malformed URL Schemes
 **Severity:** Pass
@@ -35,7 +32,6 @@ Config validation correctly rejects `javascript:`, `file://`, `data:`, `ftp://`,
 
 **Evidence:** All 7 malicious schemes rejected with `ConfigError`.
 
----
 
 ### S02 -- CRLF Injection in Header Values
 **Finding ID:** S02
@@ -70,7 +66,6 @@ for k, v in cfg.get("headers", {}).items():
         raise ConfigError(f"header '{k}' contains illegal CR/LF characters")
 ```
 
----
 
 ### S03 -- No Length Limits on Config Values
 **Finding ID:** S03
@@ -94,7 +89,6 @@ validate_target_config({"url": "http://x", "headers": {"X-Test": "A" * 1048576}}
 **Recommended remediation:**
 Add reasonable upper bounds: URL < 8192 bytes, header name < 256 bytes, header value < 8192 bytes.
 
----
 
 ### S04 -- Null Bytes in Config Strings
 **Finding ID:** S04
@@ -121,7 +115,6 @@ if "\x00" in url:
     raise ConfigError("target 'url' contains null byte")
 ```
 
----
 
 ### S05 -- Unicode Edge Cases Not Normalized
 **Finding ID:** S05
@@ -137,7 +130,6 @@ RTL override characters (`U+202E`), zero-width joiners (`U+200D`), zero-width sp
 **Recommended remediation:**
 Strip Unicode control characters from config string values, or at minimum strip Bidi control characters (`U+200B-U+200F`, `U+202A-U+202E`, `U+2066-U+2069`).
 
----
 
 ### S06 -- Path Traversal in --out Parameter
 **Finding ID:** S06
@@ -160,7 +152,6 @@ The `--out` parameter is used directly in f-string path constructions without ca
 **Recommended remediation:**
 Canonicalize `args.out` with `os.path.realpath()` and optionally restrict it to the current directory or a designated output directory.
 
----
 
 ### S07 -- Symlink Following in Evidence Directory
 **Finding ID:** S07
@@ -176,7 +167,6 @@ Canonicalize `args.out` with `os.path.realpath()` and optionally restrict it to 
 **Recommended remediation:**
 Use `os.path.realpath()` to resolve the evidence directory path before writing, and verify the resolved path is still within the intended output directory.
 
----
 
 ### S08 -- No Validation of --out Against Special Files
 **Finding ID:** S08
@@ -189,7 +179,6 @@ Use `os.path.realpath()` to resolve the evidence directory path before writing, 
 
 **Actual impact:** Minimal. Device-like paths with appended extensions are not special files.
 
----
 
 ### S09 -- XSS in SVG via Probe Names/Content
 **Severity:** Pass
@@ -200,7 +189,6 @@ All user-controlled content in SVG evidence cards (`probe_name`, `title`, `promp
 
 **Evidence:** 5/5 XSS payloads properly escaped in SVG output.
 
----
 
 ### S10 -- Plugin System Lacks Sandboxing
 **Finding ID:** S10
@@ -222,7 +210,6 @@ Plugin modules execute with full Python interpreter privileges via `importlib.ut
 **Recommended remediation:**
 Consider adding an optional integrity check (e.g., hash allowlist of approved plugin files) for enterprise deployments where plugin directories may be writable by other users.
 
----
 
 ### S11 -- No SSRF Protection in Config Validation
 **Finding ID:** S11
@@ -260,7 +247,6 @@ validate_target_config({"url": "http://[::1]:8080/"})
 3. Resolve hostnames to IP before checking (DNS rebinding defense)
 4. Make `--scope` mandatory for non-demo, non-harness runs (opt-in is insufficient)
 
----
 
 ### S12 -- Unrestricted HTTP Redirect Following
 **Finding ID:** S12
@@ -280,7 +266,6 @@ Combined with S11, this creates a redirect-based SSRF chain: a target at a valid
 2. Re-validate redirect target URLs against the scope allowlist and private IP blocklist
 3. Log redirects for audit trail visibility
 
----
 
 ### S13 -- SSL/TLS Verification
 **Severity:** Pass
@@ -289,7 +274,6 @@ Combined with S11, this creates a redirect-based SSRF chain: a target at a valid
 
 SSL certificate verification is enabled by default. `CERT_NONE` is only applied when both `--proxy` and `--proxy-no-verify` flags are set (for Burp Suite integration). Non-proxied requests use `urllib.request.urlopen`'s default context, which verifies certificates.
 
----
 
 ### S14 -- No Maximum Timeout Enforced
 **Finding ID:** S14
@@ -311,7 +295,6 @@ validate_target_config({"url": "http://x", "timeout": 999999})  # accepted
 **Recommended remediation:**
 Enforce a maximum timeout (e.g., 300 seconds) or warn when timeout exceeds a reasonable threshold.
 
----
 
 ### S15 -- Scope Enforcement Edge Cases
 **Severity:** Pass
@@ -328,7 +311,6 @@ Scope enforcement correctly handles:
 
 Empty/None scope allows all hosts by design (falls back to `--authorized` honor system).
 
----
 
 ### S16 -- HTML Report XSS via Evidence SVG
 **Finding ID:** S16
@@ -348,7 +330,6 @@ This bypasses the `esc()` function used for other fields. However, `evidence.py`
 **Recommended remediation:**
 Consider using `esc()` or DOM APIs (`textContent`, `createElementNS`) instead of raw innerHTML for evidence SVG insertion, for defense in depth.
 
----
 
 ### S17 -- Evidence Hash Algorithm Verification
 **Severity:** Pass
@@ -362,7 +343,6 @@ Consider using `esc()` or DOM APIs (`textContent`, `createElementNS`) instead of
 
 **Note:** The 8-char redaction token has a birthday-bound collision probability of ~50% at 2^16 secrets. This is acceptable for the correlation use case (not a security control).
 
----
 
 ### S18 -- Incomplete Secret Redaction Patterns
 **Finding ID:** S18
@@ -419,7 +399,6 @@ SECRET_PATTERNS = [
 ]
 ```
 
----
 
 ### S19 -- JSON Report Information Content
 **Severity:** Pass (by design)
@@ -433,7 +412,6 @@ SECRET_PATTERNS = [
 
 **Note:** `evidence_path` in reports may leak local filesystem paths. This is informational and expected for a local tool.
 
----
 
 ### S20 -- --store-raw Flag Gating
 **Severity:** Pass
@@ -445,7 +423,6 @@ SECRET_PATTERNS = [
 - HAR export also respects the `store_raw` flag (cli.py:517-518)
 - Evidence SVGs are generated after redaction (correct ordering)
 
----
 
 ### S21 -- No Subprocess/os.system Usage
 **Severity:** Pass
@@ -454,7 +431,6 @@ SECRET_PATTERNS = [
 
 No `subprocess`, `os.system`, `os.popen`, or `os.exec*` calls found in any source file under `glasscage/`. The one mention of `eval()` in `glasscage/remediation.py:30` is a string in remediation advice text, not an actual call.
 
----
 
 ### S22 -- No eval/exec Usage
 **Severity:** Pass
@@ -463,7 +439,6 @@ No `subprocess`, `os.system`, `os.popen`, or `os.exec*` calls found in any sourc
 
 No `eval()` or `exec()` calls found. `importlib` is used in `plugins.py` (documented, consent-gated) and `adapters/external.py` (for loading adapter modules).
 
----
 
 ### S23 -- Plugin System Informed Consent
 **Severity:** Informational (addressed by design)
@@ -477,7 +452,6 @@ The plugin system provides no runtime sandboxing. This is documented and the ris
 
 The threat model (arbitrary file/network/system access by plugin code) is acknowledged in the module docstring ("Load only trusted plugins").
 
----
 
 ## Summary of Actionable Recommendations
 
@@ -497,7 +471,6 @@ The threat model (arbitrary file/network/system access by plugin code) is acknow
 9. **S05 -- Unicode normalization:** Strip Bidi control characters.
 10. **S16 -- SVG innerHTML:** Use DOM APIs instead of raw innerHTML for defense in depth.
 
----
 
 ## Test Artifacts
 

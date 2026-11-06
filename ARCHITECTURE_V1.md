@@ -8,7 +8,6 @@ Backward compatibility: every v1.0 stage is additive. The old `Engine(target).ru
 call still works; new capabilities are opt-in flags or extra result keys. No existing
 signature was broken (report functions gained optional trailing params only).
 
----
 
 ## 1. Platform (not just a scanner) — [PARTIAL]
 The engine already runs recon → probes → adaptive/genetic → MCP → architecture →
@@ -90,7 +89,6 @@ Core remains standard-library only. New modules are small, single-responsibility
 documented, and covered by 43 tests. Optional extras (anthropic, pyyaml, rich) stay
 optional; PDF/OTel would be additional optional extras.
 
----
 
 ## What to build next (highest leverage)
 1. **Live agent harness** (adapter for multi-step tool-calling agents) — unlocks

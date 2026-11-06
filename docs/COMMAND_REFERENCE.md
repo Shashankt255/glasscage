@@ -9,7 +9,6 @@ Every CLI option in GLASSCAGE 1.0.0rc3. Invoke as `python -m glasscage`, `glassc
 There is **no `--version` flag** in rc3; use `python -c "import glasscage;
 print(glasscage.__version__)"`.
 
----
 
 ## Target selection & scope
 
@@ -100,7 +99,6 @@ print(glasscage.__version__)"`.
   resolved and only `paths` → HTTP methods and MCP `tools` are enumerated, so the count
   is a lower bound on a spec that leans on references.
 
----
 
 ## Attack engines
 
@@ -144,7 +142,6 @@ print(glasscage.__version__)"`.
 - **Reachable from the Python API only.** The CLI drives a single target, so `N` is 1 and
   the effective budget equals the flag value.
 
----
 
 ## Evidence & safety
 
@@ -184,7 +181,6 @@ print(glasscage.__version__)"`.
 - **Older logs:** entries written before the integrity format report as *unverifiable*
   rather than valid, and cannot be upgraded (ADR 0019).
 
----
 
 ## Output
 
@@ -219,7 +215,6 @@ print(glasscage.__version__)"`.
 - **Maturity:** Implemented but **deprecated**; removal planned next major. Narratives
   and story are unavailable in this mode.
 
----
 
 ## MCP (configuration review only)
 
@@ -232,7 +227,6 @@ print(glasscage.__version__)"`.
 - **Purpose:** rug-pull detection — diff a manifest against an approved baseline.
 - **Example:** `--mcp-manifest new.json --mcp-baseline approved.json`
 
----
 
 ## External frameworks (Pending External Validation)
 
@@ -255,7 +249,6 @@ print(glasscage.__version__)"`.
 - **Purpose:** run the detector corpus benchmark (precision/recall/F1).
 - **Maturity:** **Experimental** (corpus n=109, single annotator).
 
----
 
 ## Plugins & logging
 

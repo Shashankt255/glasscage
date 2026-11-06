@@ -11,7 +11,6 @@ Hard honesty rule honored throughout: external tools that are neither installed 
 supplied an output file are reported **Not Tested** and contribute **zero** findings.
 No synthetic external results are ever produced.
 
----
 
 ## D1 — External tool integration (`adapters/`, `taxonomy.py`)
 Production normalization from each framework's **native output** into the canonical
@@ -73,7 +72,6 @@ corpus description, benchmark results with CIs, cross-framework comparison, stat
 methods, and maturity labels. Reproducible: `python cli.py --validate --harness`.
 Status: **Implemented**.
 
----
 
 ## New CLI (all additive)
 - `--harness` — deterministic L2 reference agent as target

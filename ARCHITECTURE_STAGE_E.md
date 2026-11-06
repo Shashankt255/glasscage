@@ -12,7 +12,6 @@ Design priority (as directed): correctness, maintainability, extensibility over
 feature count. Every graph operation is deterministic (sorted traversal, deterministic
 ids) and reproducible (serialization round-trips exactly).
 
----
 
 ## E1 — Graph engine — **Implemented**  (`aakg/types.py`, `aakg/engine.py`, `aakg/build.py`)
 A lightweight, stdlib-only directed **property graph**.
@@ -61,7 +60,6 @@ tools, secrets, and assets **from observed graph relationships**, not static heu
 - Verified: at L2 a demonstrated memory-poisoning finding yields a demonstrated blast to
   Secrets+Database (multiplier 2.0); at L0 the basis is correctly "hypothesized".
 
----
 
 ## Integration & backward compatibility
 - The engine builds the AAKG after scoring and derives `trust`, `chains`, and `blast`

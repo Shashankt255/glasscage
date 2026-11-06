@@ -4,7 +4,6 @@ Hands-on, in order. **Every command below was executed against this release**; t
 described outputs are what the tool actually produces. Tutorials 1–5 are safe and
 need no network or authorization.
 
----
 
 ## Tutorial 1 — Your first assessment (2 minutes)
 
@@ -25,7 +24,6 @@ demonstrated / hypothesized / not assessable.
 **Key lesson:** the mock is an **L0** target. Agentic probes report **NOT ASSESSABLE** —
 GLASSCAGE refuses to guess about capabilities the target does not expose.
 
----
 
 ## Tutorial 2 — Seeing agentic analysis work (L2)
 
@@ -42,7 +40,6 @@ The built-in reference agent exposes planner/memory/tool traces, so agentic prob
 works. It says **nothing** about efficacy against a real model. Never present harness
 results as evidence about a real system.
 
----
 
 ## Tutorial 3 — Reading the knowledge graph
 
@@ -62,7 +59,6 @@ PY
 `state` field (`demonstrated`/`hypothesized`/`not_assessable`) is the epistemic
 backbone — **a path is only as strong as its weakest edge.**
 
----
 
 ## Tutorial 4 — Proving secrets never leak into artifacts
 
@@ -86,7 +82,6 @@ grep -rl "sk-REF00011122233344455" /tmp/raw* | head -2
 **original** before redaction, so integrity survives sanitisation. `--store-raw` is a
 deliberate, logged consent action.
 
----
 
 ## Tutorial 5 — Statistics and determinism
 
@@ -105,7 +100,6 @@ say nothing about whether the corpus or target is representative. The benchmark'
 "reproducibility" figure measures **detector determinism on fixed strings** — not
 target repeatability, which GLASSCAGE has never measured.
 
----
 
 ## Tutorial 6 — Audience views
 
@@ -122,7 +116,6 @@ Five lenses over the **same** models. Compare `executive` (business language) wi
 the `incident_response` view admits it produces **no network IOCs**. Views inherit
 evidence classes — they cannot upgrade a claim.
 
----
 
 ## Tutorial 7 — Honest adapter status
 
@@ -140,7 +133,6 @@ orchestration. Supply real output to upgrade a framework to `Measured`:
 python -m glasscage --validate-adapters --genuine-output garak=/path/real.report.jsonl --out /tmp/a2
 ```
 
----
 
 ## Tutorial 8 — MCP configuration review
 
@@ -161,7 +153,6 @@ python -m glasscage --mcp-manifest samples/mcp_manifest.json \
 JSON; it **never contacts an MCP server** (verified: zero network calls in `mcp.py`).
 The finding evidences a defect **in the manifest**. Runtime MCP testing is **Roadmap**.
 
----
 
 ## Tutorial 9 — Writing a plugin probe
 
@@ -176,7 +167,6 @@ Without `--allow-plugins` the run is **refused** (exit 2) with a trust warning.
 below-tier targets auto-return NOT ASSESSABLE. Plugins run **unsandboxed** with your
 privileges; load only code you trust. See `docs/PLUGIN_SDK.md`.
 
----
 
 ## Tutorial 10 — A realistic engagement
 

@@ -6,7 +6,6 @@
 **Platform:** Linux 6.11.2-amd64 (Kali VM on VBox)  
 **Status:** 8/8 PASS (100%)
 
----
 
 ## P01: Demo Run Timing Baseline
 
@@ -18,7 +17,6 @@
 | **Actual** | **0.135 seconds** wall time. Exit 0. |
 | **Result** | **PASS** |
 
----
 
 ## P02: Harness Run Timing
 
@@ -30,7 +28,6 @@
 | **Actual** | **0.124 seconds** wall time. Exit 0. |
 | **Result** | **PASS** |
 
----
 
 ## P03: Demo + Adaptive Timing
 
@@ -42,7 +39,6 @@
 | **Actual** | **0.136 seconds** wall time. Exit 0. Negligible overhead (+0.001s vs baseline). |
 | **Result** | **PASS** |
 
----
 
 ## P04: Demo + Genetic Timing
 
@@ -54,7 +50,6 @@
 | **Actual** | **0.125 seconds** wall time. Exit 0. No measurable overhead vs baseline. |
 | **Result** | **PASS** |
 
----
 
 ## P05: Memory Baseline
 
@@ -66,7 +61,6 @@
 | **Actual** | **30,728 KB (30.0 MB)** peak resident set size. |
 | **Result** | **PASS** |
 
----
 
 ## P06: Demo Report Sizes
 
@@ -85,7 +79,6 @@
 
 | **Result** | **PASS** |
 
----
 
 ## P07: Harness Report Sizes
 
@@ -104,7 +97,6 @@
 
 | **Result** | **PASS** |
 
----
 
 ## P08: AAKG Graph JSON Sizes
 
@@ -121,7 +113,6 @@
 
 | **Result** | **PASS** |
 
----
 
 ## Performance Summary
 

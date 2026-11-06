@@ -3,7 +3,6 @@
 Stable within a major version unless marked otherwise (see `VERSIONING.md`).
 Auto-generated per-module docs: `python tools/gen_api_docs.py` → `docs/api/`.
 
----
 
 ## Engine — **Implemented / Stable**
 
@@ -44,7 +43,6 @@ html = engine.report_html(results)      # interactive HTML
 `aakg`/`blast`/`remediation_priorities`/`narratives`/`story` are `None` when
 `use_aakg=False`.
 
----
 
 ## Models — **Implemented / Stable**
 
@@ -60,7 +58,6 @@ Key `Finding` fields: `probe_name`, `owasp_id`, `atlas_id`, `cwe_id`, `capec_id`
 `evidence_hash`, `assessed_tier`, `required_tier`, `trials_run`, `success_rate`,
 `ci_low`, `ci_high`, `reproducibility`, `source_framework`.
 
----
 
 ## Target — **Implemented / Stable**
 
@@ -72,7 +69,6 @@ resp = target.send("prompt")     # -> ChatResponse(ok, text, error, trace, ...)
 ```
 Config is validated on construction; raises `errors.ConfigError`.
 
----
 
 ## AAKG — **Implemented / Stable**
 
@@ -96,7 +92,6 @@ g.stats()
 
 **EdgeState:** `demonstrated` · `hypothesized` · `not_assessable` (monotonic upgrade).
 
----
 
 ## Evidence Confidence — **Implemented / Stable**
 
@@ -110,7 +105,6 @@ EvidenceClass.MEASURED.at_most(EvidenceClass.ESTIMATED)   # -> ESTIMATED  (clamp
 from_state("demonstrated")                                 # -> DEMONSTRATED
 ```
 
----
 
 ## Redaction — **Implemented / Stable**
 
@@ -123,7 +117,6 @@ redaction.encryption_available()  # crypto extra present?
 redaction.encrypt_dir(path, pw)   # raises ConfigError if extra absent (no fake cipher)
 ```
 
----
 
 ## Probes & Tiers — **Implemented / Stable**
 

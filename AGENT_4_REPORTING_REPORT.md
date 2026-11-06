@@ -5,7 +5,6 @@
 **Tester:** Agent 4 (Automated)  
 **Artifacts directory:** `/tmp/agent4/`
 
----
 
 ## T01 — JSON vs MD Finding Consistency
 
@@ -25,7 +24,6 @@
 
 **Evidence:** `/tmp/agent4/t01.json`, `/tmp/agent4/t01.md`
 
----
 
 ## T02 — Severity Distribution Match
 
@@ -43,7 +41,6 @@
 
 **Evidence:** `/tmp/agent4/t01.json`
 
----
 
 ## T03 — HTML Report Data Match
 
@@ -62,7 +59,6 @@
 
 **Evidence:** `/tmp/agent4/t01.html`, `/tmp/agent4/t01.json`
 
----
 
 ## T04 — AAKG Graph Stats
 
@@ -80,7 +76,6 @@
 
 **Evidence:** `/tmp/agent4/t01_aakg.json`, `/tmp/agent4/t01.json` (story), `/tmp/agent4/t01.md`
 
----
 
 ## T05 — Trust Boundary Model
 
@@ -103,7 +98,6 @@
 
 **Evidence:** `/tmp/agent4/t01.md`, `/tmp/agent4/t01.json` (story section 5)
 
----
 
 ## T06 — Audience Views
 
@@ -122,7 +116,6 @@
 
 **Evidence:** `/tmp/agent4/t06_view_*.md`
 
----
 
 ## T07 — Log-Level Debug Leakage
 
@@ -141,7 +134,6 @@
 
 **Evidence:** `/tmp/agent4/t07_debug.json`, `/tmp/agent4/t07_debug.md`, `/tmp/agent4/t07_debug.html`
 
----
 
 ## T08 — Evidence Class Tags
 
@@ -171,7 +163,6 @@
 
 **Evidence:** `/tmp/agent4/t01.json` (story), `/tmp/agent4/t01.md`
 
----
 
 ## SR01 — SARIF File Generation
 
@@ -185,7 +176,6 @@
 
 **Evidence:** `/tmp/agent4/sr01.sarif`
 
----
 
 ## SR02 — SARIF Structure
 
@@ -202,7 +192,6 @@
 
 **Evidence:** `/tmp/agent4/sr01.sarif`
 
----
 
 ## SR03 — SARIF Results Fields
 
@@ -219,7 +208,6 @@
 
 **Evidence:** `/tmp/agent4/sr01.sarif`
 
----
 
 ## SR04 — SARIF Rule ID Mapping
 
@@ -237,7 +225,6 @@
 
 **Evidence:** `/tmp/agent4/sr01.sarif`
 
----
 
 ## SR05 — SARIF Severity Level Mapping
 
@@ -258,7 +245,6 @@
 
 **Evidence:** `/tmp/agent4/sr01.sarif`, `/tmp/agent4/sr01.json`
 
----
 
 ## Summary
 

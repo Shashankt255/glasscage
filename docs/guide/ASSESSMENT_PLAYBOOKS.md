@@ -8,7 +8,6 @@
 Each playbook states: objective · prerequisites · commands · **what GLASSCAGE can
 prove** · **what it cannot** · how to confirm manually.
 
----
 
 ## Playbook 1 — Black-box chat endpoint (L0/L1)
 
@@ -29,7 +28,6 @@ ASSESSABLE** — the target is L0/L1. **This is the expected result, not a failu
 
 **Confirm manually:** reproduce each finding with the curl in its Reproduce tab.
 
----
 
 ## Playbook 2 — Agentic application with a tool schema (L1/L2)
 
@@ -53,7 +51,6 @@ narrative will say so.
 **Watch for:** `--architecture` answers are **trusted, not verified**. A wrong answer
 suppresses violations and *lowers* the risk index. Answer only what you know.
 
----
 
 ## Playbook 3 — Instrumented agent (L2) — the differentiating case
 
@@ -76,7 +73,6 @@ other agents.
 shows what a full L2 result looks like. **The harness is a test fixture, not evidence
 about your system.**
 
----
 
 ## Playbook 4 — MCP manifest review — **configuration review only**
 
@@ -99,7 +95,6 @@ these as "MCP server tested".
 
 **Best use:** the rug-pull diff in CI — pin an approved manifest, alert on drift.
 
----
 
 ## Playbook 5 — Regression / drift assessment
 
@@ -117,7 +112,6 @@ python -m glasscage --diff run-A.json run-B.json
 and GLASSCAGE has never measured target repeatability. Use `--trials 5` on both runs
 and treat single-trial differences as noise.
 
----
 
 ## Playbook 6 — Detector benchmarking — **Experimental**
 
@@ -133,7 +127,6 @@ alongside the detectors. `[Measured]` on an `[Experimental]` corpus — both lab
 matter. Note: the benchmark's "reproducibility" figure measures **detector
 determinism on fixed strings**, not target repeatability.
 
----
 
 ## Playbook 7 — External framework adapters — **Pending External Validation**
 
@@ -149,7 +142,6 @@ tool outputs have ever been ingested** — `--validate-adapters` will tell you s
 honestly (`Genuine-validated: 0`). If you have real output, pass it with
 `--genuine-output tool=path` and the status upgrades to `Measured` for that framework.
 
----
 
 ## Playbook 8 — Client engagement with live secrets
 
@@ -166,7 +158,6 @@ python -m glasscage --config t.json --authorized \
 `--encrypt-evidence` requires `pip install glasscage[crypto]`. Custody hashes are
 computed **before** redaction, so integrity holds either way. Replay bundles strip auth.
 
----
 
 ## Objective coverage — what one run actually tests
 

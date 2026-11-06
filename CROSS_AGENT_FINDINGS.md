@@ -3,7 +3,6 @@
 **Date:** 2026-11-05
 **Validated by:** Lead Agent (cross-agent correlation of Agents 1–5)
 
----
 
 ## Cross-Agent Validation Notes
 
@@ -11,13 +10,11 @@
 
 **Conflict check:** Agent 4 P03 notes 1 evidence_hash mismatch for `sensitive-info-disclosure` due to post-hash redaction — this is consistent with Agent 2's audit chain validation (which also noted hash integrity is correct) and Agent 3's S20 (store-raw gating confirmed correct). No conflicting conclusions.
 
----
 
 ## Consolidated Defect List
 
 ### CRITICAL — None
 
----
 
 ### HIGH
 
@@ -29,7 +26,6 @@
 
 **Release gate:** CONDITIONAL — acceptable for CLI-only 1.0.0 GA where user controls their own config. Must fix before any API/service deployment mode.
 
----
 
 ### MEDIUM
 
@@ -40,7 +36,6 @@
 | S12 | Agent 3 | Unrestricted HTTP redirect following | `target.py:137-138` | SSRF via redirect chain (amplifies S11) |
 | A07 | Agent 2 | PermissionError crash on non-writable output dir | `evidence.py:129`, `cli.py:488` | Unhandled traceback instead of clean ConfigError |
 
----
 
 ### LOW
 
@@ -51,7 +46,6 @@
 | S06 | Agent 3 | Path traversal in --out parameter | `cli.py:488-561` | Write reports to unintended locations |
 | S14 | Agent 3 | No maximum timeout enforced | `config.py:39-41` | Process hang on extreme timeout values |
 
----
 
 ### INFORMATIONAL / OBSERVATIONS
 
@@ -65,7 +59,6 @@
 | S23 | Agent 3 | Plugin informed consent adequate | `plugins.py`, `cli.py:281-291` | Design review — acceptable |
 | A08 | Agent 2 | Stale test counts (21/25 vs 34/32) | `test_custody_completeness.py` | Expected — caused by uncommitted feature additions |
 
----
 
 ## Pre-GA Remediation Priority
 
@@ -85,7 +78,6 @@
 9. **S06** — Path canonicalization for --out
 10. **S14** — Maximum timeout cap
 
----
 
 ## Defect Density Summary
 

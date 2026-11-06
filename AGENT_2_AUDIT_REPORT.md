@@ -5,7 +5,6 @@
 **Tester:** Agent 2 (automated)
 **Artifacts:** /tmp/agent2/
 
----
 
 ## Summary
 
@@ -16,7 +15,6 @@
 | FAIL            | 1     |
 | OBSERVATION     | 1     |
 
----
 
 ## A01 - Normal Audit Persistence
 
@@ -35,7 +33,6 @@
 
 **Evidence:** `/tmp/agent2/a01.jsonl` (34 lines, all valid JSON)
 
----
 
 ## A02 - Multiple Exchanges: Audit Log vs Findings
 
@@ -55,7 +52,6 @@
 
 **Evidence:** `/tmp/agent2/a01.jsonl`, `/tmp/agent2/a01.json`
 
----
 
 ## A03 - Audit Chain Integrity
 
@@ -75,7 +71,6 @@
 
 **Evidence:** Independent verification script output confirms chain integrity
 
----
 
 ## A04 - Evidence File Generation
 
@@ -95,7 +90,6 @@
 
 **Evidence:** `/tmp/agent2/a04_evidence/` (29 SVG files)
 
----
 
 ## A05 - Evidence Hash Integrity
 
@@ -114,7 +108,6 @@
 
 **Evidence:** `/tmp/agent2/a01.json` -- 2 findings with `[REDACTED:...]` in raw_response confirming designed behavior
 
----
 
 ## A06 - Redaction Verification
 
@@ -133,7 +126,6 @@
 
 **Evidence:** `/tmp/agent2/a06_raw.json` (raw), `/tmp/agent2/a01.json` (redacted)
 
----
 
 ## A07 - Evidence Write Failure
 
@@ -155,7 +147,6 @@
 
 **Evidence:** Traceback output captured in test artifacts
 
----
 
 ## A08 - Corrupted Audit File
 
@@ -173,7 +164,6 @@
 
 **Evidence:** stderr output captured
 
----
 
 ## A09 - Repeated Assessment (Append Semantics)
 
@@ -192,7 +182,6 @@
 
 **Evidence:** `/tmp/agent2/a09.jsonl` (68 entries, verified)
 
----
 
 ## A10 - Evidence-Audit Mismatch Detection (Custody Completeness Tests)
 
@@ -215,7 +204,6 @@
 
 **Evidence:** pytest output captured; file: `/home/kali/glasscage/tests/test_custody_completeness.py` lines 293, 303
 
----
 
 ## A11 - No-Evidence Mode
 
@@ -234,7 +222,6 @@
 
 **Evidence:** `/tmp/agent2/a11.json`
 
----
 
 ## A12 - HAR Export
 
@@ -255,7 +242,6 @@
 
 **Evidence:** `/tmp/agent2/a12.har`
 
----
 
 ## Issues Found
 
@@ -273,7 +259,6 @@
 **Description:** Two tests hardcode expected entry counts (21 and 25) that no longer match the current probe set (now 34 and 32). All behavioral invariants pass; only the counts are stale.
 **Recommendation:** Update to current counts or use `self.calls` for a dynamic assertion as other tests in the same file already do.
 
----
 
 ## Conclusion
 

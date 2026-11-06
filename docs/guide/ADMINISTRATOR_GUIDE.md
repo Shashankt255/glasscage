@@ -3,7 +3,6 @@
 For those deploying, securing, and governing GLASSCAGE. See `docs/THREAT_MODEL.md`
 for the full threat model of the tool itself.
 
----
 
 ## 1. Supported deployment models
 
@@ -14,7 +13,6 @@ for the full threat model of the tool itself.
 | **Sandboxed engagement host** | **Supported** | required for `--store-raw`; pair with `--encrypt-evidence` and restricted artifact access |
 | **Unattended fleet / multi-tenant service** | **NOT SUPPORTED** | no persistence, no async, no tenancy model. Do not attempt. |
 
----
 
 ## 2. Security posture of the tool
 
@@ -39,7 +37,6 @@ enable `--judge`.
 | **Release signing / provenance** | **Roadmap** — supply-chain gap |
 | **URL-scheme allowlist in report links** | **Roadmap** — `javascript:`/`data:` hrefs not blocked |
 
----
 
 ## 3. Handling assessment artifacts as sensitive data
 
@@ -59,7 +56,6 @@ export GLASSCAGE_EVIDENCE_PASSWORD='...'
 python -m glasscage --config t.json --authorized --encrypt-evidence --out engagement
 ```
 
----
 
 ## 4. Plugin governance
 
@@ -78,7 +74,6 @@ Without `--allow-plugins` the run is refused (exit 2).
 `GLASSCAGE_PLUGIN_API` major version; do not load third-party plugins on hosts with
 production credentials.
 
----
 
 ## 5. Supply chain
 
@@ -91,7 +86,6 @@ python tools/gen_sbom.py > sbom.json   # CycloneDX; 0 runtime deps, 56 hashed mo
 - **Release signing is not yet implemented** (Roadmap). Until then, verify provenance
   out-of-band and pin versions in CI.
 
----
 
 ## 6. Logging & monitoring
 
@@ -106,7 +100,6 @@ Library modules never configure handlers; only the CLI/application does.
 > as a note rather than surfaced loudly — a failure can therefore become a silent
 > coverage gap. Run with `--log-level DEBUG` when results look thin.
 
----
 
 ## 7. Versioning & upgrades
 
@@ -118,7 +111,6 @@ documented CLI flags.
 **Deprecated:** `--no-aakg` and the legacy `posture`/`coverage`/`chain`/`trust`
 modules — removal planned in the next major.
 
----
 
 ## 8. Vulnerability reporting
 

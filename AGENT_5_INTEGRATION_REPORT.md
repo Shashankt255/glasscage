@@ -5,7 +5,6 @@
 **Tester:** Agent 5 (Automated)  
 **Status:** 9/9 PASS (100%)
 
----
 
 ## I01: Full `--demo` Assessment
 
@@ -18,7 +17,6 @@
 | **Result** | **PASS** |
 | **Evidence** | `/tmp/agent5/i01/` |
 
----
 
 ## I02: Full `--harness` Assessment
 
@@ -31,7 +29,6 @@
 | **Result** | **PASS** |
 | **Evidence** | `/tmp/agent5/i02/` |
 
----
 
 ## I03: Demo + All Flags
 
@@ -57,7 +54,6 @@
 | **Result** | **PASS** |
 | **Evidence** | `/tmp/agent5/i03/` |
 
----
 
 ## I04: Demo with Architecture Answers
 
@@ -70,7 +66,6 @@
 | **Result** | **PASS** |
 | **Evidence** | `/tmp/agent5/i04/` |
 
----
 
 ## I05: Demo with System Prompt
 
@@ -88,7 +83,6 @@
 | **Result** | **PASS** |
 | **Evidence** | `/tmp/agent5/i05/` |
 
----
 
 ## I06: MCP Manifest Analysis
 
@@ -106,7 +100,6 @@
 | **Result** | **PASS** |
 | **Evidence** | `/tmp/agent5/i06/` |
 
----
 
 ## I07: Custom Mock Target (Normal)
 
@@ -119,7 +112,6 @@
 | **Result** | **PASS** |
 | **Evidence** | `/tmp/agent5/i07/` |
 
----
 
 ## I08: Custom Mock Target (Errors)
 
@@ -132,7 +124,6 @@
 | **Result** | **PASS** |
 | **Evidence** | `/tmp/agent5/i08/` |
 
----
 
 ## I09: Custom Mock Target (Large Responses)
 
@@ -145,7 +136,6 @@
 | **Result** | **PASS** |
 | **Evidence** | `/tmp/agent5/i09/` |
 
----
 
 ## Summary
 

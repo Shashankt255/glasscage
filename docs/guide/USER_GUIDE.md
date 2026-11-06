@@ -4,7 +4,6 @@
 > can prove. Read [Known Limitations](#known-limitations) before you rely on any number
 > in a report. Findings are **hypotheses to confirm**, not conclusions.
 
----
 
 ## 1. What GLASSCAGE is
 
@@ -22,7 +21,6 @@ assets fall — and it refuses to claim more than its evidence supports.
 **What it is not:** it is not a fleet scanner, not a validated efficacy measurement,
 and not a substitute for an expert. See [Known Limitations](#known-limitations).
 
----
 
 ## 2. Install
 
@@ -39,7 +37,6 @@ pip install glasscage[dev]      # pytest / ruff / mypy / build
 
 Requires Python ≥ 3.10. Run via `glasscage`, `python -m glasscage`, or `python cli.py`.
 
----
 
 ## 3. Quickstart
 
@@ -73,7 +70,6 @@ Outputs: `report.md`, `report.html`, `report.json`, `report_aakg.json`, `report_
 `{{PROMPT}}` is substituted with each probe payload. `response_path` is a dotted path
 into the JSON response. Config is validated on load; errors are actionable.
 
----
 
 ## 4. Core concepts (you must understand these to read a report)
 
@@ -128,7 +124,6 @@ never to compare targets or to state absolute risk.
 > **Do not put this number in front of a board as "our AI risk is 74".** It has never
 > been calibrated against real outcomes.
 
----
 
 ## 5. Feature maturity matrix
 
@@ -169,7 +164,6 @@ never to compare targets or to state absolute risk.
 | Trend reporting (requires persistence) | **Roadmap** |
 | Risk index calibration | **Roadmap** |
 
----
 
 ## 6. Known Limitations
 
@@ -222,7 +216,6 @@ succeed", **not** "the target is not vulnerable".
 - **"Reproducibility" in benchmark output** measures detector determinism on fixed
   strings, not target repeatability.
 
----
 
 ## 7. Where to go next
 

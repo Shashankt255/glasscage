@@ -5,7 +5,6 @@
 **Tester:** Agent 4 (Automated)  
 **Artifacts directory:** `/tmp/agent4/`
 
----
 
 ## R01 — Deterministic Replay (Seed 42)
 
@@ -24,7 +23,6 @@
 
 **Evidence:** `/tmp/agent4/r01a.json`, `/tmp/agent4/r01b.json`
 
----
 
 ## R02 — Wilson CI Intervals (Trials = 3)
 
@@ -41,7 +39,6 @@
 
 **Evidence:** `/tmp/agent4/r02.json`
 
----
 
 ## R03 — Replay Bundle
 
@@ -60,7 +57,6 @@
 
 **Evidence:** `/tmp/agent4/r03.replay.json`, `/tmp/agent4/r03_replay_runner.py`
 
----
 
 ## R04 — Diff Identical Reports
 
@@ -82,7 +78,6 @@ Grade F -> F
 
 **Evidence:** CLI output
 
----
 
 ## R05 — Diff Different Seeds
 
@@ -99,7 +94,6 @@ Grade F -> F
 
 **Evidence:** `/tmp/agent4/r01a.json`, `/tmp/agent4/r05_seed99.json`
 
----
 
 ## R06 — Harness vs Demo (Different Targets)
 
@@ -117,7 +111,6 @@ Grade F -> F
 
 **Evidence:** `/tmp/agent4/r01a.json`, `/tmp/agent4/r06.json`
 
----
 
 ## P01 — Required Provenance Fields
 
@@ -131,7 +124,6 @@ Grade F -> F
 
 **Evidence:** `/tmp/agent4/r01a.json`
 
----
 
 ## P02 — Vulnerable Finding Evidence
 
@@ -145,7 +137,6 @@ Grade F -> F
 
 **Evidence:** `/tmp/agent4/r01a.json`
 
----
 
 ## P03 — Evidence Hash Recomputation
 
@@ -165,7 +156,6 @@ Grade F -> F
 
 **Evidence:** `/tmp/agent4/r01a.json` — finding `sensitive-info-disclosure`
 
----
 
 ## P04 — Reproduction Steps
 
@@ -183,7 +173,6 @@ Grade F -> F
 
 **Evidence:** `/tmp/agent4/r01a.json`
 
----
 
 ## P05 — Reference Links Format
 
@@ -200,7 +189,6 @@ Grade F -> F
 
 **Evidence:** `/tmp/agent4/r01a.json`
 
----
 
 ## P06 — Taxonomy Cross-References
 
@@ -219,7 +207,6 @@ Grade F -> F
 
 **Evidence:** `/tmp/agent4/r01a.json`
 
----
 
 ## Summary
 

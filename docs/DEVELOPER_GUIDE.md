@@ -4,7 +4,6 @@ Zero-dependency Python (stdlib only) built around the **AI Attack Knowledge Grap
 **The architecture is frozen** (since Stage E5). Extend via probes, adapters and
 plugins — not by editing the core.
 
----
 
 ## 1. Layout
 
@@ -40,7 +39,6 @@ glasscage/
 
 `*` coverage has a known accounting defect — see §6.
 
----
 
 ## 2. Architectural rules (do not violate)
 
@@ -56,7 +54,6 @@ glasscage/
 6. **Reporting layers read; they never analyse.** Narratives/story/views select and
    render existing graph objects only.
 
----
 
 ## 3. Adding a probe — **Implemented extension point**
 
@@ -87,7 +84,6 @@ class MyProbe(Probe):
 **steerability** from **impact** (only impact drives high risk); use `r.trace` to
 *confirm* agentic impact rather than infer it; never claim what you did not observe.
 
----
 
 ## 4. Adding an adapter — **Implemented extension point**
 
@@ -107,7 +103,6 @@ class MyToolAdapter(ExternalToolAdapter):
 Register in `adapters/__init__.REGISTRY`. Parsers must emit normalized `Finding`s with
 full taxonomy. **Fixture conformance is not validation** — see §6.
 
----
 
 ## 5. Writing a plugin — **Implemented**
 
@@ -115,7 +110,6 @@ See `docs/PLUGIN_SDK.md` and `plugins_example/example_probe.py`.
 Declare `GLASSCAGE_PLUGIN_API = "1.0"`; a major mismatch is refused. Plugins load only
 with `--allow-plugins` and run **unsandboxed**.
 
----
 
 ## 6. Known defects a contributor should know
 
@@ -129,7 +123,6 @@ with `--allow-plugins` and run **unsandboxed**.
 | Dual graph systems (`graph.py` vs `aakg/`) and legacy shims still ship | **P2 — open** |
 | CI lint/type gates are advisory (`|| true`) | **P2 — open** |
 
----
 
 ## 7. Testing
 
@@ -146,7 +139,6 @@ python tools/profile_run.py                      # cProfile + tracemalloc
 anti-hallucination tests (`test_narrative.py`) assert that every cited node/edge exists
 in the graph and no state is laundered — do not weaken them.
 
----
 
 ## 8. Contributing
 

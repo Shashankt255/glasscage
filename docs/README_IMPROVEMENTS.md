@@ -18,7 +18,6 @@
 ## Recommended replacement for the top of README.md
 (Keep the historical stage notes lower down under a "Development history" heading.)
 
----
 
 # GLASSCAGE
 
@@ -63,7 +62,6 @@ Full detail: `docs/USER_GUIDE.md` §6 and `docs/VALIDATION.md`.
 ## Documentation
 Start at [`README.md`](README.md).
 
----
 
 ## After pasting, also:
 - Add badges once CI/URLs are real (build status, license, python versions).

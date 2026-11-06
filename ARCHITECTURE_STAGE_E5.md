@@ -7,7 +7,6 @@ edge types, no new probes, no new attack techniques** were added. Backward compa
 
 Status labels: **Implemented · Partial · Experimental · Roadmap**.
 
----
 
 ## 1. Architecture diff (before → after)
 
@@ -104,7 +103,6 @@ Breakdown: 43 original · 19 Stage A–C · 12 Stage D · 17 Stage E (E1–E4) �
 Includes explicit fallback tests proving `use_aakg=False` still works and graph vs legacy
 both render reports.
 
----
 
 ## NEXT IMPLEMENTATION STAGE — awaiting instruction
 E5 complete. **E6–E8 not started.** When you approve, natural E6 scope: migrate the HTML
