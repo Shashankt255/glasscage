@@ -14,6 +14,8 @@ _REQUIRED_TARGET = ("url",)
 _OPTIONAL_TARGET = {
     "name": str, "method": str, "headers": dict, "body_template": (dict, str),
     "response_path": str, "timeout": (int, float), "stateful": bool,
+    "proxy": str, "proxy_no_verify": bool,
+    "max_retries": int, "backoff_base": (int, float),
 }
 
 

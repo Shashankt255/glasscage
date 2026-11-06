@@ -290,7 +290,7 @@ class TestFailuresThatAreNotCustodyLoss(_CliCase):
                            "--out", os.path.join(self.tmp, "demo"), "--audit-log", a])
         self.assertEqual(rc, 0)
         self.assertNotIn(_DIAG, se.getvalue())
-        self.assertEqual(verify_file(a).entries, 21)
+        self.assertEqual(verify_file(a).entries, 34)
 
     def test_harness_surface_is_unchanged(self):
         a = self.audit("h.jsonl")
@@ -300,7 +300,7 @@ class TestFailuresThatAreNotCustodyLoss(_CliCase):
                            "--out", os.path.join(self.tmp, "h"), "--audit-log", a])
         self.assertEqual(rc, 0)
         self.assertNotIn(_DIAG, se.getvalue())
-        self.assertEqual(verify_file(a).entries, 25)
+        self.assertEqual(verify_file(a).entries, 32)
 
 
 # ---------------- recon-time failure keeps its existing behaviour ----------------

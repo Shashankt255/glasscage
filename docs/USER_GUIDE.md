@@ -1,28 +1,25 @@
-# GLASSCAGE User Guide — 1.0.0rc3
+# GLASSCAGE User Guide (1.0.0rc3)
 
 > **Maturity of this release: Release Candidate.** GLASSCAGE is honest about what it
 > can prove. Read [Known Limitations](#known-limitations) before you rely on any number
 > in a report. Findings are **hypotheses to confirm**, not conclusions.
 
----
 
 ## 1. What GLASSCAGE is
 
 GLASSCAGE is a zero-dependency (Python standard library only) security assessment
 platform for LLM and agentic applications. It probes an authorized target, records
-evidence, and builds an **AI Attack Knowledge Graph (AAKG)** — a typed graph of
+evidence, and builds an **AI Attack Knowledge Graph (AAKG)**: a typed graph of
 findings, evidence, components, tools, assets, secrets, trust zones and taxonomy
 mappings. Every downstream answer (attack paths, trust boundaries, blast radius,
 coverage, remediation, narratives) is derived from that one graph.
 
 **What makes it different:** other tools produce a *list of findings*. GLASSCAGE
-answers *"so what?"* — what a finding reaches, which trust boundary it crosses, which
-assets fall — and it refuses to claim more than its evidence supports.
+answers *"so what?"*: what a finding reaches, which trust boundary it crosses, which
+assets fall. It refuses to claim more than its evidence supports.
 
 **What it is not:** it is not a fleet scanner, not a validated efficacy measurement,
 and not a substitute for an expert. See [Known Limitations](#known-limitations).
-
----
 
 ## 2. Install
 
@@ -39,7 +36,6 @@ pip install glasscage[dev]      # pytest / ruff / mypy / build
 
 Requires Python ≥ 3.10. Run via `glasscage`, `python -m glasscage`, or `python cli.py`.
 
----
 
 ## 3. Quickstart
 
@@ -73,19 +69,18 @@ Outputs: `report.md`, `report.html`, `report.json`, `report_aakg.json`, `report_
 `{{PROMPT}}` is substituted with each probe payload. `response_path` is a dotted path
 into the JSON response. Config is validated on load; errors are actionable.
 
----
 
 ## 4. Core concepts (you must understand these to read a report)
 
-### 4.1 Steerability vs Impact — **Implemented**
+### 4.1 Steerability vs Impact
 The single most important distinction in GLASSCAGE.
 - **Steerability**: the model echoed a canary / followed an instruction. Interesting, capped severity.
-- **Impact**: something real happened — a secret was disclosed, a tool fired.
+- **Impact**: something real happened. A secret was disclosed, a tool fired.
 
 Only **impact** drives high risk. A model that repeats a canary is not the same as one
 that leaks your database credentials, and GLASSCAGE never conflates them.
 
-### 4.2 Capability Tiers (L0–L3) — **Implemented**
+### 4.2 Capability Tiers (L0–L3)
 | Tier | Target exposes | Consequence |
 |---|---|---|
 | L0 | text in / text out | agentic probes cannot run |
@@ -93,14 +88,14 @@ that leaks your database credentials, and GLASSCAGE never conflates them.
 | L2 | + planner / tool traces | planner, tool-routing probes can run |
 | L3 | + multimodal / logprobs | **Roadmap** |
 
-**A probe above the target's tier returns `NOT ASSESSABLE` — never a pass.** This is
-deliberate: GLASSCAGE reports what it could not determine instead of guessing.
+**A probe above the target's tier returns `NOT ASSESSABLE`, never a pass.** GLASSCAGE
+reports what it could not determine instead of guessing.
 
 > **Practical consequence:** most real black-box endpoints are L0/L1. The agentic
 > analysis that differentiates GLASSCAGE will mostly return NOT ASSESSABLE against
 > them. That is an honest result, not a defect — but set expectations accordingly.
 
-### 4.3 Evidence Confidence Classification — **Implemented**
+### 4.3 Evidence Confidence Classification
 Every report section carries exactly one class. A claim can never exceed its evidence
 (enforced in code, not by convention):
 
@@ -108,18 +103,18 @@ Every report section carries exactly one class. A claim can never exceed its evi
 |---|---|
 | **Verified** | confirmed against ground truth or a cryptographic check (custody hash) |
 | **Measured** | quantified with a stated method (detector precision/recall on the corpus) |
-| **Demonstrated** | observed on-target: impact-confirmed finding or fully-demonstrated path |
+| **Demonstrated** | observed on-target; impact-confirmed finding or fully-demonstrated path |
 | **Observed** | seen in a response but not impact-confirmed |
 | **Experimental** | from an Experimental component or small dataset; indicative only |
 | **Estimated** | heuristic from an uncalibrated model (e.g. the Indicative Risk Index) |
 | **Hypothesized** | architecturally reachable but not shown; confirm manually |
 | **Pending External Validation** | framework implemented, not yet run against real external tools; no result claimed |
 
-### 4.4 Graph edge states — **Implemented**
+### 4.4 Graph edge states
 `demonstrated` · `hypothesized` · `not_assessable`. **A path's state is its weakest
 hop.** One hypothesized hop makes the whole path hypothesized, however strong the rest.
 
-### 4.5 Indicative Risk Index — **Implemented (as a heuristic)**
+### 4.5 Indicative Risk Index
 A 0–100 number where higher is worse. **It is an uncalibrated heuristic `[Estimated]`,
 not a statistical or calibrated measure.** Every point is attributed to a graph factor
 in the contribution breakdown. Use it to *prioritize between findings on one target*,
@@ -128,7 +123,6 @@ never to compare targets or to state absolute risk.
 > **Do not put this number in front of a board as "our AI risk is 74".** It has never
 > been calibrated against real outcomes.
 
----
 
 ## 5. Feature maturity matrix
 
@@ -144,7 +138,7 @@ never to compare targets or to state absolute risk.
 | Evidence Confidence Classification | **Implemented** |
 | Secret redaction (default-on) | **Implemented** |
 | Encrypted evidence at rest | **Implemented** (requires the `cryptography` package; there is no `crypto` extra in rc3) |
-| Chain of custody (hash-chained audit) | **Implemented** — detects alteration of a recorded entry; stores payload digests, not payloads; does not detect tail truncation (ADR 0019) |
+| Chain of custody (hash-chained audit) | **Implemented**. Detects alteration of a recorded entry; stores payload digests, not payloads; does not detect tail truncation (ADR 0019) |
 | Capability tiers L0–L2 | **Implemented** |
 | Prompt injection probes (9 techniques) | **Implemented** |
 | Reference agent harness (L2) | **Implemented** |
@@ -152,30 +146,29 @@ never to compare targets or to state absolute risk.
 | SARIF 2.1.0 export | **Implemented** |
 | Replay bundles | **Implemented** |
 | Plugin SDK (consent-gated) | **Implemented** |
-| MCP manifest analysis (tool-poisoning, rug-pull, SSRF params) | **Implemented — configuration review only; no MCP server is contacted** |
+| MCP manifest analysis (tool-poisoning, rug-pull, SSRF params) | **Implemented**. Configuration review only; no MCP server is contacted |
 | Wilson confidence intervals / trials | **Implemented** |
 | Genetic + adaptive attack engines | **Implemented** |
-| Indicative Risk Index | **Implemented — uncalibrated heuristic** |
+| Indicative Risk Index | **Implemented**. Uncalibrated heuristic |
 | Detector benchmark corpus (n=109) | **Experimental** |
-| Agentic exploitation capability | **Experimental** — demonstrated only against the built-in harness |
-| External adapters (garak/PyRIT/Promptfoo/DeepTeam/FuzzyAI) | **Pending External Validation** — parsers conform to fixtures; 0 of 5 genuine tool outputs ingested |
+| Agentic exploitation capability | **Experimental**. Demonstrated only against the built-in harness |
+| External adapters (garak/PyRIT/Promptfoo/DeepTeam/FuzzyAI) | **Pending External Validation**. Parsers conform to fixtures; 0 of 5 genuine tool outputs ingested |
 | Cross-framework validation | **Pending External Validation** |
 | LLM-as-judge | **Experimental** (requires `llm` extra) |
 | Runtime MCP interaction | **Roadmap** |
 | Multimodal injection (L3) | **Roadmap** |
 | LLM04 (Data & Model Poisoning) | **Roadmap** |
 | Cross-agent abuse | **Roadmap** |
-| Async / rate-limit backoff / resume | **Roadmap** |
+| Async, rate-limit backoff, resume | **Roadmap** |
 | Trend reporting (requires persistence) | **Roadmap** |
 | Risk index calibration | **Roadmap** |
 
----
 
 ## 6. Known Limitations
 
 Read this section before quoting GLASSCAGE in any deliverable.
 
-### 6.1 Coverage is currently overstated — **known defect**
+### 6.1 Coverage is currently overstated (known defect)
 `coverage_ratio` counts a category as "tested" if **any** finding carries its id,
 regardless of how that finding was obtained. Verified breakdown for the full canonical
 set of 13 categories:
@@ -215,14 +208,13 @@ succeed", **not** "the target is not vulnerable".
 ### 6.6 Other limitations
 - **Redaction is pattern-based** (API key / AWS / password / PEM shapes). Novel secret
   formats may pass through. Review artifacts before sharing.
-- **Plugins are not sandboxed** — they run as arbitrary code with your privileges.
+- **Plugins are not sandboxed.** They run as arbitrary code with your privileges.
 - **No release signing** yet.
-- **Serial execution** — no async, no rate-limit backoff, no resume. Large engagements
+- **Serial execution.** No async, no rate-limit backoff, no resume. Large engagements
   are slow and cannot resume on failure.
 - **"Reproducibility" in benchmark output** measures detector determinism on fixed
   strings, not target repeatability.
 
----
 
 ## 7. Where to go next
 

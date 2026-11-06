@@ -148,6 +148,10 @@ def main(argv=None):
                          "which only prints an inventory and drives nothing")
     ap.add_argument("--scope", nargs="+", help="allowlist of hostnames permitted to test")
     ap.add_argument("--rate", type=float, help="max requests per second (be polite)")
+    ap.add_argument("--max-retries", type=int, default=3,
+                    help="retry rate-limited (429/402) requests up to N times (default 3)")
+    ap.add_argument("--backoff", type=float, default=2.0,
+                    help="exponential backoff base in seconds (default 2.0: waits 2s, 4s, 8s)")
     ap.add_argument("--adaptive", action="store_true", help="run the adaptive mutation attacker")
     ap.add_argument("--genetic", action="store_true",
                     help="run the genetic/evolutionary attack engine")
@@ -161,6 +165,8 @@ def main(argv=None):
     ap.add_argument("--seed", type=int, help="seed for deterministic replay")
     ap.add_argument("--no-aakg", action="store_true",
                     help="disable the AI Attack Knowledge Graph (use legacy trust/chains)")
+    ap.add_argument("--no-chain", action="store_true",
+                    help="disable impact-chaining (skip follow-up probes after injection success)")
     ap.add_argument("--views", nargs="+", metavar="AUDIENCE", default=[],
                     help="write audience views of the narrative/story: executive, "
                          "security, developer, incident_response, compliance, or 'all'")
@@ -186,7 +192,18 @@ def main(argv=None):
     ap.add_argument("--model-card-template", action="store_true",
                     help="print a blank model card template and exit")
     ap.add_argument("--har", action="store_true", help="export raw exchanges as HAR")
+    ap.add_argument("--proxy", metavar="URL",
+                    help="route all target traffic through an HTTP proxy "
+                         "(e.g. http://127.0.0.1:8080 for Burp Suite)")
+    ap.add_argument("--proxy-no-verify", action="store_true",
+                    help="disable SSL certificate verification when using --proxy "
+                         "(needed for Burp's intercepting CA)")
     ap.add_argument("--audit-log", help="path to append-only, hash-chained JSONL audit log")
+    ap.add_argument("--free", action="store_true",
+                    help="use a built-in free AI endpoint (Pollinations AI) for testing")
+    ap.add_argument("--retry-errors", action="store_true",
+                    help="re-run only probes that hit transport errors in the previous "
+                         "report (loads from --out.json)")
     args = ap.parse_args(argv)
     from glasscage.logging_setup import configure as _configure_logging
     _configure_logging(level=args.log_level, json_output=args.log_json)
@@ -284,7 +301,13 @@ def main(argv=None):
                   "Only test systems you own or have written permission to assess.",
                   file=sys.stderr)
             return 2
-        target = HTTPChatTarget(_load(args.config))
+        cfg = _load(args.config)
+        if args.proxy:
+            cfg["proxy"] = args.proxy
+            cfg["proxy_no_verify"] = args.proxy_no_verify
+        cfg["max_retries"] = args.max_retries
+        cfg["backoff_base"] = args.backoff
+        target = HTTPChatTarget(cfg)
     elif args.rest_config:
         # ADR 0015: the REST assessment path. --authorized gates it exactly as it gates
         # --config; the non-empty --scope that ADR 0012 R1 requires is enforced downstream
@@ -305,9 +328,23 @@ def main(argv=None):
         target = RestTarget(rest_cfg["url"], headers=rest_cfg.get("headers"),
                             timeout=rest_cfg.get("timeout", 30),
                             name=rest_cfg.get("name"))
+    elif args.free:
+        if not args.authorized:
+            print("Refusing to run against a live target without --authorized.\n"
+                  "Only test systems you own or have written permission to assess.",
+                  file=sys.stderr)
+            return 2
+        _here = os.path.dirname(os.path.abspath(__file__))
+        free = _load(os.path.join(_here, "samples", "free_targets.json"))
+        cfg = free["targets"][0]
+        if args.proxy:
+            cfg["proxy"] = args.proxy
+            cfg["proxy_no_verify"] = args.proxy_no_verify
+        target = HTTPChatTarget(cfg)
+        print(f"Using free target: {cfg['name']}", file=sys.stderr)
     else:
         ap.error("provide --config <file>, --demo, --harness, --rest-config, "
-                 "--mcp-manifest, --benchmark, or --diff")
+                 "--free, --mcp-manifest, --benchmark, or --diff")
         return 2
 
     # ADR 0021: operational safety + chain of custody, attached HERE - immediately after
@@ -423,7 +460,28 @@ def main(argv=None):
                     model_card=model_card,
                     system_prompt_text=system_prompt_text, genetic=args.genetic,
                     trials=args.trials, seed=args.seed, use_aakg=not args.no_aakg,
-                    store_raw=args.store_raw, surface=surface)
+                    store_raw=args.store_raw, surface=surface,
+                    impact_chain=not args.no_chain)
+
+    # --retry-errors: filter engine probes to only those that errored in a previous run.
+    if args.retry_errors:
+        prev_path = f"{args.out}.json"
+        if not os.path.exists(prev_path):
+            print(f"error: --retry-errors requires a previous report at {prev_path}",
+                  file=sys.stderr)
+            return 2
+        prev = _load(prev_path)
+        prev_findings = prev.get("findings", [])
+        error_probes = {f["probe_name"] for f in prev_findings
+                        if f.get("status") == "error"}
+        if not error_probes:
+            print("No errored probes in the previous report; nothing to retry.",
+                  file=sys.stderr)
+            return 0
+        engine.probes = [p for p in engine.probes if p.name in error_probes]
+        print(f"Retrying {len(engine.probes)} probe(s) that errored: "
+              f"{', '.join(sorted(error_probes))}", file=sys.stderr)
+
     results = engine.run()
 
     md = engine.report_markdown(results)

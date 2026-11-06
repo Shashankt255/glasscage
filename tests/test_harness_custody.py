@@ -318,7 +318,7 @@ class TestOtherInvocationsUnchanged(_CliCase):
         self.assertEqual(rc, 0)
         r = verify_file(a)
         self.assertIs(r.status, ChainStatus.VERIFIED)
-        self.assertEqual(r.entries, 21)
+        self.assertEqual(r.entries, 34)
 
     def test_chat_target_entry_count_is_unaffected(self):
         """AC10 - a real HTTP chat target still records exactly its own exchanges."""

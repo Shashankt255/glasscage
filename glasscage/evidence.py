@@ -126,11 +126,19 @@ def capture(finding: Finding, evidence_dir: str | None = None) -> str:
     svg = render_svg(finding)
     finding.evidence_svg = svg
     if evidence_dir:
-        os.makedirs(evidence_dir, exist_ok=True)
+        try:
+            os.makedirs(evidence_dir, exist_ok=True)
+        except PermissionError:
+            from .errors import ConfigError
+            raise ConfigError(f"cannot create evidence directory '{evidence_dir}': permission denied")
         safe = re.sub(r"\W+", "_", f"{finding.owasp_id}_{finding.probe_name}_{id(finding) & 0xffff}")
         filename = safe + ".svg"
-        with open(os.path.join(evidence_dir, filename), "w", encoding="utf-8") as fh:
-            fh.write(svg)
+        try:
+            with open(os.path.join(evidence_dir, filename), "w", encoding="utf-8") as fh:
+                fh.write(svg)
+        except PermissionError:
+            from .errors import ConfigError
+            raise ConfigError(f"cannot write evidence to '{evidence_dir}': permission denied")
         # path relative to the output base so the markdown reference resolves
         finding.evidence_path = os.path.join(os.path.basename(os.path.normpath(evidence_dir)), filename)
     return svg

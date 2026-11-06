@@ -239,6 +239,11 @@ def to_html(target_name: str, recon: ReconResult, findings: list[Finding],
     if story is not None:
         parts = ['<section class="panel"><h2>Assessment Story</h2>']
         for s in story.sections:
+            _body_empty = (len(s.body) <= 1 and
+                           all(b.strip().rstrip(".") in ("Not demonstrated", "") for b in s.body)
+                           and not s.citations)
+            if _body_empty:
+                continue
             parts.append(f'<h3>{html.escape(s.title)} '
                          f'<span class="pill">{html.escape(s.evidence_class.value)}</span></h3>')
             parts.append("<ul>" + "".join(
@@ -248,22 +253,33 @@ def to_html(target_name: str, recon: ReconResult, findings: list[Finding],
         data["story"] = story.to_dict()
     if narratives is not None:
         from .aakg import narrative as _n
-        parts = ['<section class="panel"><h2>Attack Narratives</h2>'
-                 '<p class="meta">Strategic readings of the same graph paths; no path '
-                 'is synthesized.</p>']
-        for grp in _n.dedupe(narratives):
-            m = grp["model"]
-            parts.append(f'<h3>{html.escape(", ".join(grp["strategies"]))} '
-                         f'<span class="pill">{html.escape(m.evidence_class.value)}</span></h3>')
-            if not grp["supported"]:
-                parts.append(f'<p>{html.escape(m.reason)}</p>')
-                continue
-            parts.append("<ol>" + "".join(
-                f"<li>{html.escape(t.prose)}<br><span class='meta'>"
-                f"{html.escape(t.citation())}</span></li>"
-                for t in m.transitions) + "</ol>")
-        parts.append("</section>")
-        narr_html = "".join(parts)
+        _narr_groups = _n.dedupe(narratives)
+        _all_unsupported = all(not grp["supported"] for grp in _narr_groups)
+        if _all_unsupported and _narr_groups:
+            _all_strats = ", ".join(
+                s for grp in _narr_groups for s in grp["strategies"])
+            narr_html = (
+                '<section class="panel"><h2>Attack Narratives</h2>'
+                f'<p class="meta">{html.escape(_all_strats)}: No existing graph path '
+                'matches any strategy. [Not Supported by Current Evidence]</p>'
+                '</section>')
+        else:
+            parts = ['<section class="panel"><h2>Attack Narratives</h2>'
+                     '<p class="meta">Strategic readings of the same graph paths; no path '
+                     'is synthesized.</p>']
+            for grp in _narr_groups:
+                m = grp["model"]
+                parts.append(f'<h3>{html.escape(", ".join(grp["strategies"]))} '
+                             f'<span class="pill">{html.escape(m.evidence_class.value)}</span></h3>')
+                if not grp["supported"]:
+                    parts.append(f'<p>{html.escape(m.reason)}</p>')
+                    continue
+                parts.append("<ol>" + "".join(
+                    f"<li>{html.escape(t.prose)}<br><span class='meta'>"
+                    f"{html.escape(t.citation())}</span></li>"
+                    for t in m.transitions) + "</ol>")
+            parts.append("</section>")
+            narr_html = "".join(parts)
         data["narratives"] = [_n.to_dict(m) for m in narratives]
 
     payload = json.dumps(data).replace("</", "<\\/")

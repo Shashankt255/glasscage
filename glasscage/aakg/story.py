@@ -69,6 +69,12 @@ class StoryModel:
              "the AI Attack Knowledge Graph; nothing is inferred beyond it. Each section "
              "carries its evidence classification._", ""]
         for s in self.sections:
+            _body_empty = (len(s.body) <= 1 and
+                           all(b.strip().rstrip(".") in ("Not demonstrated", "")
+                               for b in s.body)
+                           and not s.citations)
+            if _body_empty:
+                continue
             L.append(s.to_markdown())
             L.append("")
         return "\n".join(L)

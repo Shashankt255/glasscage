@@ -47,3 +47,11 @@ Thumbs.db
 *.pem
 *.key
 .env
+openai_target.json
+
+# --- Scan outputs (local assessment runs) ---
+pollinations_report*
+pollinations_target.json
+
+# --- Claude Code session data ---
+.claude/

@@ -14,12 +14,12 @@ under their original Apache-2.0 license.
 - The architecture is frozen around the AI Attack Knowledge Graph. No new graph node/
   edge types, attack engines, or reporting redesigns without a maintainer RFC.
 - Never fabricate results. Unavailable external tools must report "Not Tested"/"Pending
-  External Validation" — never synthetic data.
+  External Validation", never synthetic data.
 - Preserve determinism: sorted traversal, deterministic ids, seeded randomness.
 
 ## Workflow
 1. Fork, branch from `main`.
-2. `pytest -q` must pass — 997+ tests (add tests for changes).
+2. `pytest -q` must pass (997+ tests). Add tests for changes.
 3. `pytest tests/test_fuzz.py tests/test_property.py -q` for core changes.
 4. Keep public APIs backward compatible (see `VERSIONING.md`).
 5. Open a PR with a clear description and, for behavior changes, a CHANGELOG entry.

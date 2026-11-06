@@ -107,13 +107,23 @@ def to_markdown(g, results, target_name: str = "target") -> str:
     narratives = results.get("narratives")
     if narratives is None:
         narratives = narr_mod.build_all(g, chains)
-    L.append("## Attack Narratives")
-    L.append("_Different strategic readings of the SAME graph paths. No path is "
-             "synthesized; strategies that match no existing path say so._")
-    L.append("")
-    for group in narr_mod.dedupe(narratives):
-        L.append(narr_mod.group_to_markdown(group))
+    _narr_groups = narr_mod.dedupe(narratives)
+    _all_unsupported = all(not grp["supported"] for grp in _narr_groups)
+    if _all_unsupported and _narr_groups:
+        _all_strategies = ", ".join(
+            s for grp in _narr_groups for s in grp["strategies"])
+        L.append("## Attack Narratives")
+        L.append(f"_{_all_strategies}_: No existing graph path matches any strategy; "
+                 "no path was synthesized. [Not Supported by Current Evidence]")
         L.append("")
+    elif _narr_groups:
+        L.append("## Attack Narratives")
+        L.append("_Different strategic readings of the SAME graph paths. No path is "
+                 "synthesized; strategies that match no existing path say so._")
+        L.append("")
+        for group in _narr_groups:
+            L.append(narr_mod.group_to_markdown(group))
+            L.append("")
 
     # Attack paths — condensed index (prose lives in the narratives above)
     if chains:

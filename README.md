@@ -2,10 +2,11 @@
 
 Security assessment platform for LLM and agentic applications.
 
-Probes a target, records evidence, and builds an **AI Attack Knowledge Graph (AAKG)** —
-a typed property graph from which it derives attack paths, trust boundaries, blast radius,
-coverage, and remediation. Every claim in the report is cited to graph evidence and clamped
-to the weakest link in its chain. If something wasn't tested, the report says so.
+Probes a target, records evidence, and builds an **AI Attack Knowledge Graph (AAKG)**.
+The AAKG is a typed property graph that drives everything downstream: attack paths, trust
+boundaries, blast radius, coverage, and remediation. Every claim in the report is backed by
+graph evidence and capped at the weakest link in its chain. If something wasn't tested,
+the report says so.
 
 [![CI](https://github.com/Shashankt255/glasscage/actions/workflows/ci.yml/badge.svg)](https://github.com/Shashankt255/glasscage/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
@@ -15,18 +16,16 @@ to the weakest link in its chain. If something wasn't tested, the report says so
 > **Authorized use only.** Run this only against systems you own or have explicit written
 > permission to test. `--authorized` is required for live targets.
 
----
-
 ## Why
 
-Most AI security tools are probe batteries — they fire payloads and hand you a pass/fail
-list. That's useful, but it's not an assessment.
+Most AI security tools are probe batteries. They fire payloads and hand you a pass/fail
+list. Useful, but not an assessment.
 
-GLASSCAGE does the rest of the pentest loop: it maps the attack surface into a graph,
-traces what an attacker can actually reach from each finding, models trust boundaries and
-privilege transitions, scores the result with honest evidence accounting, and writes a
-remediation-focused report with reproduction steps. It tells you what to fix first and
-why, not just what failed.
+GLASSCAGE picks up where they stop. It maps the attack surface into a graph, traces what
+an attacker can actually reach from each finding, models trust boundaries and privilege
+transitions, scores everything with honest evidence accounting, and writes a
+remediation-focused report with reproduction steps. You get what to fix first and why,
+not just what failed.
 
 The whole thing runs on Python's standard library. No API keys, no cloud calls, no
 dependencies to audit.
@@ -39,7 +38,7 @@ glasscage --demo --out report
 ```
 
 That runs a full assessment against a built-in intentionally-weak bot and writes
-`report.md`, `report.html`, and `report.json`. Open the HTML — it's a self-contained
+`report.md`, `report.html`, and `report.json`. Open the HTML for a self-contained
 app with severity dashboard, live search, and tabbed findings (Evidence / Remediation /
 Verify / Reproduce / References).
 
@@ -83,8 +82,10 @@ See [`docs/FIRST_RUN.md`](docs/FIRST_RUN.md) for configuration details and
 | Architecture review | `--architecture FILE` | Defense-in-depth controls across 15 categories |
 
 Runtime coverage: **7 of 13 OWASP LLM categories** tested with actual payloads.
-The remaining 6 are assessed via config review or architecture questionnaire — the
-report separates the two and never labels a config-review finding as "measured."
+Graph-derived coverage (with all config reviews): **11/13**. The remaining categories
+come from config review, model card, system prompt analysis, or architecture
+questionnaire. The report separates these and never labels a config-review finding
+as "measured."
 
 ## What makes it different
 
@@ -100,7 +101,7 @@ report separates the two and never labels a config-review finding as "measured."
 | **Target types** | Chat, REST API, MCP | Chat, API | Chat, API |
 
 garak has more probes and wider model coverage. PyRIT has stronger multi-turn
-orchestration. Use them alongside GLASSCAGE — it can ingest their output via
+orchestration. Use them alongside GLASSCAGE. It can ingest their output via
 `--adapter-file` and map their findings into the AAKG.
 
 ## Architecture
@@ -163,16 +164,16 @@ See [`docs/PLUGIN_SDK.md`](docs/PLUGIN_SDK.md) for the full API.
 Read these before relying on any output.
 
 - **Efficacy is not independently validated.** The built-in harness uses a deterministic
-  mock. Treat findings as hypotheses until confirmed against your actual target.
-- **Runtime coverage is 7/13 OWASP categories.** The report separates this from
+  mock. Treat findings as hypotheses until you confirm them against your actual target.
+- **Runtime coverage is 7/13 OWASP categories.** The report keeps this separate from
   config-review coverage. Quote `runtime_coverage_ratio`, not `coverage_ratio`.
 - **MCP assessment is configuration review only.** No MCP server is contacted.
-- **External-tool adapters are experimentally validated.** garak format verified;
+- **External-tool adapters are experimentally validated.** garak format is verified,
   others are marked Experimental.
 - **The risk index is an uncalibrated heuristic.** It gives directional signal,
   not a calibrated probability.
 
-Full discussion: [`docs/METHODOLOGY_AND_LIMITATIONS.md`](docs/METHODOLOGY_AND_LIMITATIONS.md)
+Details in [`docs/METHODOLOGY_AND_LIMITATIONS.md`](docs/METHODOLOGY_AND_LIMITATIONS.md)
 and [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
 ## Documentation

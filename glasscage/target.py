@@ -11,6 +11,7 @@ standard library only, so it runs anywhere Python does.
 from __future__ import annotations
 
 import json
+import ssl
 import time
 import urllib.error
 import urllib.request
@@ -56,6 +57,20 @@ def _inject(template: Any, prompt: str) -> Any:
     return template
 
 
+def _build_proxy_opener(
+    proxy_url: str, no_verify: bool = False,
+) -> urllib.request.OpenerDirector:
+    """Build an opener that routes all traffic through a proxy."""
+    handler = urllib.request.ProxyHandler({"http": proxy_url, "https": proxy_url})
+    handlers: list = [handler]
+    if no_verify:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        handlers.append(urllib.request.HTTPSHandler(context=ctx))
+    return urllib.request.build_opener(*handlers)
+
+
 class HTTPChatTarget:
     """Configurable adapter for a black-box chat endpoint.
 
@@ -66,6 +81,9 @@ class HTTPChatTarget:
       body_template  : JSON body with "{{PROMPT}}" where the user message goes
       response_path  : dot path to the assistant text in the JSON response
       timeout        : seconds (default 30)
+      proxy          : HTTP/HTTPS proxy URL (e.g. http://127.0.0.1:8080 for Burp)
+      proxy_no_verify: disable SSL verification when proxying (needed for Burp's
+                       intercepting CA unless the cert is installed system-wide)
     """
 
     def __init__(self, config: dict[str, Any]):
@@ -78,6 +96,13 @@ class HTTPChatTarget:
         self.response_path: str = config.get("response_path", "response")
         self.timeout: float = float(config.get("timeout", 30))
         self.name: str = config.get("name", self.url)
+        self.max_retries: int = int(config.get("max_retries", 3))
+        self.backoff_base: float = float(config.get("backoff_base", 2.0))
+        self._proxy: str | None = config.get("proxy")
+        self._proxy_no_verify: bool = bool(config.get("proxy_no_verify", False))
+        self._opener: urllib.request.OpenerDirector | None = None
+        if self._proxy:
+            self._opener = _build_proxy_opener(self._proxy, self._proxy_no_verify)
         # Stage A: capability tier. A plain HTTP chat endpoint is L0 unless the
         # integrator declares it maintains session state across calls.
         from .tal import TargetCapabilities
@@ -89,6 +114,9 @@ class HTTPChatTarget:
         self.exchanges: list = []  # raw request/response records for HAR
 
     def send(self, prompt: str) -> ChatResponse:
+        import logging
+        _log = logging.getLogger("glasscage.target")
+
         if self.scope is not None:
             self.scope.check(self.url)          # refuse out-of-scope hosts
         if self.rate is not None:
@@ -96,46 +124,54 @@ class HTTPChatTarget:
         body = _inject(self.body_template, prompt)
         data = json.dumps(body).encode("utf-8")
         headers = {"Content-Type": "application/json", **self.headers}
-        req = urllib.request.Request(self.url, data=data, headers=headers, method=self.method)
 
         from datetime import datetime, timezone
-        ts = datetime.now(timezone.utc).isoformat()
-        start = time.perf_counter()
-        resp_obj = None
-        # ADR 0023: this try/except decides only WHAT was exchanged. It must not enclose
-        # the custody call. `_record` used to sit inside it, so a failure raised by custody
-        # itself was caught below as though it were a transport fault: a fabricated
-        # ok=False response was built from the audit error text and a SECOND exchange was
-        # recorded for one network call. Each handler now assigns the outcome and nothing
-        # more; recording happens once, after the block - the shape `RestDriver.drive` has
-        # always had (ADR 0008 §1: recording stays with whoever owns the transport).
-        # `status` and `body_text` are deliberately not pre-initialised: a future branch
-        # that forgets one must fail loudly rather than record default metadata.
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                raw_bytes = resp.read()
-                status_code = resp.status
-            latency = (time.perf_counter() - start) * 1000
-            body_text = raw_bytes.decode("utf-8", "replace")
-            raw = json.loads(body_text)
+        _RETRYABLE = (429, 402)
+
+        for attempt in range(1 + self.max_retries):
+            req = urllib.request.Request(self.url, data=data, headers=headers, method=self.method)
+            ts = datetime.now(timezone.utc).isoformat()
+            start = time.perf_counter()
+            resp_obj = None
             try:
-                text = _dig(raw, self.response_path)
-            except (KeyError, IndexError, ValueError) as e:
-                resp_obj = ChatResponse("", raw, latency, ok=False,
-                                        error=f"response_path '{self.response_path}' failed: {e}")
-            else:
-                if not isinstance(text, str):
-                    text = json.dumps(text)
-                resp_obj = ChatResponse(text, raw, latency, ok=True)
-            status = status_code
-        except urllib.error.HTTPError as e:
-            latency = (time.perf_counter() - start) * 1000
-            resp_obj = ChatResponse("", None, latency, ok=False, error=f"HTTP {e.code}: {e.reason}")
-            status, body_text = e.code, str(e.reason)
-        except Exception as e:
-            latency = (time.perf_counter() - start) * 1000
-            resp_obj = ChatResponse("", None, latency, ok=False, error=str(e))
-            status, body_text = 0, str(e)
+                _open = self._opener.open if self._opener else urllib.request.urlopen
+                with _open(req, timeout=self.timeout) as resp:
+                    raw_bytes = resp.read()
+                    status_code = resp.status
+                latency = (time.perf_counter() - start) * 1000
+                body_text = raw_bytes.decode("utf-8", "replace")
+                raw = json.loads(body_text)
+                try:
+                    text = _dig(raw, self.response_path)
+                except (KeyError, IndexError, ValueError) as e:
+                    resp_obj = ChatResponse("", raw, latency, ok=False,
+                                            error=f"response_path '{self.response_path}' failed: {e}")
+                else:
+                    if not isinstance(text, str):
+                        text = json.dumps(text)
+                    resp_obj = ChatResponse(text, raw, latency, ok=True)
+                status = status_code
+                break
+            except urllib.error.HTTPError as e:
+                latency = (time.perf_counter() - start) * 1000
+                status, body_text = e.code, str(e.reason)
+                if e.code in _RETRYABLE and attempt < self.max_retries:
+                    retry_after = e.headers.get("Retry-After") if hasattr(e, "headers") else None
+                    if retry_after and retry_after.isdigit():
+                        wait = int(retry_after)
+                    else:
+                        wait = self.backoff_base ** (attempt + 1)
+                    _log.info("HTTP %d on attempt %d/%d, retrying in %.1fs",
+                              e.code, attempt + 1, 1 + self.max_retries, wait)
+                    time.sleep(wait)
+                    continue
+                resp_obj = ChatResponse("", None, latency, ok=False, error=f"HTTP {e.code}: {e.reason}")
+                break
+            except Exception as e:
+                latency = (time.perf_counter() - start) * 1000
+                resp_obj = ChatResponse("", None, latency, ok=False, error=str(e))
+                status, body_text = 0, str(e)
+                break
         self._record(ts, data, status, body_text, latency, resp_obj)
         return resp_obj
 

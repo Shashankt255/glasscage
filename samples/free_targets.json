@@ -1,0 +1,19 @@
+{
+  "_comment": "Curated free AI endpoints for GLASSCAGE testing. No auth required. Rate limits apply.",
+  "targets": [
+    {
+      "name": "Pollinations AI (gpt-oss-20b)",
+      "url": "https://text.pollinations.ai/openai",
+      "method": "POST",
+      "headers": {},
+      "body_template": {
+        "messages": [{"role": "user", "content": "{{PROMPT}}"}],
+        "model": "openai",
+        "max_tokens": 1024
+      },
+      "response_path": "choices.0.message.content",
+      "timeout": 60,
+      "notes": "Free, no auth. Rate limit ~1 req/15s for anonymous users. Returns reasoning chain. Tested 2026-11."
+    }
+  ]
+}

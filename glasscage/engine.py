@@ -53,7 +53,7 @@ class Engine:
                  system_prompt_text=None,
                  genetic=False, genetic_budget=40,
                  build_chains=True, trials=1, seed=None, use_aakg=True,
-                 store_raw=False, surface=None):
+                 store_raw=False, impact_chain=True, surface=None):
         self.target = target
         self.probes = selected_probes if selected_probes is not None else probes_mod.all_probes()
         self.mcp_manifest = mcp_manifest
@@ -73,6 +73,7 @@ class Engine:
         self.seed = seed
         self.use_aakg = use_aakg
         self.store_raw = store_raw
+        self.impact_chain = impact_chain
         # ADR 0002: optional Surface/ApplicationTarget to route probe traffic through.
         # None keeps the pre-existing single-target path exactly as it was.
         self.surface = surface
@@ -195,6 +196,16 @@ class Engine:
                                                use_llm=self.use_judge))
                 except Exception as e:
                     recon.notes.append(f"genetic attacker crashed: {e}")
+        if self.impact_chain and driven_kind is SurfaceKind.CHAT:
+            from . import impact_chain as ic_mod
+            injection_hits = [f for f in out if f.status is Status.VULNERABLE
+                              and f.dimension == "steerability"]
+            if injection_hits:
+                try:
+                    chained = ic_mod.run_impact_chains(probe_target, injection_hits)
+                    out.extend(chained)
+                except Exception as e:
+                    recon.notes.append(f"impact chaining crashed: {e}")
 
     @staticmethod
     def _surface_gated(name, owasp_id, category, driven_kind, target_tier) -> Finding:

@@ -1,7 +1,7 @@
-# GLASSCAGE — Methodology, Scoring & Limitations
+# GLASSCAGE: Methodology, Scoring & Limitations
 
 Read this before trusting any GLASSCAGE report. It states plainly what the tool
-does, how it scores, and — most importantly — what it does **not** prove.
+does, how it scores, and what it does **not** prove.
 
 ## What GLASSCAGE is
 A **force-multiplier for a skilled AI red-teamer**: it automates recon, runs a
@@ -20,9 +20,9 @@ by hand** and engineering can act on it.
   signal — not proof an attacker can cause harm.
 
 ## Steerability vs. Impact (core distinction)
-- **Steerability** — the model emitted a benign canary under a crafted prompt.
+- **Steerability**: the model emitted a benign canary under a crafted prompt.
   Capped at a medium score. Shows a guardrail is soft; does not show consequence.
-- **Impact** — a real, consented consequence was demonstrated (sensitive data
+- **Impact**: a real, consented consequence was demonstrated (sensitive data
   actually returned, a schema-confirmed tool actually fired). Only these drive
   high/critical posture.
 Do not report steerability as if it were impact. The report labels each finding's
@@ -46,10 +46,10 @@ names are shown but never inflate the score — an LLM is an unreliable narrator
 ## Coverage & known gaps
 Every report prints a coverage statement: techniques run and categories tested vs
 **not** tested. GLASSCAGE deliberately does not claim:
-- **LLM04 Data & Model Poisoning** — needs training-pipeline access (not black-box).
-- **Multimodal / cross-modal injection** — needs a multimodal input channel and
+- **LLM04 Data & Model Poisoning**: needs training-pipeline access (not black-box).
+- **Multimodal / cross-modal injection**: needs a multimodal input channel and
   payload crafting; a hook exists but is not a general detector.
-- **Confirmed tool impact** — requires an authorized sandbox; not run by default.
+- **Confirmed tool impact**: requires an authorized sandbox; not run by default.
 Absence of a finding in these areas is not evidence of safety.
 
 ## Adaptive attacker
@@ -63,12 +63,12 @@ attempts" as "resisted these mutations", not "unbreakable".
 Raw request/response are hashed (sha256) and timestamped; the audit log is
 append-only and hash-chained (tamper-evident, `verify()`), and raw exchanges
 export to HAR. The SVG evidence card is a **rendered reconstruction** of the
-captured exchange for readability — the authoritative artifacts are the HAR + the
+captured exchange for readability. The authoritative artifacts are the HAR and the
 hashed audit log, not the picture.
 
 ## Operational safety
 `--scope` enforces a host allowlist (out-of-scope hosts are refused); `--rate`
-throttles requests. `--authorized` remains an attestation — only test systems you
+throttles requests. `--authorized` remains an attestation. Only test systems you
 own or have written permission to assess.
 
 ## Architecture assessment
@@ -82,4 +82,4 @@ leverage than any single probe result.
 Compare against garak, PyRIT, Promptfoo, and DeepTeam on: probe breadth, adaptive
 strength, false-positive rate, impact validation, and reporting. GLASSCAGE's
 intended edge is the **back half** (reproduction, remediation, evidence,
-deliverable) and the **honesty of its scoring** — not raw probe count.
+deliverable) and the **honesty of its scoring**, not raw probe count.
