@@ -89,20 +89,12 @@ as "measured."
 
 ## What makes it different
 
-| | GLASSCAGE | garak | PyRIT |
-|---|---|---|---|
-| **Approach** | Graph-native assessment (recon → probe → graph → score → remediate → report) | Probe battery | Red-team orchestration |
-| **Output** | Attack graph + narrative report with reproduction steps | Pass/fail probe results | Attack logs |
-| **Coverage accounting** | Separates runtime-tested from config-review, reports both | Probe pass rate | Not tracked |
-| **Remediation** | Ranked by measured impact (paths broken, blast reduced) | Not included | Not included |
-| **Trust boundaries** | Mapped in graph with privilege transitions | Not modeled | Not modeled |
-| **Blast radius** | "If this succeeds, what's reachable?" from graph relationships | Not modeled | Not modeled |
-| **Dependencies** | Zero (stdlib only) | Multiple | Multiple |
-| **Target types** | Chat, REST API, MCP | Chat, API | Chat, API |
-
-garak has more probes and wider model coverage. PyRIT has stronger multi-turn
-orchestration. Use them alongside GLASSCAGE. It can ingest their output via
-`--adapter-file` and map their findings into the AAKG.
+- **Graph-native assessment.** Probes feed a property graph (AAKG) that maps trust boundaries, privilege transitions, and blast radius. Findings are scored by what they actually reach, not just whether they passed.
+- **Coverage accounting.** Runtime-tested and config-review categories are tracked separately. The report never labels a config-review finding as "measured."
+- **Ranked remediation.** Fix priorities come from the graph: paths broken and blast radius reduced, not just severity labels.
+- **Full reproduction chain.** Every finding ships with the exact prompt, response, evidence SVG, and SHA-256 custody hash.
+- **Zero dependencies.** stdlib only. No virtual environment, no compiled extensions.
+- **Adapter ingestion.** Import findings from other tools via `--adapter-file` and map them into the AAKG for graph-level analysis.
 
 ## Architecture
 
