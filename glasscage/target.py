@@ -14,6 +14,7 @@ import json
 import ssl
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import Any
@@ -55,6 +56,22 @@ def _inject(template: Any, prompt: str) -> Any:
     if isinstance(template, dict):
         return {k: _inject(v, prompt) for k, v in template.items()}
     return template
+
+
+class _ScopeRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Follow redirects only if the target host stays within scope."""
+
+    def __init__(self, allowed_host: str):
+        self._allowed = allowed_host.lower()
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        parsed = urllib.parse.urlparse(newurl)
+        if parsed.hostname and parsed.hostname.lower() != self._allowed:
+            from .errors import ConfigError
+            raise ConfigError(
+                f"redirect to {parsed.hostname} blocked (out of scope; "
+                f"only {self._allowed} is allowed)")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
 def _build_proxy_opener(
@@ -103,6 +120,8 @@ class HTTPChatTarget:
         self._opener: urllib.request.OpenerDirector | None = None
         if self._proxy:
             self._opener = _build_proxy_opener(self._proxy, self._proxy_no_verify)
+        parsed = urllib.parse.urlparse(self.url)
+        self._redirect_handler = _ScopeRedirectHandler(parsed.hostname or "")
         # Stage A: capability tier. A plain HTTP chat endpoint is L0 unless the
         # integrator declares it maintains session state across calls.
         from .tal import TargetCapabilities
@@ -134,7 +153,10 @@ class HTTPChatTarget:
             start = time.perf_counter()
             resp_obj = None
             try:
-                _open = self._opener.open if self._opener else urllib.request.urlopen
+                if self._opener:
+                    _open = self._opener.open
+                else:
+                    _open = urllib.request.build_opener(self._redirect_handler).open
                 with _open(req, timeout=self.timeout) as resp:
                     raw_bytes = resp.read()
                     status_code = resp.status

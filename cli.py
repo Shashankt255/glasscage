@@ -205,6 +205,7 @@ def main(argv=None):
                     help="re-run only probes that hit transport errors in the previous "
                          "report (loads from --out.json)")
     args = ap.parse_args(argv)
+    args.out = os.path.realpath(args.out)
     from glasscage.logging_setup import configure as _configure_logging
     _configure_logging(level=args.log_level, json_output=args.log_json)
 
