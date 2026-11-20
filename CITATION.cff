@@ -13,7 +13,7 @@ abstract: >
   evidence-gated narratives. Findings are hypotheses requiring confirmation; efficacy
   has not been independently validated as of this release.
 license: Apache-2.0
-version: 1.0.0
+version: 1.1.0
 date-released: 2026-11-20
 keywords:
   - LLM security

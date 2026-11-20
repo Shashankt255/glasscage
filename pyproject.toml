@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "glasscage"
-version = "1.0.0"
+version = "1.1.0"
 description = "GLASSCAGE - AI Application Security Assessment Platform (AI Attack Knowledge Graph)"
 readme = "README.md"
 requires-python = ">=3.10"

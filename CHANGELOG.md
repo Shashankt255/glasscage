@@ -3,6 +3,43 @@
 All notable changes. Versions prior to 1.0.0rc1 were internal stage-build milestones
 during development; the first public release candidate is **1.0.0rc1**.
 
+## [1.1.0] — 2026-11-20 — Knowledge Base Integration
+
+Full Claude-BugHunter extraction (Tier 1–3) and engine wiring.
+
+### Added
+- **Engine wiring**: findings now enriched with severity calibration (94 bounty-payout
+  mappings), disclosed report examples (up to 3 cited per finding), hunt strategy hints,
+  and real-world risk weights — all from CBH data.
+- **HTML report**: new "Knowledge Base" tab on enriched findings showing all enrichment data.
+- **`--no-kb` CLI flag**: disable knowledge-base enrichment.
+- **Tier 2 extraction**: verification labs (13 writeups + 7 runnable Flask/Docker apps),
+  HackerOne MCP server (7 tools), recon manifest schema, engagement example, plugin
+  manifest, 4 design docs (autopilot ledger, H1 report body fetch).
+- **Tier 3 extraction**: OSINT references (dork corpus, 48 secret regex, probe wordlists),
+  9 engine modules (scope/recon/agent/memory architecture), 15 command definitions with
+  full prompt templates.
+- Loaders: `verification_labs.py`, `integration_reference.py`, `engine_modules.py`,
+  `osint_references.py`.
+- Knowledge base section in USER_GUIDE and DEVELOPER docs.
+
+### Changed
+- Finding dataclass: 5 enrichment fields declared as proper fields for serialization.
+- Classifier: Beta → Production/Stable.
+- LICENSE: full canonical Apache-2.0 text (GitHub now detects it correctly).
+- Topics: added sarif, zero-dependency, agentic-security.
+
+### Fixed
+- Broken README link to docs/METHODOLOGY_AND_LIMITATIONS.md.
+- Removed internal planning docs visible to public visitors.
+
+### Infra
+- Secret scanning + push protection + Dependabot enabled.
+- .editorconfig and PR template added.
+- 2 stale draft releases deleted.
+
+**Tests:** 1132 → 1181 (+49). **Data files:** 18 → 21. **Loaders:** 7 → 9.
+
 ## [1.0.0] — 2026-11-20 — General Availability
 
 First stable release. All GA blockers resolved.
