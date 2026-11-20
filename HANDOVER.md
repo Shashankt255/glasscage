@@ -6,7 +6,7 @@
 GLASSCAGE is an open-source Python AI security assessment platform built around a graph-native substrate, the **AAKG** (AI Attack Knowledge Graph). It probes AI targets (chat, REST, and MCP surfaces), records findings with evidence and chain of custody, and produces reports in JSON, Markdown, HTML, and SARIF, plus replay bundles.
 
 ## 2. Access and setup
-- **Repo:** `github.com/Shashankt255/glasscage` (private).
+- **Repo:** `github.com/Shashankt255/glasscage` (public).
 - **Release:** `v1.0.0` — https://github.com/Shashankt255/glasscage/releases/tag/v1.0.0
 - **Version:** `1.0.0` (`pyproject.toml`). Requires Python >= 3.10.
 - **Entry point:** `glasscage = cli:main` or `python cli.py`.
@@ -16,7 +16,7 @@ GLASSCAGE is an open-source Python AI security assessment platform built around 
   # or from source:
   git clone https://github.com/Shashankt255/glasscage.git
   cd glasscage && pip install -e .
-  pytest -q          # 1107 passed, 89 subtests in ~26s
+  pytest -q          # 1132 passed, 89 subtests in ~27s
   ```
 
 ## 3. Release history
@@ -59,8 +59,25 @@ Extracted complete knowledge base from Claude-BugHunter (elementalsouls, CC BY 4
 
 **Integration:** `kb.py` enrichment attaches `web_attack_chains` to findings, showing how AI-layer vulns chain to web-layer impact (e.g., LLM01 Prompt Injection → SSRF via tool-use, RCE via code-exec).
 
+**CBH Tier 2 extraction (Nov 20, same session):**
+
+| Data File | Contents |
+|---|---|
+| `cbh_verification_labs.json` | 13 verification writeups (Apache, Jenkins, Spring, Juice Shop, JWT, SSTI, SAML, Smuggling, LLM, Cloud, Playwright, HackerOne VDP) |
+| `cbh_lab_apps.json` + `cbh_labs/` | 7 runnable lab apps (Flask + Docker) |
+| `cbh_mcp_tools.json` + `cbh_hackerone_mcp.py` | HackerOne MCP server (7 tools, 468 lines) |
+| `cbh_recon_manifest_schema.json` | Recon→hunt JSON Schema |
+| `cbh_engagement_example.json` | Engagement config example |
+| `cbh_plugin_manifest.json` | Claude Code plugin v2.1.0 |
+| `cbh_design_docs.json` | 4 design docs (autopilot ledger + H1 report body fetch) |
+
+| Loader Module | Functions |
+|---|---|
+| `integration_reference.py` | `mcp_tools()`, `mcp_tool_for()`, `recon_manifest_schema()`, `engagement_example()`, `plugin_manifest()`, `design_docs()`, `design_doc_for()` |
+| `verification_labs.py` | `labs()`, `lab_for()`, `labs_for_class()`, `lab_apps()` |
+
 **CBH source:** `/home/kali/extraction-workspace/Claude-BugHunter/` (clone of elementalsouls/Claude-BugHunter)
-**Extraction script:** `/home/kali/extraction-workspace/extract_cbh_to_glasscage.py`
+**CBH extraction status: COMPLETE** — All Tier 1 + Tier 2 assets extracted, tested, and pushed.
 
 ### v1.0.0rc4 — 5 Nov 2026
 - P0 coverage credibility: VERIFIED FIXED
@@ -93,10 +110,9 @@ Extracted complete knowledge base from Claude-BugHunter (elementalsouls, CC BY 4
 ## 5. What's next (priority order)
 1. **Make repo public** — user decision pending
 2. **PyPI publish** — optional (`twine upload dist/*`)
-3. **README test count update** — bump from 997 to 1107
-4. **Multi-target validation campaign** — run against different LLMs (GPT, Claude, Gemini endpoints) for broader coverage
-5. **Independent validation** — efficacy not independently validated (stated in CITATION.cff)
-6. **Fresh-clone smoke on Windows/macOS** — Linux verified, other OS pending
+3. **Multi-target validation campaign** — run against different LLMs (GPT, Claude, Gemini endpoints) for broader coverage
+4. **Independent validation** — efficacy not independently validated (stated in CITATION.cff)
+5. **Fresh-clone smoke on Windows/macOS** — Linux verified, other OS pending
 
 ## 6. Engineering rules (unchanged)
 1. Never redesign approved architecture (ADRs 0001-0032 are binding)

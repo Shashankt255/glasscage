@@ -151,6 +151,27 @@ Drop the file in a directory, run with `--plugins ./that_dir --allow-plugins`.
 
 See [`docs/PLUGIN_SDK.md`](docs/PLUGIN_SDK.md) for the full API.
 
+## Knowledge base
+
+GLASSCAGE ships with an integrated knowledge base extracted from
+[Claude-BugHunter](https://github.com/elementalsouls/Claude-BugHunter)
+(CC BY 4.0 + MIT), giving every assessment access to real-world attack
+intelligence without external API calls:
+
+| Dataset | What it provides |
+|---|---|
+| **83 hunt strategies** | Skill-indexed playbooks with 2 092 sections and 1 122 report references |
+| **56 attack chains** | 10 vuln classes mapped to web-layer impact (SSRF, RCE, XSS via tool-use) |
+| **215 attack patterns** | 36 vuln-class libraries with 142 cited disclosed reports |
+| **94 severity calibrations** | Finding → severity mappings grounded in real bounty payouts |
+| **15 assessment workflows** | Autopilot, chain, hunt, validate, triage, and more |
+| **30 KEV CVE gaps** | Known-exploited vulnerability coverage gaps (91 indexed) |
+| **13 verification labs** | Ground-truth test scenarios with runnable Flask apps |
+| **7 MCP tool definitions** | HackerOne integration reference (public + authenticated) |
+
+All data is loaded lazily from bundled JSON — no network, no keys, no
+external dependencies.
+
 ## Limitations
 
 Read these before relying on any output.
