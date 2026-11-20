@@ -15,6 +15,7 @@ copied, from those standards.
 
 from __future__ import annotations
 
+from .chain_reference import chains_for
 from .models import Finding
 
 # --- verified canonical links -------------------------------------------------
@@ -252,6 +253,9 @@ def enrich(finding: Finding) -> None:
         finding.verification_steps = list(e["verification"])
     if not finding.reference_links:
         finding.reference_links = [dict(x) for x in e["links"]]
+    chains = chains_for(finding.owasp_id)
+    if chains and not getattr(finding, "web_attack_chains", None):
+        finding.web_attack_chains = chains
 
 
 def enrich_all(findings: list[Finding]) -> None:

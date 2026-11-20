@@ -66,6 +66,24 @@ Two commits staged on local `main`:
 
 To push: `gh auth login --scopes workflow` then `git push origin main`.
 
+## CBH Extraction Session (Nov 20, 2026)
+
+Extracted assets from Claude-BugHunter (elementalsouls, CC BY 4.0 + MIT) into GLASSCAGE:
+
+**Files added:**
+- `glasscage/data/cbh_attack_chains.json` — 10 vuln classes, 56 patterns, 183 disclosed reports mapped to OWASP LLM categories
+- `glasscage/data/cbh_severity_reference.json` — 94 calibrated finding→severity mappings from CBH's severity matrix
+- `glasscage/data/cbh_fp_corpus.json` — 10 AI-reframed FP test cases (7 safe, 3 vulnerable)
+- `glasscage/chain_reference.py` — loader module: `chains_for(owasp_id)`, `severity_reference()`, `severity_for_finding(text)`
+- `tests/test_chain_reference.py` — 8 tests, all passing
+
+**Integration:**
+- `kb.py` enrichment: `enrich()` now attaches `web_attack_chains` to findings, showing how AI-layer vulns chain to web-layer impact (e.g., LLM01 Prompt Injection → SSRF via tool-use, RCE via code-exec)
+- Full test suite: 1062 passed, 0 regressions
+
+**Extraction script:** `/home/kali/extraction-workspace/extract_cbh_to_glasscage.py`
+**CBH clone:** `/home/kali/extraction-workspace/Claude-BugHunter/`
+
 ## 5. What's next (priority order)
 1. **Push pending commits** — needs `workflow` scope on GitHub token
 2. **Close Dependabot PRs #2-#4** — comment "Subsumed by PR34"

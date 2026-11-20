@@ -1,0 +1,570 @@
+{
+  "version": "1.0",
+  "provenance": "Claude-BugHunter:CC-BY-4.0+MIT",
+  "entries": [
+    {
+      "finding": "/.git/config reachable on prod webapp",
+      "severity": "CRITICAL",
+      "reason": "Full source-code disclosure; secret history reconstructable.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "/.env reachable on prod webapp",
+      "severity": "CRITICAL",
+      "reason": "Plaintext creds (DB, cloud, API).",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Open Firebase RTDB returning data",
+      "severity": "CRITICAL",
+      "reason": "All app data readable; often writable.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Listable S3 bucket containing PII",
+      "severity": "CRITICAL",
+      "reason": "Direct data exfil.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Listable S3 bucket containing logs only",
+      "severity": "HIGH",
+      "reason": "Internal hostnames + paths in logs; pivot data.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Spring Boot /actuator/env exposed",
+      "severity": "CRITICAL",
+      "reason": "DB creds, JWT secrets, cloud keys in env.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Spring Boot /actuator/heapdump exposed",
+      "severity": "CRITICAL",
+      "reason": "Heap contains live secrets in string form.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Open Elasticsearch (/_cat/indices returns)",
+      "severity": "CRITICAL",
+      "reason": "Full data reads; often writable.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Open MongoDB (no auth)",
+      "severity": "CRITICAL",
+      "reason": "Full data + password-hash collection.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Open Redis (no AUTH)",
+      "severity": "CRITICAL",
+      "reason": "Write `authorized_keys` \u2192 SSH foothold.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Open Docker API (port 2375)",
+      "severity": "CRITICAL",
+      "reason": "Container/host takeover.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Public PMAK validated live with broad scope",
+      "severity": "CRITICAL",
+      "reason": "Full Postman account + all team workspaces.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Public AWS root access key validated live",
+      "severity": "CRITICAL",
+      "reason": "Full account compromise.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Live AWS IAM-user key found on GitHub",
+      "severity": "HIGH",
+      "reason": "Limited scope (depends on IAM policy); often elevatable.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Live GitHub PAT found in JS bundle",
+      "severity": "HIGH",
+      "reason": "Repo write access (depends on scope).",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Live Slack token in pastebin",
+      "severity": "HIGH",
+      "reason": "Workspace data + history; sometimes channel post.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Sourcemap (.js.map) accessible on prod",
+      "severity": "HIGH",
+      "reason": "Frontend source disclosure.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Open GraphQL introspection on prod",
+      "severity": "HIGH",
+      "reason": "Full schema \u2192 mutations + business-logic discovery.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Subdomain takeover possible (Heroku / GitHub Pages / etc.)",
+      "severity": "HIGH",
+      "reason": "Takeover \u2192 phishing on trusted domain.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Reflected CORS with credentials on /api/billing",
+      "severity": "HIGH",
+      "reason": "CSRF-via-CORS for billing data.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Verb tampering: DELETE allowed on documented-GET-only endpoint",
+      "severity": "HIGH",
+      "reason": "Authz bypass; potentially destructive.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "phpinfo.php reachable on prod",
+      "severity": "HIGH",
+      "reason": "Discloses paths, env vars, modules \u2192 vuln-version pivot.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Tomcat /manager/html reachable",
+      "severity": "HIGH",
+      "reason": "Often default creds; WAR upload = RCE.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Jenkins script console accessible",
+      "severity": "HIGH",
+      "reason": "Groovy script execution = RCE.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Missing HSTS on standard pages",
+      "severity": "MEDIUM",
+      "reason": "Hardening gap.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Missing CSP",
+      "severity": "MEDIUM",
+      "reason": "XSS impact mitigation gone.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Internal IP / K8s service DNS in JS",
+      "severity": "MEDIUM",
+      "reason": "Internal topology disclosure.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Apache /server-status reachable",
+      "severity": "MEDIUM",
+      "reason": "Live request visibility.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "android:debuggable=true on prod app",
+      "severity": "CRITICAL",
+      "reason": "Production debug-build \u2192 full client compromise.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "android:allowBackup=true (no whitelist)",
+      "severity": "MEDIUM",
+      "reason": "App data exfil via `adb backup`.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "android:usesCleartextTraffic=true",
+      "severity": "MEDIUM",
+      "reason": "MITM-able on hostile networks.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Sensitive deep-link handler (myapp://reset-password)",
+      "severity": "HIGH",
+      "reason": "Other apps can trigger sensitive flows.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Exported Android component without permission",
+      "severity": "MEDIUM",
+      "reason": "IPC attack surface.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Slack webhook URL leaked",
+      "severity": "MEDIUM",
+      "reason": "Send to channel; can be used for social-eng.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Twilio Account SID leaked (no auth token)",
+      "severity": "MEDIUM",
+      "reason": "Half a credential pair; plus account enumeration.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Wildcard CORS on data-returning API",
+      "severity": "MEDIUM",
+      "reason": "Lower than reflected+creds but still exfil-able.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Missing X-Frame-Options",
+      "severity": "LOW",
+      "reason": "Clickjacking.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": ".DS_Store exposed",
+      "severity": "LOW",
+      "reason": "Directory listing of dev's machine.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Stripe **test** key leaked",
+      "severity": "LOW",
+      "reason": "No real money risk.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Firebase URL exposed (no open RTDB)",
+      "severity": "LOW",
+      "reason": "Project-ID disclosure only.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Cert pinning missing in mobile app",
+      "severity": "LOW",
+      "reason": "MITM possible on hostile networks.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Outdated WordPress install detected",
+      "severity": "LOW",
+      "reason": "Pending CVE confirmation.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Missing Referrer-Policy / Permissions-Policy",
+      "severity": "INFO",
+      "reason": "Hardening, not an exposure.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "/.well-known/security.txt discovered",
+      "severity": "INFO",
+      "reason": "Useful contact info only.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Domain in breach with 0 named accounts",
+      "severity": "INFO",
+      "reason": "Contextual only.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Private bucket exists (HEAD 403)",
+      "severity": "INFO",
+      "reason": "Asset only, no finding.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Open kubelet on 10250",
+      "severity": "CRITICAL",
+      "reason": "Pod exec without K8s API auth.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Open etcd on 2379",
+      "severity": "CRITICAL",
+      "reason": "Cluster state + secrets.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "K8s API on 6443 with anonymous-auth",
+      "severity": "HIGH",
+      "reason": "Cluster recon; sometimes pod exec.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "K8s dashboard exposed without auth",
+      "severity": "HIGH",
+      "reason": "Cluster admin UI.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Helm Tiller (Helm 2) on 44134",
+      "severity": "HIGH",
+      "reason": "Cluster-admin scope.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Citrix Netscaler with KEV CVE",
+      "severity": "CRITICAL",
+      "reason": "Patch immediately; actively exploited.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "F5 BIG-IP TMUI accessible",
+      "severity": "HIGH",
+      "reason": "TMUI = admin panel; CVE-2022-1388 if unpatched = CRIT.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Pulse Secure with CVE-2024-21887",
+      "severity": "CRITICAL",
+      "reason": "KEV; chained command injection.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "FortiGate with CVE-2024-21762",
+      "severity": "CRITICAL",
+      "reason": "KEV; auth bypass + RCE.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "PaloAlto GlobalProtect with CVE-2024-3400",
+      "severity": "CRITICAL",
+      "reason": "KEV; pre-auth RCE.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "VMware vCenter with CVE-2021-21972",
+      "severity": "CRITICAL",
+      "reason": "KEV; pre-auth RCE.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "VMware ESXi exposed without VPN",
+      "severity": "HIGH",
+      "reason": "Multiple CVEs (ESXiArgs ransomware vector).",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "MS Exchange with ProxyShell/Logon/NotShell unpatched",
+      "severity": "CRITICAL",
+      "reason": "KEV chain; RCE + mailbox dump.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "AWS Lambda Function URL accessible anonymously",
+      "severity": "HIGH",
+      "reason": "Direct invocation; check IAM auth posture.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Public Cloud Run / Cloud Function unauthenticated",
+      "severity": "HIGH",
+      "reason": "Same.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Public Docker registry (anonymous catalog)",
+      "severity": "MEDIUM",
+      "reason": "Image enum + secret hunt in layers.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "GitHub Actions secrets echoed in workflow logs",
+      "severity": "HIGH",
+      "reason": "Secret-in-log = full secret disclosure.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "GitHub Actions pull_request_target checkout of fork code",
+      "severity": "HIGH",
+      "reason": "Class of bug; secrets accessible to attacker PRs.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "GitLab self-hosted with CVE-2021-22205",
+      "severity": "CRITICAL",
+      "reason": "KEV; ExifTool RCE.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Jenkins with pull_request_target-equivalent misconfig",
+      "severity": "HIGH",
+      "reason": "Build secrets accessible to PRs.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Public Notion page with internal SOPs",
+      "severity": "MEDIUM",
+      "reason": "Operational intel; sometimes credentials.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Public Trello board with credentials in cards",
+      "severity": "HIGH",
+      "reason": "Often plaintext API keys.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Public Confluence space with onboarding docs",
+      "severity": "MEDIUM",
+      "reason": "Seed creds + tech-stack reveal.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Public Miro board with architecture diagrams",
+      "severity": "LOW",
+      "reason": "Internal-host disclosure.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "DMARC policy p=none on production sending domain",
+      "severity": "MEDIUM",
+      "reason": "Spoof feasible (escalated from LOW for risk surface).",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "SPF ~all (softfail) without strict DMARC",
+      "severity": "MEDIUM",
+      "reason": "Spoofs land in spam, but land.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "MX server allows open relay (test with 250 OK to RCPT TO foreign domain)",
+      "severity": "HIGH",
+      "reason": "Spam + spoof feasibility.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Live Anthropic / OpenAI API key with broad scope",
+      "severity": "CRITICAL",
+      "reason": "Quota cost + potential PII in past responses.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Live npm token with publish scope",
+      "severity": "CRITICAL",
+      "reason": "Supply-chain compromise of all maintained packages.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Live PyPI / Docker Hub / GHCR token with publish scope",
+      "severity": "CRITICAL",
+      "reason": "Supply-chain compromise.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Atlassian token with admin scope",
+      "severity": "HIGH",
+      "reason": "Workspace-wide read; sometimes write.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Subdomain takeover candidate confirmed",
+      "severity": "HIGH",
+      "reason": "Trusted-domain phishing surface.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Sensitive CI/CD wordlist hits (Jenkinsfile, .gitlab-ci.yml on public repo)",
+      "severity": "MEDIUM",
+      "reason": "Build-script intel; often references secret names.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Public Postman workspace with internal API endpoints",
+      "severity": "MEDIUM",
+      "reason": "API attack surface mapped.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "WAF/CDN trivially bypassable (origin discoverable via \u00a716.15)",
+      "severity": "HIGH",
+      "reason": "All WAF protections null.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "TLS 1.0/1.1 supported on prod",
+      "severity": "MEDIUM",
+      "reason": "Compliance gap; PCI-DSS forbids TLS 1.0.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "RC4 / 3DES cipher accepted",
+      "severity": "MEDIUM",
+      "reason": "NOMORE / SWEET32 attacks.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Cert about to expire (<30 days)",
+      "severity": "LOW",
+      "reason": "Operational risk; not exploitable.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Self-signed cert on prod",
+      "severity": "MEDIUM",
+      "reason": "Trust failure for users.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Heartbleed (CVE-2014-0160) detected",
+      "severity": "CRITICAL",
+      "reason": "Memory disclosure including session tokens + keys.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Public Slack invite link discoverable",
+      "severity": "HIGH",
+      "reason": "Anyone joins workspace; full DM/channel access.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Vendor / supplier / e-procurement portal publicly exposed + breach corpus shows vendor accounts compromised",
+      "severity": "HIGH",
+      "reason": "Vendor impersonation + procurement fraud (BEC vector); regulatory exposure if PII/payment data flows.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Job-application / careers portal collects PII over plain HTTP (no TLS)",
+      "severity": "HIGH",
+      "reason": "Cleartext PII at scale; regulatory exposure under GDPR / CCPA / India DPDP Act / LGPD.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Decommissioned legacy mail (NXDOMAIN today) + breach corpus has historical employee URLs against it + cloud SSO migration confirmed via autodiscover IPs",
+      "severity": "CRITICAL",
+      "reason": "Stolen passwords almost certainly survived migration via reuse; SSO_EXPOSURE escalates regardless of the legacy host being dead.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Public-facing intranet (intranet.<domain> resolves and returns content without VPN)",
+      "severity": "MEDIUM",
+      "reason": "Internal-staff portal exposed; often leaks org structure, employee directory, internal apps.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "Staging / preprod / UAT / sandbox subdomain publicly resolvable",
+      "severity": "MEDIUM",
+      "reason": "Often weaker auth, debug endpoints, test creds; sometimes mirrors prod data.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "vpn.<domain> resolves but vendor + version unknown (passive only)",
+      "severity": "INFO",
+      "reason": "Attack surface flag only; escalate to HIGH-CRITICAL after active fingerprint matches a KEV CVE (\u00a716.16).",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    },
+    {
+      "finding": "DMARC RUA points to a third-party reporting vendor (kdmarc / dmarcian / Valimail / Agari / EasyDMARC)",
+      "severity": "INFO",
+      "reason": "Tenant signal only; vendor compromise = DMARC bypass for *all* their customers.",
+      "provenance": "Claude-BugHunter:CC-BY-4.0+MIT"
+    }
+  ]
+}
