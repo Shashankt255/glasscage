@@ -15,8 +15,12 @@ copied, from those standards.
 
 from __future__ import annotations
 
-from .chain_reference import chains_for
-from .models import Finding
+from .chain_reference import chains_for, severity_for_finding
+from .disclosed_reports import cited_examples_for
+from .engine_reference import skills_for as _cbh_skills_for
+from .engine_reference import weight_for as _cbh_weight_for
+from .hunt_strategies import strategy_for as _cbh_strategy_for
+from .models import Finding, Status
 
 # --- verified canonical links -------------------------------------------------
 _OWASP = "https://genai.owasp.org/llmrisk/"
@@ -247,6 +251,83 @@ def entry(owasp_id: str) -> dict:
     return KB.get(owasp_id, KB["_default"])
 
 
+_OWASP_TO_CBH_CLASS: dict[str, list[str]] = {
+    "LLM01": ["llm-ai"],
+    "LLM02": ["info-leak", "secret"],
+    "LLM03": ["supply-chain-attack-recon"],
+    "LLM05": ["xss", "html-injection"],
+    "LLM06": ["llm-ai"],
+    "LLM07": ["info-leak", "llm-ai"],
+    "LLM08": ["rag-vector"],
+    "LLM09": ["llm-ai"],
+    "LLM10": ["llm-ai"],
+    "MCP03": ["llm-ai"],
+    "MCP07": ["ssrf"],
+}
+
+_MAX_HUNT_HINTS = 3
+_MAX_DISCLOSED_EXAMPLES = 3
+
+# OWASP LLM → web-layer vuln classes for disclosed report lookup
+# (derived from the attack chain mappings in cbh_attack_chains.json)
+_OWASP_TO_WEB_VULN: dict[str, list[str]] = {
+    "LLM01": ["ssrf", "rce", "ssti", "business-logic", "deserialization", "file-upload"],
+    "LLM02": ["source-leak", "graphql", "jwt-crypto"],
+    "LLM04": ["deserialization", "file-upload", "rce"],
+    "LLM05": ["xss", "html-injection", "sqli", "ssti"],
+    "LLM06": ["business-logic", "graphql", "idor", "jwt-crypto"],
+    "LLM07": ["source-leak", "ssrf"],
+    "LLM09": ["business-logic"],
+    "MCP07": ["ssrf"],
+}
+
+
+def _hunt_hints_for(owasp_id: str) -> list[dict]:
+    """Return up to _MAX_HUNT_HINTS hunt strategy summaries for a finding's OWASP class."""
+    seen: set[str] = set()
+    hints: list[dict] = []
+    for cbh_class in _OWASP_TO_CBH_CLASS.get(owasp_id, []):
+        for skill_name in _cbh_skills_for(cbh_class):
+            if skill_name in seen:
+                continue
+            seen.add(skill_name)
+            strat = _cbh_strategy_for(skill_name)
+            if strat:
+                hints.append({
+                    "skill_name": strat["name"],
+                    "description": strat.get("description", ""),
+                })
+            if len(hints) >= _MAX_HUNT_HINTS:
+                return hints
+    return hints
+
+
+def _risk_weight_for(owasp_id: str) -> float | None:
+    """Return the highest CBH risk weight across all mapped classes, or None."""
+    classes = _OWASP_TO_CBH_CLASS.get(owasp_id, [])
+    if not classes:
+        return None
+    weights = [_cbh_weight_for(c) for c in classes]
+    best = max(weights) if weights else 0
+    return best / 100.0 if best > 0 else None
+
+
+def _disclosed_examples_for(owasp_id: str) -> list[dict]:
+    """Return up to _MAX_DISCLOSED_EXAMPLES cited examples from web-layer vuln classes."""
+    examples: list[dict] = []
+    for vuln_class in _OWASP_TO_WEB_VULN.get(owasp_id, []):
+        for ex in cited_examples_for(vuln_class):
+            examples.append({
+                "name": ex.get("name", ""),
+                "source": ex.get("source", ""),
+                "vuln_class": vuln_class,
+                "key_trick": ex.get("key_trick", ""),
+            })
+            if len(examples) >= _MAX_DISCLOSED_EXAMPLES:
+                return examples
+    return examples
+
+
 def enrich(finding: Finding) -> None:
     e = entry(finding.owasp_id)
     if not finding.verification_steps:
@@ -256,6 +337,28 @@ def enrich(finding: Finding) -> None:
     chains = chains_for(finding.owasp_id)
     if chains and not getattr(finding, "web_attack_chains", None):
         finding.web_attack_chains = chains
+
+    # Severity calibration from CBH bounty-payout data
+    if not getattr(finding, "cbh_severity_calibration", None):
+        cal = severity_for_finding(finding.title)
+        if cal:
+            finding.cbh_severity_calibration = cal
+
+    # Disclosed report examples for the finding's web-layer attack surface
+    if not getattr(finding, "cbh_disclosed_examples", None):
+        examples = _disclosed_examples_for(finding.owasp_id)
+        if examples:
+            finding.cbh_disclosed_examples = examples
+
+    if finding.status == Status.VULNERABLE:
+        if not getattr(finding, "cbh_hunt_hints", None):
+            hints = _hunt_hints_for(finding.owasp_id)
+            if hints:
+                finding.cbh_hunt_hints = hints
+        if not getattr(finding, "cbh_risk_weight", None):
+            w = _risk_weight_for(finding.owasp_id)
+            if w is not None:
+                finding.cbh_risk_weight = w
 
 
 def enrich_all(findings: list[Finding]) -> None:

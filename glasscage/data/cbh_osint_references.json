@@ -1,0 +1,732 @@
+{
+  "meta": {
+    "source": "Claude-BugHunter/skills/offensive-osint/references/",
+    "license": "CC BY 4.0 (reference data) + MIT (code helpers)",
+    "file_count": 15,
+    "extracted": "2026-11-20"
+  },
+  "categories": [
+    {
+      "id": "dork-corpus",
+      "name": "Google & GitHub Dork Corpus",
+      "source_file": "dork-corpus.md",
+      "dork_groups": [
+        {
+          "group": "login-pages",
+          "dorks": [
+            "intitle:\"login\" site:{domain}",
+            "inurl:/login site:{domain}",
+            "inurl:/admin site:{domain}",
+            "inurl:/portal site:{domain}",
+            "intitle:\"sign in\" site:{domain}"
+          ]
+        },
+        {
+          "group": "file-exposure",
+          "dorks": [
+            "site:{domain} filetype:pdf",
+            "site:{domain} filetype:xlsx",
+            "site:{domain} filetype:docx",
+            "site:{domain} filetype:csv",
+            "site:{domain} filetype:sql",
+            "site:{domain} filetype:log",
+            "site:{domain} filetype:env",
+            "site:{domain} filetype:conf",
+            "site:{domain} filetype:bak",
+            "site:{domain} filetype:xml"
+          ]
+        },
+        {
+          "group": "config-exposure",
+          "dorks": [
+            "site:{domain} inurl:wp-config",
+            "site:{domain} inurl:.env",
+            "site:{domain} inurl:config.php",
+            "site:{domain} inurl:settings.py",
+            "site:{domain} inurl:application.yml",
+            "site:{domain} inurl:database.yml",
+            "site:{domain} intitle:\"index of\"",
+            "site:{domain} intitle:\"directory listing\""
+          ]
+        },
+        {
+          "group": "error-pages",
+          "dorks": [
+            "site:{domain} intext:\"sql syntax\"",
+            "site:{domain} intext:\"Warning: mysql\"",
+            "site:{domain} intext:\"ORA-\"",
+            "site:{domain} intext:\"stack trace\"",
+            "site:{domain} intext:\"Traceback (most recent call last)\"",
+            "site:{domain} intext:\"Exception in thread\""
+          ]
+        },
+        {
+          "group": "api-exposure",
+          "dorks": [
+            "site:{domain} inurl:/api/",
+            "site:{domain} inurl:swagger",
+            "site:{domain} inurl:graphql",
+            "site:{domain} inurl:/v1/ OR inurl:/v2/",
+            "site:{domain} filetype:json inurl:api"
+          ]
+        },
+        {
+          "group": "cloud-infrastructure",
+          "dorks": [
+            "site:s3.amazonaws.com \"{org}\"",
+            "site:blob.core.windows.net \"{org}\"",
+            "site:storage.googleapis.com \"{org}\"",
+            "site:digitaloceanspaces.com \"{org}\"",
+            "site:firebaseio.com \"{org}\""
+          ]
+        },
+        {
+          "group": "code-repositories",
+          "dorks": [
+            "site:github.com \"{org}\" password",
+            "site:gitlab.com \"{org}\"",
+            "site:bitbucket.org \"{org}\"",
+            "site:pastebin.com \"{domain}\""
+          ]
+        },
+        {
+          "group": "sensitive-pages",
+          "dorks": [
+            "site:{domain} inurl:backup",
+            "site:{domain} inurl:debug",
+            "site:{domain} inurl:test",
+            "site:{domain} inurl:staging",
+            "site:{domain} inurl:dev"
+          ]
+        },
+        {
+          "group": "third-party-mentions",
+          "dorks": [
+            "site:trello.com \"{org}\"",
+            "site:notion.so \"{org}\"",
+            "site:atlassian.net \"{org}\"",
+            "site:slack.com \"{domain}\"",
+            "site:stackoverflow.com \"{domain}\""
+          ]
+        }
+      ],
+      "github_dorks": [
+        {
+          "query": "org:{org} password",
+          "purpose": "Hardcoded credentials"
+        },
+        {
+          "query": "org:{org} secret",
+          "purpose": "API secrets/tokens"
+        },
+        {
+          "query": "org:{org} AKIA",
+          "purpose": "AWS access keys"
+        },
+        {
+          "query": "org:{org} BEGIN RSA PRIVATE KEY",
+          "purpose": "Private keys"
+        },
+        {
+          "query": "org:{org} filename:.env",
+          "purpose": "Environment files"
+        },
+        {
+          "query": "org:{org} filename:id_rsa",
+          "purpose": "SSH keys"
+        },
+        {
+          "query": "org:{org} filename:credentials",
+          "purpose": "Credential files"
+        },
+        {
+          "query": "org:{org} filename:wp-config.php",
+          "purpose": "WordPress configs"
+        },
+        {
+          "query": "\"{domain}\" password",
+          "purpose": "Domain-specific password mentions"
+        },
+        {
+          "query": "\"{domain}\" api_key",
+          "purpose": "Domain-specific API keys"
+        },
+        {
+          "query": "\"{domain}\" token",
+          "purpose": "Domain-specific tokens"
+        },
+        {
+          "query": "\"{domain}\" jdbc:mysql",
+          "purpose": "Database connection strings"
+        },
+        {
+          "query": "\"{domain}\" mongodb+srv",
+          "purpose": "MongoDB connection strings"
+        }
+      ]
+    },
+    {
+      "id": "secret-patterns",
+      "name": "Secret Detection Patterns",
+      "source_file": "secret-patterns.md",
+      "patterns": [
+        {"name": "AWS_ACCESS_KEY", "severity": "critical", "category": "aws", "regex": "\\b(AKIA|ASIA)[0-9A-Z]{16}\\b"},
+        {"name": "AWS_SECRET_TYPED", "severity": "critical", "category": "aws", "regex": "(?i)aws[_\\-]?secret[_\\-]?access[_\\-]?key['\"]?\\s*[:=]\\s*['\"]?([A-Za-z0-9/+=]{40})"},
+        {"name": "GCP_SERVICE_ACCOUNT", "severity": "critical", "category": "gcp", "regex": "\"type\"\\s*:\\s*\"service_account\""},
+        {"name": "GOOGLE_API_KEY", "severity": "high", "category": "gcp", "regex": "\\bAIza[0-9A-Za-z_\\-]{35}\\b"},
+        {"name": "GH_PAT_CLASSIC", "severity": "critical", "category": "github", "regex": "\\bghp_[A-Za-z0-9]{36}\\b"},
+        {"name": "GH_PAT_FINEGRAINED", "severity": "critical", "category": "github", "regex": "\\bgithub_pat_[A-Za-z0-9_]{82}\\b"},
+        {"name": "GH_OAUTH", "severity": "high", "category": "github", "regex": "\\bgho_[A-Za-z0-9]{36}\\b"},
+        {"name": "GH_S2S", "severity": "high", "category": "github", "regex": "\\bgh[usr]_[A-Za-z0-9]{36,}\\b"},
+        {"name": "STRIPE_LIVE", "severity": "critical", "category": "stripe", "regex": "\\bsk_live_[0-9A-Za-z]{24,}\\b"},
+        {"name": "STRIPE_TEST", "severity": "low", "category": "stripe", "regex": "\\bsk_test_[0-9A-Za-z]{24,}\\b"},
+        {"name": "SLACK_TOKEN", "severity": "high", "category": "slack", "regex": "\\bxox[abpors]-[0-9A-Za-z\\-]{10,48}\\b"},
+        {"name": "SLACK_WEBHOOK", "severity": "medium", "category": "slack", "regex": "https://hooks\\.slack\\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]+"},
+        {"name": "SENDGRID", "severity": "high", "category": "email_svc", "regex": "\\bSG\\.[A-Za-z0-9_\\-]{22}\\.[A-Za-z0-9_\\-]{43}\\b"},
+        {"name": "MAILGUN", "severity": "high", "category": "email_svc", "regex": "\\bkey-[0-9a-zA-Z]{32}\\b"},
+        {"name": "TWILIO_API", "severity": "high", "category": "twilio", "regex": "\\bSK[0-9a-fA-F]{32}\\b"},
+        {"name": "TWILIO_SID", "severity": "medium", "category": "twilio", "regex": "\\bAC[a-f0-9]{32}\\b"},
+        {"name": "HEROKU_API", "severity": "medium", "category": "paas", "regex": "(?i)heroku(.{0,20})?api[\"'=: ]+([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"},
+        {"name": "FIREBASE_URL", "severity": "low", "category": "firebase", "regex": "\\bhttps?://[a-z0-9\\-]+\\.firebaseio\\.com\\b"},
+        {"name": "JWT", "severity": "medium", "category": "jwt", "regex": "\\beyJ[A-Za-z0-9_\\-]{10,}\\.eyJ[A-Za-z0-9_\\-]{10,}\\.[A-Za-z0-9_\\-]{10,}\\b"},
+        {"name": "BEARER_AUTH", "severity": "medium", "category": "bearer", "regex": "(?i)authorization[\"'=: ]+bearer\\s+[A-Za-z0-9._\\-]{20,}"},
+        {"name": "BASIC_AUTH_URL", "severity": "medium", "category": "basic_auth", "regex": "https?://[^/\\s:@]+:[^/\\s:@]+@[^/\\s]+"},
+        {"name": "RSA_PRIVKEY", "severity": "critical", "category": "private_key", "regex": "-----BEGIN RSA PRIVATE KEY-----"},
+        {"name": "EC_PRIVKEY", "severity": "critical", "category": "private_key", "regex": "-----BEGIN EC PRIVATE KEY-----"},
+        {"name": "OPENSSH_PRIVKEY", "severity": "critical", "category": "private_key", "regex": "-----BEGIN OPENSSH PRIVATE KEY-----"},
+        {"name": "GENERIC_PRIVKEY", "severity": "critical", "category": "private_key", "regex": "-----BEGIN (DSA |PGP |)PRIVATE KEY-----"},
+        {"name": "GENERIC_API_KEY", "severity": "medium", "category": "generic", "regex": "(?i)(?:api[_\\-]?key|apikey|api_secret|access_token|secret[_\\-]?token)['\"]?\\s*[:=]\\s*[\"']([A-Za-z0-9+/=_\\-]{24,})[\"']"}
+      ]
+    },
+    {
+      "id": "probe-wordlists",
+      "name": "Probe Paths & Wordlists",
+      "source_file": "probes-and-wordlists.md",
+      "swagger_paths": [
+        "/swagger.json", "/swagger/v1/swagger.json", "/swagger-ui.html",
+        "/api-docs", "/api/swagger.json", "/openapi.json", "/openapi.yaml",
+        "/v1/swagger.json", "/v2/swagger.json", "/v3/api-docs",
+        "/docs", "/redoc", "/.well-known/openapi.yaml",
+        "/swagger/index.html", "/swagger-resources",
+        "/api/v1/swagger.json", "/api/v2/swagger.json",
+        "/api/api-docs", "/api/docs",
+        "/swagger.yaml", "/api-docs.json", "/api-docs.yaml",
+        "/spec.json", "/openapi/v1/swagger.json",
+        "/swagger/ui/index", "/swagger-ui/",
+        "/api/swagger-ui.html", "/api/openapi.json"
+      ],
+      "graphql_paths": [
+        "/graphql", "/graphiql", "/altair", "/playground",
+        "/api/graphql", "/graphql/console", "/v1/graphql",
+        "/graphql/playground", "/graphql/schema",
+        "/graphql/v1", "/gql", "/_graphql", "/query"
+      ],
+      "high_risk_ports": [
+        {"port": 21, "service": "FTP"},
+        {"port": 22, "service": "SSH"},
+        {"port": 23, "service": "Telnet"},
+        {"port": 25, "service": "SMTP"},
+        {"port": 53, "service": "DNS"},
+        {"port": 80, "service": "HTTP"},
+        {"port": 110, "service": "POP3"},
+        {"port": 111, "service": "RPCbind"},
+        {"port": 135, "service": "MSRPC"},
+        {"port": 139, "service": "NetBIOS"},
+        {"port": 143, "service": "IMAP"},
+        {"port": 389, "service": "LDAP"},
+        {"port": 443, "service": "HTTPS"},
+        {"port": 445, "service": "SMB"},
+        {"port": 512, "service": "rexec"},
+        {"port": 513, "service": "rlogin"},
+        {"port": 514, "service": "rshell"},
+        {"port": 873, "service": "rsync"},
+        {"port": 993, "service": "IMAPS"},
+        {"port": 995, "service": "POP3S"},
+        {"port": 1433, "service": "MSSQL"},
+        {"port": 1521, "service": "Oracle"},
+        {"port": 2049, "service": "NFS"},
+        {"port": 3306, "service": "MySQL"},
+        {"port": 3389, "service": "RDP"},
+        {"port": 5432, "service": "PostgreSQL"},
+        {"port": 5900, "service": "VNC"},
+        {"port": 5985, "service": "WinRM-HTTP"},
+        {"port": 5986, "service": "WinRM-HTTPS"},
+        {"port": 6379, "service": "Redis"},
+        {"port": 8080, "service": "HTTP-alt"},
+        {"port": 8443, "service": "HTTPS-alt"},
+        {"port": 9200, "service": "Elasticsearch"},
+        {"port": 11211, "service": "Memcached"},
+        {"port": 27017, "service": "MongoDB"}
+      ],
+      "security_headers": [
+        "Strict-Transport-Security",
+        "Content-Security-Policy",
+        "X-Content-Type-Options",
+        "X-Frame-Options",
+        "Referrer-Policy",
+        "Permissions-Policy"
+      ],
+      "subdomain_takeover_fingerprints": [
+        {"provider": "AWS S3", "cname": ".s3.amazonaws.com", "fingerprint": "NoSuchBucket"},
+        {"provider": "GitHub Pages", "cname": ".github.io", "fingerprint": "There isn't a GitHub Pages site here"},
+        {"provider": "Heroku", "cname": ".herokuapp.com", "fingerprint": "No such app"},
+        {"provider": "Shopify", "cname": ".myshopify.com", "fingerprint": "Sorry, this shop is currently unavailable"},
+        {"provider": "Tumblr", "cname": ".tumblr.com", "fingerprint": "There's nothing here"},
+        {"provider": "Zendesk", "cname": ".zendesk.com", "fingerprint": "Help Center Closed"},
+        {"provider": "Fastly", "cname": ".fastly.net", "fingerprint": "Fastly error: unknown domain"},
+        {"provider": "Pantheon", "cname": ".pantheonsite.io", "fingerprint": "404 error unknown site"},
+        {"provider": "Surge.sh", "cname": ".surge.sh", "fingerprint": "project not found"},
+        {"provider": "Unbounce", "cname": ".unbouncepages.com", "fingerprint": "The requested URL was not found"},
+        {"provider": "WordPress.com", "cname": ".wordpress.com", "fingerprint": "Do you want to register"},
+        {"provider": "TeamWork", "cname": ".teamwork.com", "fingerprint": "Oops - We didn't find your site"},
+        {"provider": "Helpjuice", "cname": ".helpjuice.com", "fingerprint": "We could not find what you're looking for"},
+        {"provider": "HelpScout", "cname": ".helpscoutdocs.com", "fingerprint": "No settings were found"},
+        {"provider": "Ghost", "cname": ".ghost.io", "fingerprint": "The thing you were looking for is no longer here"},
+        {"provider": "Cargo", "cname": ".cargocollective.com", "fingerprint": "404 Not Found"},
+        {"provider": "StatusPage", "cname": ".statuspage.io", "fingerprint": "You are being redirected"},
+        {"provider": "UserVoice", "cname": ".uservoice.com", "fingerprint": "This UserVoice subdomain is currently available"},
+        {"provider": "Brightcove", "cname": ".brightcove.com", "fingerprint": "Error - brightcove"},
+        {"provider": "Bigcartel", "cname": ".bigcartel.com", "fingerprint": "undefined"},
+        {"provider": "ActiveCampaign", "cname": ".activehosted.com", "fingerprint": "alt=\"JEdistribution\""},
+        {"provider": "CampaignMonitor", "cname": ".createsend.com", "fingerprint": "Trying to access your account?"},
+        {"provider": "Acquia", "cname": ".acquia-test.co", "fingerprint": "Web Site Not Found"},
+        {"provider": "Proposify", "cname": ".proposify.biz", "fingerprint": "If you need immediate assistance"},
+        {"provider": "Simplebooklet", "cname": ".simplebooklet.com", "fingerprint": "SimpleBklet didn't recognize"},
+        {"provider": "GetResponse", "cname": ".gr8.com", "fingerprint": "With GetResponse"},
+        {"provider": "Vend", "cname": ".vendecommerce.com", "fingerprint": "Looks like you've followed a broken link"}
+      ],
+      "cloud_bucket_patterns": [
+        {"provider": "AWS S3", "patterns": ["{org}.s3.amazonaws.com", "{org}-assets.s3.amazonaws.com", "{org}-backup.s3.amazonaws.com", "{org}-data.s3.amazonaws.com", "{org}-dev.s3.amazonaws.com", "{org}-staging.s3.amazonaws.com", "{org}-prod.s3.amazonaws.com"]},
+        {"provider": "Azure Blob", "patterns": ["{org}.blob.core.windows.net", "{org}storage.blob.core.windows.net"]},
+        {"provider": "GCS", "patterns": ["{org}.storage.googleapis.com", "{org}-assets.storage.googleapis.com"]},
+        {"provider": "DigitalOcean", "patterns": ["{org}.digitaloceanspaces.com"]}
+      ],
+      "email_security_checks": [
+        {"record": "SPF", "command": "dig +short TXT {domain} | grep spf"},
+        {"record": "DMARC", "command": "dig +short TXT _dmarc.{domain}"},
+        {"record": "DKIM", "command": "dig +short TXT {selector}._domainkey.{domain}"},
+        {"record": "MTA-STS", "command": "dig +short TXT _mta-sts.{domain}"},
+        {"record": "BIMI", "command": "dig +short TXT default._bimi.{domain}"}
+      ],
+      "cdn_bypass_techniques": [
+        "Direct IP via DNS history (SecurityTrails, DNSTrails)",
+        "MX record IP as origin hint",
+        "Outbound email headers (Return-Path, Received)",
+        "Internal SSRF to bypass CDN",
+        "IPv6 address not behind CDN",
+        "Certificate transparency alt-names pointing to origin"
+      ]
+    },
+    {
+      "id": "identity-fabric",
+      "name": "Identity Fabric & SSO Endpoints",
+      "source_file": "identity-fabric.md",
+      "providers": [
+        {
+          "name": "Microsoft Entra (Azure AD)",
+          "endpoints": [
+            {"path": "https://login.microsoftonline.com/{tenant}/.well-known/openid-configuration", "purpose": "OIDC discovery"},
+            {"path": "https://login.microsoftonline.com/getuserrealm.srf?login={email}", "purpose": "Realm discovery (federated/managed)"},
+            {"path": "https://autodiscover-s.outlook.com/autodiscover/autodiscover.xml", "purpose": "Exchange autodiscover"},
+            {"path": "https://login.microsoftonline.com/common/GetCredentialType", "purpose": "Username existence (POST)"},
+            {"path": "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token", "purpose": "OAuth2 token endpoint"}
+          ]
+        },
+        {
+          "name": "Okta",
+          "endpoints": [
+            {"path": "https://{org}.okta.com/.well-known/openid-configuration", "purpose": "OIDC discovery"},
+            {"path": "https://{org}.okta.com/api/v1/meta/schemas/user/default", "purpose": "User schema (may be public)"},
+            {"path": "https://{org}.okta.com/api/v1/users?limit=200", "purpose": "User list (requires auth)"}
+          ]
+        },
+        {
+          "name": "ADFS",
+          "endpoints": [
+            {"path": "https://{host}/adfs/.well-known/openid-configuration", "purpose": "OIDC discovery"},
+            {"path": "https://{host}/adfs/ls/idpinitiatedsignon.aspx", "purpose": "Sign-on page (confirms ADFS)"},
+            {"path": "https://{host}/FederationMetadata/2007-06/FederationMetadata.xml", "purpose": "Federation metadata"}
+          ]
+        },
+        {
+          "name": "Google Workspace",
+          "endpoints": [
+            {"path": "https://accounts.google.com/.well-known/openid-configuration", "purpose": "OIDC discovery"},
+            {"path": "https://www.googleapis.com/admin/directory/v1/users", "purpose": "Directory API (authed)"}
+          ]
+        },
+        {
+          "name": "Auth0",
+          "endpoints": [
+            {"path": "https://{tenant}.auth0.com/.well-known/openid-configuration", "purpose": "OIDC discovery"},
+            {"path": "https://{tenant}.auth0.com/.well-known/jwks.json", "purpose": "JWKS public keys"}
+          ]
+        },
+        {
+          "name": "Keycloak",
+          "endpoints": [
+            {"path": "https://{host}/realms/{realm}/.well-known/openid-configuration", "purpose": "OIDC discovery"},
+            {"path": "https://{host}/admin/", "purpose": "Admin console"}
+          ]
+        },
+        {
+          "name": "Ping Identity",
+          "endpoints": [
+            {"path": "https://{host}/.well-known/openid-configuration", "purpose": "OIDC discovery"}
+          ]
+        }
+      ],
+      "aws_account_id_extraction": {
+        "method": "STS GetAccessKeyLastUsed with known key prefix → returns account ID",
+        "note": "AWS access key prefix AKIA → account ID via sts:GetAccessKeyLastUsed without auth"
+      }
+    },
+    {
+      "id": "breach-credentials",
+      "name": "Breach & Credential Intelligence",
+      "source_file": "breach-and-credentials.md",
+      "sources": [
+        {"name": "HudsonRock Cavalier", "type": "infostealer", "access": "API (paid)", "note": "Stealer log correlation by domain/email"},
+        {"name": "Have I Been Pwned", "type": "breach_check", "access": "API (free/paid)", "note": "Email breach membership check"},
+        {"name": "Dehashed", "type": "breach_search", "access": "paid", "note": "Full-text breach data search"},
+        {"name": "IntelX", "type": "breach_archive", "access": "freemium", "note": "Pastes, leaks, darknet archives"},
+        {"name": "Snusbase", "type": "breach_search", "access": "paid", "note": "Breach data search"}
+      ],
+      "email_patterns": [
+        "{first}.{last}@{domain}",
+        "{first}{last}@{domain}",
+        "{f}{last}@{domain}",
+        "{first}_{last}@{domain}",
+        "{first}@{domain}",
+        "{last}.{first}@{domain}",
+        "{f}.{last}@{domain}",
+        "{first}{l}@{domain}"
+      ],
+      "severity_mapping": {
+        "password_plaintext": "critical",
+        "password_hash": "high",
+        "email_only": "low",
+        "sso_exposure": "high",
+        "stealer_log": "critical"
+      }
+    },
+    {
+      "id": "severity-matrix",
+      "name": "Severity Assessment Matrix",
+      "source_file": "severity-matrix.md",
+      "severity_levels": ["critical", "high", "medium", "low", "info"],
+      "examples_count": 100,
+      "note": "100+ worked severity examples from real engagements covering OSINT findings"
+    },
+    {
+      "id": "sector-notes",
+      "name": "Sector-Specific OSINT Notes",
+      "source_file": "sector-notes.md",
+      "sectors": [
+        {
+          "sector": "Healthcare",
+          "protocols": ["DICOM (port 4242/11112)", "HL7 FHIR (REST)", "HL7v2 (MLLP port 2575)"],
+          "search_terms": ["inurl:wado", "DICOM PACS exposure", "FHIR /Patient endpoint"],
+          "regulatory": ["HIPAA", "HITECH"]
+        },
+        {
+          "sector": "Finance",
+          "protocols": ["SWIFT/FIN", "FIX (port 9878)", "ISO 20022"],
+          "search_terms": ["SWIFT endpoint exposure", "FIX engine banner"],
+          "regulatory": ["PCI-DSS", "SOX", "GLBA"]
+        },
+        {
+          "sector": "ICS/SCADA",
+          "protocols": ["Modbus (port 502)", "DNP3 (port 20000)", "EtherNet/IP (port 44818)", "BACnet (port 47808)", "S7comm (port 102)"],
+          "search_terms": ["Shodan: port:502 modbus", "Shodan: port:47808 bacnet"],
+          "regulatory": ["NERC CIP", "IEC 62443"]
+        },
+        {
+          "sector": "IoT",
+          "protocols": ["MQTT (port 1883/8883)", "CoAP (port 5683)", "UPnP/SSDP (port 1900)"],
+          "search_terms": ["Shodan: port:1883 topic", "open MQTT brokers"],
+          "regulatory": ["ETSI EN 303 645"]
+        },
+        {
+          "sector": "Government",
+          "protocols": [],
+          "search_terms": ["site:.gov filetype:pdf", "FOIA response archives"],
+          "regulatory": ["FedRAMP", "FISMA", "NIST 800-53"]
+        },
+        {
+          "sector": "Maritime",
+          "protocols": ["AIS (VHF)", "NMEA 0183"],
+          "search_terms": ["MarineTraffic vessel lookup", "AIS gap analysis"],
+          "regulatory": ["IMO MSC guidelines"]
+        },
+        {
+          "sector": "Aviation",
+          "protocols": ["ADS-B (1090 MHz)", "ACARS"],
+          "search_terms": ["FlightRadar24", "ADSBExchange unfiltered"],
+          "regulatory": ["ICAO Annex 17"]
+        },
+        {
+          "sector": "Automotive",
+          "protocols": ["CAN bus", "OBD-II", "V2X"],
+          "search_terms": ["CAN bus fuzzing", "OBD-II diagnostic exposure"],
+          "regulatory": ["UNECE WP.29 R155/R156"]
+        }
+      ]
+    },
+    {
+      "id": "recon-techniques",
+      "name": "Recon Techniques & Methodologies",
+      "source_file": "recon-techniques.md",
+      "techniques": [
+        {
+          "name": "LinkedIn Employee Enumeration",
+          "category": "people",
+          "description": "Extract employee names, roles, and tech stack from LinkedIn company pages and job postings"
+        },
+        {
+          "name": "Job Posting Tech Stack Analysis",
+          "category": "tech_enum",
+          "description": "Analyze job requirements to identify internal technologies, frameworks, and infrastructure"
+        },
+        {
+          "name": "Collaboration Platform Discovery",
+          "category": "surface",
+          "description": "Find Slack, Discord, and Telegram workspaces associated with the target"
+        },
+        {
+          "name": "Package Registry Leak Hunting",
+          "category": "secret",
+          "description": "Search npm, PyPI, RubyGems, Cargo, Maven for packages referencing target internal resources",
+          "registries": ["npm", "PyPI", "RubyGems", "Cargo", "Maven", "NuGet", "crates.io"]
+        },
+        {
+          "name": "Satellite Imagery Physical Recon",
+          "category": "physical",
+          "description": "Use satellite imagery for physical facility assessment and perimeter mapping"
+        }
+      ]
+    },
+    {
+      "id": "saas-surfaces",
+      "name": "SaaS Public Surfaces",
+      "source_file": "saas-public-surfaces.md",
+      "surfaces": [
+        {"platform": "Postman", "search": "Postman public workspace search for {org}", "risk": "API endpoints, auth tokens, internal schemas"},
+        {"platform": "Stack Exchange", "search": "site:stackoverflow.com \"{domain}\" OR \"{org}\"", "risk": "Internal code snippets, architecture details, error messages"},
+        {"platform": "Trello", "search": "site:trello.com \"{org}\"", "risk": "Project plans, credentials, internal URLs"},
+        {"platform": "Notion", "search": "site:notion.so \"{org}\"", "risk": "Internal documentation, architecture diagrams"}
+      ]
+    },
+    {
+      "id": "secret-validators",
+      "name": "Secret Validation (Read-Only)",
+      "source_file": "secret-validators.md",
+      "validators": [
+        {"provider": "AWS", "method": "aws sts get-caller-identity", "note": "Read-only identity check; never use for destructive ops"},
+        {"provider": "GitHub", "method": "curl -sH 'Authorization: token {t}' https://api.github.com/user", "note": "Returns user info, read-only"},
+        {"provider": "Slack", "method": "curl -s 'https://slack.com/api/auth.test' -d token={t}", "note": "Returns workspace and user info"},
+        {"provider": "Stripe", "method": "curl -su {key}: https://api.stripe.com/v1/balance", "note": "Returns balance info, read-only"},
+        {"provider": "SendGrid", "method": "curl -sH 'Authorization: Bearer {key}' https://api.sendgrid.com/v3/user/profile", "note": "Returns profile"},
+        {"provider": "Twilio", "method": "curl -su {sid}:{token} https://api.twilio.com/2010-04-01/Accounts/{sid}.json", "note": "Returns account info"},
+        {"provider": "Google Maps", "method": "curl -s 'https://maps.googleapis.com/maps/api/staticmap?center=0,0&zoom=1&size=1x1&key={key}'", "note": "Returns image if valid"},
+        {"provider": "Mailgun", "method": "curl -su 'api:{key}' https://api.mailgun.net/v3/domains", "note": "Returns domains list"},
+        {"provider": "HerokuAPI", "method": "curl -sH 'Authorization: Bearer {t}' https://api.heroku.com/account -H 'Accept: application/vnd.heroku+json; version=3'", "note": "Returns account info"}
+      ],
+      "warning": "GLASSCAGE policy: NEVER test leaked keys against external services. Only report exposure and recommend rotation."
+    },
+    {
+      "id": "recon-stack",
+      "name": "Subdomain & Infrastructure Recon",
+      "source_file": "recon-stack.md",
+      "subdomain_sources": [
+        {"name": "crt.sh", "tier": "free", "type": "certificate_transparency"},
+        {"name": "VirusTotal", "tier": "freemium", "type": "passive_dns"},
+        {"name": "AlienVault OTX", "tier": "free", "type": "passive_dns"},
+        {"name": "Shodan", "tier": "paid", "type": "device_search"},
+        {"name": "BinaryEdge", "tier": "paid", "type": "device_search"},
+        {"name": "FOFA", "tier": "freemium", "type": "device_search"},
+        {"name": "ZoomEye", "tier": "freemium", "type": "device_search"},
+        {"name": "Netlas", "tier": "paid", "type": "pivot"},
+        {"name": "SecurityTrails", "tier": "paid", "type": "passive_dns"},
+        {"name": "RapidDNS", "tier": "free", "type": "passive_dns"},
+        {"name": "Subfinder", "tier": "free", "type": "aggregator"},
+        {"name": "Amass", "tier": "free", "type": "aggregator"}
+      ],
+      "crt_sh_fallbacks": ["Censys cert search", "Cert Spotter API", "CertStream archive", "Subfinder aggregator", "AlienVault OTX", "ThreatMiner", "URLScan", "Anubis-DB"],
+      "infrastructure_tools": [
+        {"name": "Shodan", "purpose": "Internet device + cert search"},
+        {"name": "Censys", "purpose": "Internet device + cert search"},
+        {"name": "GreyNoise", "purpose": "Distinguish background noise from targeted scans"},
+        {"name": "SpiderFoot", "purpose": "Automated recon + correlation"},
+        {"name": "theHarvester", "purpose": "Subdomain, email, metadata"},
+        {"name": "BuiltWith", "purpose": "Tech stack enumeration"}
+      ],
+      "asn_bgp_tools": ["Hurricane Electric BGP Toolkit", "RIPEstat", "BGPView", "bgp.tools", "PeeringDB"],
+      "tls_audit_issues": [
+        {"issue": "TLS 1.0/1.1 supported", "severity": "medium"},
+        {"issue": "SSL 3.0/2.0 supported", "severity": "high"},
+        {"issue": "Weak ciphers (RC4, 3DES, CBC)", "severity": "medium"},
+        {"issue": "Anonymous DH", "severity": "high"},
+        {"issue": "Self-signed cert on production", "severity": "medium"},
+        {"issue": "Expired cert", "severity": "medium"},
+        {"issue": "Weak key size (<2048 RSA)", "severity": "high"},
+        {"issue": "Heartbleed (CVE-2014-0160)", "severity": "critical"},
+        {"issue": "ROBOT (CVE-2017-13099)", "severity": "high"},
+        {"issue": "CCS injection (CVE-2014-0224)", "severity": "high"},
+        {"issue": "Ticketbleed (CVE-2016-9244)", "severity": "high"}
+      ]
+    },
+    {
+      "id": "helpers-automation",
+      "name": "AI-Assisted OSINT & Automation",
+      "source_file": "helpers-and-automation.md",
+      "ai_tools": [
+        {"name": "ChatGPT", "strength": "Log parsing, dataset analysis, Code Interpreter"},
+        {"name": "Claude", "strength": "200K-token context for large doc dumps"},
+        {"name": "Gemini", "strength": "Long-context, Deep Research with citations"},
+        {"name": "Perplexity Pro", "strength": "Real-time web search + reasoning"}
+      ],
+      "local_ai": ["Ollama", "LM Studio", "GPT4All"],
+      "automation_platforms": [
+        {"name": "n8n", "purpose": "Self-hosted workflow automation"},
+        {"name": "Huginn", "purpose": "Agent-based monitoring/scraping/alerting"},
+        {"name": "Playwright", "purpose": "Headless browser automation"},
+        {"name": "Browsertrix Crawler", "purpose": "Archival crawling with WARC export"},
+        {"name": "Prefect", "purpose": "Workflow orchestration"},
+        {"name": "Apache Airflow", "purpose": "Workflow orchestration"}
+      ],
+      "evidence_handling": {
+        "required": ["URL + UTC timestamp", "PNG screenshot", "WARC/SingleFileZ archive", "SHA-256 hash"],
+        "note": "Separate work profiles per case, store evidence read-only, JSONL run logs"
+      },
+      "helper_scripts": [
+        {"name": "secret_scan.py", "purpose": "Stdlib-only 29-pattern secret scanner, JSONL output"},
+        {"name": "h1_reference.py", "purpose": "HackerOne public GraphQL hacktivity query"},
+        {"name": "dashboard.py", "purpose": "Localhost recon console wrapping secret_scan + h1_reference"}
+      ]
+    },
+    {
+      "id": "tooling-install",
+      "name": "Tooling Quick-Install Reference",
+      "source_file": "tooling-install.md",
+      "tool_categories": [
+        {
+          "category": "Subdomain enumeration",
+          "tools": ["subfinder", "amass", "assetfinder", "dnsx", "puredns"]
+        },
+        {
+          "category": "HTTP probing",
+          "tools": ["httpx", "gowitness", "aquatone"]
+        },
+        {
+          "category": "Vulnerability scanning",
+          "tools": ["nuclei", "naabu", "masscan"]
+        },
+        {
+          "category": "Content discovery",
+          "tools": ["ffuf", "gobuster", "feroxbuster"]
+        },
+        {
+          "category": "JS/endpoint extraction",
+          "tools": ["katana", "gospider", "linkfinder", "subjs"]
+        },
+        {
+          "category": "Wayback/archive",
+          "tools": ["gau", "waybackurls"]
+        },
+        {
+          "category": "Cloud/AWS",
+          "tools": ["awscli", "cloud_enum", "s3scanner", "cloudsploit"]
+        },
+        {
+          "category": "Identity/SSO",
+          "tools": ["o365enum", "credmaster"]
+        },
+        {
+          "category": "Mobile",
+          "tools": ["google-play-scraper", "androguard", "apkleaks"]
+        },
+        {
+          "category": "TLS/cert",
+          "tools": ["sslyze", "testssl.sh", "pyjarm", "certgraph"]
+        },
+        {
+          "category": "Misc",
+          "tools": ["anew", "gf", "hakrawler", "trufflehog", "gitleaks", "jq"]
+        },
+        {
+          "category": "Frameworks",
+          "tools": ["pdtm", "reconftw", "axiom"]
+        }
+      ]
+    },
+    {
+      "id": "people-osint",
+      "name": "People, Username & Social OSINT",
+      "source_file": "people-osint.md",
+      "username_tools": [
+        {"name": "Sherlock", "purpose": "Username search across social networks"},
+        {"name": "Maigret", "purpose": "Profile collector by username"},
+        {"name": "What's My Name", "purpose": "Username search"},
+        {"name": "Holehe", "purpose": "Email registration check"},
+        {"name": "Epieos", "purpose": "Email pivots and metadata"},
+        {"name": "Hunter.io", "purpose": "Domain to emails"},
+        {"name": "EmailRep", "purpose": "Email reputation"},
+        {"name": "PhoneInfoga", "purpose": "Phone number intelligence"}
+      ],
+      "social_platforms": [
+        {"platform": "Instagram", "tool": "Picuki"},
+        {"platform": "X/Twitter", "tool": "snscrape"},
+        {"platform": "Facebook", "tool": "Graph Search (IntelTechniques)"},
+        {"platform": "YouTube/Twitch", "tool": "Social Blade"},
+        {"platform": "TikTok", "tool": "Tokboard"},
+        {"platform": "Reddit", "tool": "Reveddit, RedTrack.social"},
+        {"platform": "Bluesky", "tool": "Firesky, SkyView"},
+        {"platform": "Mastodon", "tool": "FediSearch, Fedifinder"}
+      ],
+      "people_search": ["TruePeopleSearch", "WhitePages", "Spokeo", "Pipl", "Clearbit", "FaceCheck", "FaceSeek"]
+    },
+    {
+      "id": "specialized-osint",
+      "name": "Threat Intel, Crypto, Media & Geo OSINT",
+      "source_file": "specialized-osint.md",
+      "threat_intel_sources": [
+        {"name": "MISP", "purpose": "CTI knowledge sharing"},
+        {"name": "OpenCTI", "purpose": "CTI knowledge graph"},
+        {"name": "Malpedia", "purpose": "Malware families, YARA"},
+        {"name": "ThreatFox", "purpose": "IOC sharing"},
+        {"name": "MalwareBazaar", "purpose": "Malware sample sharing"},
+        {"name": "PhishTank", "purpose": "Phishing URL DB"}
+      ],
+      "vuln_prioritization_sources": [
+        {"name": "NVD", "purpose": "Base CVE catalog with CVSS"},
+        {"name": "EPSS", "purpose": "30-day exploit probability (0.0-1.0)"},
+        {"name": "CISA KEV", "purpose": "Proven exploited-in-the-wild CVEs"},
+        {"name": "ExploitDB", "purpose": "POC code presence"},
+        {"name": "InTheWild.io", "purpose": "Community actively-exploited tracker"},
+        {"name": "OSV.dev", "purpose": "Open-source vulnerability DB"}
+      ],
+      "crypto_blockchain_tools": [
+        {"name": "Arkham", "purpose": "Multichain entity labels + graphs"},
+        {"name": "MetaSleuth", "purpose": "Visual transaction flow"},
+        {"name": "Breadcrumbs", "purpose": "Visual graphing + labels"},
+        {"name": "Chainalysis", "purpose": "Professional analytics"},
+        {"name": "Dune", "purpose": "Custom SQL queries"}
+      ],
+      "geospatial_tools": [
+        {"name": "Sentinel Hub EO Browser", "purpose": "Satellite imagery"},
+        {"name": "NASA Worldview", "purpose": "Earth observation"},
+        {"name": "FlightRadar24", "purpose": "Flight tracking"},
+        {"name": "ADSBExchange", "purpose": "Unfiltered ADS-B"},
+        {"name": "MarineTraffic", "purpose": "Vessel tracking"},
+        {"name": "Overpass Turbo", "purpose": "OpenStreetMap query"}
+      ],
+      "media_forensics": [
+        {"name": "TinEye", "purpose": "Reverse image search"},
+        {"name": "ExifTool", "purpose": "Image metadata extraction"},
+        {"name": "InVID/WeVerify", "purpose": "Video verification"},
+        {"name": "Forensically", "purpose": "Photo forensics"}
+      ]
+    }
+  ]
+}
