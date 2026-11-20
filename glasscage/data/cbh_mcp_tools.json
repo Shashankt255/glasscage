@@ -1,0 +1,73 @@
+{
+  "source": "elementalsouls/Claude-BugHunter",
+  "license": "MIT",
+  "extracted": "2026-11-20",
+  "server_name": "hackerone",
+  "server_version": "1.0.0",
+  "protocol_version": "2025-06-18",
+  "tools": [
+    {
+      "name": "search_disclosed_reports",
+      "description": "Search HackerOne Hacktivity's disclosed reports. Use it before writing a report to check for duplicates on the same program, and to find disclosed techniques for a bug class. The query is matched by HackerOne's search (supports AND / OR); program narrows to one program's disclosures.",
+      "params": [
+        {"name": "query", "type": "string", "description": "Keywords, e.g. 'ssrf', 'oauth AND redirect_uri'."},
+        {"name": "program", "type": "string", "description": "HackerOne program handle, e.g. 'gitlab'."},
+        {"name": "severity", "type": "array", "description": "Keep only these severities.", "enum": ["none", "low", "medium", "high", "critical"]},
+        {"name": "sort", "type": "string", "description": "Sort order.", "enum": ["relevance", "votes", "bounty"], "default": "relevance"},
+        {"name": "limit", "type": "integer", "description": "Max results.", "minimum": 1, "maximum": 50, "default": 10}
+      ],
+      "requires_auth": false
+    },
+    {
+      "name": "get_program",
+      "description": "A public HackerOne program's bounty figures: base bounty, average bounty range, resolved report count, launch date and state.",
+      "params": [
+        {"name": "program", "type": "string", "required": true, "description": "HackerOne program handle, e.g. 'gitlab'."}
+      ],
+      "requires_auth": false
+    },
+    {
+      "name": "get_program_scope",
+      "description": "A public HackerOne program's structured scope (in-scope and out-of-scope assets, bounty eligibility, max severity, per-asset instructions) and its policy text. Check this before touching any asset.",
+      "params": [
+        {"name": "program", "type": "string", "required": true, "description": "HackerOne program handle, e.g. 'gitlab'."},
+        {"name": "include_policy", "type": "boolean", "default": true, "description": "Include the full policy text (can be long)."}
+      ],
+      "requires_auth": false
+    },
+    {
+      "name": "get_report",
+      "description": "Fetch a disclosed HackerOne report's full write-up body and public metadata by id or url. Read-only, keyless. Use it when testing a vuln class to read the real precedent report's reproduction steps and bypasses before mirroring them on a live target. Returns a note when the public body is thin or empty.",
+      "params": [
+        {"name": "id", "type": "integer", "description": "Report id, e.g. 826361."},
+        {"name": "url", "type": "string", "description": "Report url, e.g. https://hackerone.com/reports/826361."}
+      ],
+      "requires_auth": false
+    },
+    {
+      "name": "list_my_programs",
+      "description": "Programs your HackerOne account can see through the Hacker API, including private programs you are invited to. Read-only.",
+      "params": [
+        {"name": "limit", "type": "integer", "minimum": 1, "maximum": 500, "default": 100}
+      ],
+      "requires_auth": true
+    },
+    {
+      "name": "get_my_program",
+      "description": "One program's policy and full structured scope as your account sees it, private programs included. Read-only.",
+      "params": [
+        {"name": "program", "type": "string", "required": true, "description": "HackerOne program handle, e.g. 'gitlab'."}
+      ],
+      "requires_auth": true
+    },
+    {
+      "name": "list_my_reports",
+      "description": "Your own HackerOne reports with their state, optionally for one program. Use it to check you have not already reported something. Read-only.",
+      "params": [
+        {"name": "program", "type": "string", "description": "HackerOne program handle, e.g. 'gitlab'."},
+        {"name": "limit", "type": "integer", "minimum": 1, "maximum": 500, "default": 50}
+      ],
+      "requires_auth": true
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "source": "elementalsouls/Claude-BugHunter",
+  "license": "CC BY 4.0 + MIT",
+  "extracted": "2026-11-20",
+  "labs_count": 7,
+  "total_files": 12,
+  "labs": [
+    {
+      "name": "hardened-lab",
+      "files": [
+        "hardened-lab/app.py"
+      ]
+    },
+    {
+      "name": "phase2e-lab",
+      "files": [
+        "phase2e-lab/app.py"
+      ]
+    },
+    {
+      "name": "phase2f-lab",
+      "files": [
+        "phase2f-lab/app.py"
+      ]
+    },
+    {
+      "name": "phase2g-lab",
+      "files": [
+        "phase2g-lab/app.py"
+      ]
+    },
+    {
+      "name": "phase2h-lab",
+      "files": [
+        "phase2h-lab/docker-compose.yml",
+        "phase2h-lab/nginx/Dockerfile",
+        "phase2h-lab/nginx/nginx.conf",
+        "phase2h-lab/origin/Dockerfile",
+        "phase2h-lab/origin/app.py"
+      ]
+    },
+    {
+      "name": "phase2i-lab",
+      "files": [
+        "phase2i-lab/app.py"
+      ]
+    },
+    {
+      "name": "phase3-playwright",
+      "files": [
+        "phase3-playwright/harness.py",
+        "phase3-playwright/target_app.py"
+      ]
+    }
+  ]
+}

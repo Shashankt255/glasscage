@@ -16,6 +16,13 @@ First stable release. All GA blockers resolved.
   chain to web-layer impact (SSRF, RCE, data exfil) grounded in disclosed reports.
 - Real-target validation completed against Ollama llama3.2 (Grade D, 25 findings,
   42 probes, all output formats verified).
+- CBH Tier 1 extended: disclosed reports (36 vuln classes, 215 patterns),
+  engine reference (47 class weights, workflows), 15 workflow definitions.
+- CBH Tier 2: verification labs (13 writeups + 6 lab apps), HackerOne MCP
+  tool reference (7 tools), recon manifest schema, engagement example,
+  plugin manifest, 4 design docs (autopilot ledger, H1 report body fetch).
+- Loader modules: `integration_reference.py`, `verification_labs.py`,
+  `disclosed_reports.py`, `engine_reference.py`.
 
 ### Fixed
 - Import sort in `engine.py` (ruff I001 — zero lint errors).
@@ -23,7 +30,7 @@ First stable release. All GA blockers resolved.
 ### Changed
 - VERSIONING.md: clarified that `coverage.py` functions are active on the default
   AAKG path (not deprecated as previously stated).
-- Test count: 997 → 1081 (19 new tests, 0 regressions).
+- Test count: 997 → 1132 (25 new Tier 2 tests, 0 regressions).
 
 ## [1.0.0rc4] — 2026-11-05 — Engine surface wiring, coverage honesty, custody hardening
 Previous: 1.0.0rc3. Incorporates PRs 14–34.
