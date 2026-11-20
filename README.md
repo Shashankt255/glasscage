@@ -186,8 +186,7 @@ Read these before relying on any output.
 - **The risk index is an uncalibrated heuristic.** It gives directional signal,
   not a calibrated probability.
 
-Details in [`docs/METHODOLOGY_AND_LIMITATIONS.md`](docs/METHODOLOGY_AND_LIMITATIONS.md)
-and [`docs/VALIDATION.md`](docs/VALIDATION.md).
+Details in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
 ## Documentation
 
