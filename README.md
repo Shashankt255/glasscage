@@ -11,7 +11,7 @@ the report says so.
 [![CI](https://github.com/Shashankt255/glasscage/actions/workflows/ci.yml/badge.svg)](https://github.com/Shashankt255/glasscage/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-1132%20passed-brightgreen)](#)
+[![Tests](https://img.shields.io/badge/tests-1176%20passed-brightgreen)](#)
 
 > **Authorized use only.** Run this only against systems you own or have explicit written
 > permission to test. `--authorized` is required for live targets.
