@@ -11,7 +11,7 @@ and generates a remediation-focused report.
 Do NOT run this against systems you are not authorized to test.
 """
 
-__version__ = "1.0.0rc3"
+__version__ = "1.1.0"
 
 from . import (
     adapters,
