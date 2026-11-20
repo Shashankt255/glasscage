@@ -1,0 +1,221 @@
+{
+  "source": "elementalsouls/Claude-BugHunter",
+  "license": "CC BY 4.0 + MIT",
+  "extracted": "2026-11-20",
+  "kev_catalog_version": "2026.05.15",
+  "total_kev_vulnerabilities": 1592,
+  "indexed_cves": 91,
+  "in_scope_cves": 53,
+  "gaps": [
+    {
+      "date_added": "2026-05-15",
+      "cve": "CVE-2026-42897",
+      "vendor": "Microsoft",
+      "product": "Microsoft",
+      "vulnerability": "Microsoft Exchange Server Cross-Site Scripting Vulnerability"
+    },
+    {
+      "date_added": "2026-05-14",
+      "cve": "CVE-2026-20182",
+      "vendor": "Cisco",
+      "product": "Catalyst SD-WAN",
+      "vulnerability": "Cisco Catalyst SD-WAN Controller Authentication Bypass Vulnerability"
+    },
+    {
+      "date_added": "2026-05-07",
+      "cve": "CVE-2026-6973",
+      "vendor": "Ivanti",
+      "product": "Endpoint Manager Mobile (EPMM)",
+      "vulnerability": "Ivanti Endpoint Manager Mobile (EPMM) Improper Input Validation Vulnerability"
+    },
+    {
+      "date_added": "2026-05-06",
+      "cve": "CVE-2026-0300",
+      "vendor": "Palo Alto Networks",
+      "product": "PAN-OS",
+      "vulnerability": "Palo Alto Networks PAN-OS Out-of-bounds Write Vulnerability"
+    },
+    {
+      "date_added": "2026-04-30",
+      "cve": "CVE-2026-41940",
+      "vendor": "WebPros",
+      "product": "cPanel & WHM and WP2 (WordPress Squared)",
+      "vulnerability": "WebPros cPanel & WHM and WP2 (WordPress Squared) Missing Authentication for Critical Funct"
+    },
+    {
+      "date_added": "2026-04-28",
+      "cve": "CVE-2026-32202",
+      "vendor": "Microsoft",
+      "product": "Windows",
+      "vulnerability": "Microsoft Windows Protection Mechanism Failure Vulnerability"
+    },
+    {
+      "date_added": "2026-04-22",
+      "cve": "CVE-2026-33825",
+      "vendor": "Microsoft",
+      "product": "Defender",
+      "vulnerability": "Microsoft Defender Insufficient Granularity of Access Control Vulnerability"
+    },
+    {
+      "date_added": "2026-04-20",
+      "cve": "CVE-2026-20122",
+      "vendor": "Cisco",
+      "product": "Catalyst SD-WAN Manger",
+      "vulnerability": "Cisco Catalyst SD-WAN Manager Incorrect Use of Privileged APIs Vulnerability"
+    },
+    {
+      "date_added": "2026-04-20",
+      "cve": "CVE-2026-20133",
+      "vendor": "Cisco",
+      "product": "Catalyst SD-WAN Manager",
+      "vulnerability": "Cisco Catalyst SD-WAN Manager Exposure of Sensitive Information to an Unauthorized Actor V"
+    },
+    {
+      "date_added": "2026-04-20",
+      "cve": "CVE-2026-20128",
+      "vendor": "Cisco",
+      "product": "Catalyst SD-WAN Manager",
+      "vulnerability": "Cisco Catalyst SD-WAN Manager Storing Passwords in a Recoverable Format Vulnerability"
+    },
+    {
+      "date_added": "2026-04-16",
+      "cve": "CVE-2026-34197",
+      "vendor": "Apache",
+      "product": "ActiveMQ",
+      "vulnerability": "Apache ActiveMQ Improper Input Validation Vulnerability"
+    },
+    {
+      "date_added": "2026-04-14",
+      "cve": "CVE-2009-0238",
+      "vendor": "Microsoft",
+      "product": "Office",
+      "vulnerability": "Microsoft Office Remote Code Execution"
+    },
+    {
+      "date_added": "2026-04-14",
+      "cve": "CVE-2026-32201",
+      "vendor": "Microsoft",
+      "product": "SharePoint Server",
+      "vulnerability": "Microsoft SharePoint Server Improper Input Validation Vulnerability"
+    },
+    {
+      "date_added": "2026-04-13",
+      "cve": "CVE-2012-1854",
+      "vendor": "Microsoft",
+      "product": "Visual Basic for Applications (VBA)",
+      "vulnerability": "Microsoft Visual Basic for Applications Insecure Library Loading Vulnerability"
+    },
+    {
+      "date_added": "2026-04-13",
+      "cve": "CVE-2025-60710",
+      "vendor": "Microsoft",
+      "product": "Windows",
+      "vulnerability": "Microsoft Windows Link Following Vulnerability"
+    },
+    {
+      "date_added": "2026-04-13",
+      "cve": "CVE-2023-21529",
+      "vendor": "Microsoft",
+      "product": "Exchange Server",
+      "vulnerability": "Microsoft Exchange Server Deserialization of Untrusted Data Vulnerability"
+    },
+    {
+      "date_added": "2026-04-13",
+      "cve": "CVE-2023-36424",
+      "vendor": "Microsoft",
+      "product": "Windows",
+      "vulnerability": "Microsoft Windows Out-of-Bounds Read Vulnerability"
+    },
+    {
+      "date_added": "2026-04-13",
+      "cve": "CVE-2020-9715",
+      "vendor": "Adobe",
+      "product": "Acrobat",
+      "vulnerability": "Adobe Acrobat Use-After-Free Vulnerability"
+    },
+    {
+      "date_added": "2026-04-13",
+      "cve": "CVE-2026-21643",
+      "vendor": "Fortinet",
+      "product": "FortiClient EMS",
+      "vulnerability": "Fortinet FortiClient EMS SQL Injection Vulnerability"
+    },
+    {
+      "date_added": "2026-04-13",
+      "cve": "CVE-2026-34621",
+      "vendor": "Adobe",
+      "product": "Acrobat and Reader",
+      "vulnerability": "Adobe Acrobat and Reader Prototype Pollution Vulnerability"
+    },
+    {
+      "date_added": "2026-04-08",
+      "cve": "CVE-2026-1340",
+      "vendor": "Ivanti",
+      "product": "Endpoint Manager Mobile (EPMM)",
+      "vulnerability": "Ivanti Endpoint Manager Mobile (EPMM) Code Injection Vulnerability"
+    },
+    {
+      "date_added": "2026-04-06",
+      "cve": "CVE-2026-35616",
+      "vendor": "Fortinet",
+      "product": "FortiClient EMS",
+      "vulnerability": "Fortinet FortiClient EMS Improper Access Control Vulnerability"
+    },
+    {
+      "date_added": "2026-03-30",
+      "cve": "CVE-2026-3055",
+      "vendor": "Citrix",
+      "product": "NetScaler",
+      "vulnerability": "Citrix NetScaler Out-of-Bounds Read Vulnerability"
+    },
+    {
+      "date_added": "2026-03-27",
+      "cve": "CVE-2025-53521",
+      "vendor": "F5",
+      "product": "BIG-IP",
+      "vulnerability": "F5 BIG-IP Stack-Based Buffer Overflow Vulnerability"
+    },
+    {
+      "date_added": "2026-03-19",
+      "cve": "CVE-2026-20131",
+      "vendor": "Cisco",
+      "product": "Secure Firewall Management Center (FMC)",
+      "vulnerability": "Cisco Secure Firewall Management Center (FMC) Software and Cisco Security Cloud Control (S"
+    },
+    {
+      "date_added": "2026-03-18",
+      "cve": "CVE-2026-20963",
+      "vendor": "Microsoft",
+      "product": "SharePoint",
+      "vulnerability": "Microsoft SharePoint Deserialization of Untrusted Data Vulnerability"
+    },
+    {
+      "date_added": "2026-03-09",
+      "cve": "CVE-2021-22054",
+      "vendor": "Omnissa",
+      "product": "Workspace One UEM",
+      "vulnerability": "Omnissa Workspace ONE Server-Side Request Forgery"
+    },
+    {
+      "date_added": "2026-03-09",
+      "cve": "CVE-2026-1603",
+      "vendor": "Ivanti",
+      "product": "Endpoint Manager (EPM)",
+      "vulnerability": "Ivanti Endpoint Manager (EPM) Authentication Bypass Vulnerability"
+    },
+    {
+      "date_added": "2026-03-03",
+      "cve": "CVE-2026-22719",
+      "vendor": "Broadcom",
+      "product": "VMware Aria Operations",
+      "vulnerability": "Broadcom VMware Aria Operations Command Injection Vulnerability"
+    },
+    {
+      "date_added": "2026-02-25",
+      "cve": "CVE-2022-20775",
+      "vendor": "Cisco",
+      "product": "SD-WAN",
+      "vulnerability": "Cisco SD-WAN Path Traversal Vulnerability"
+    }
+  ]
+}
