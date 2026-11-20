@@ -53,7 +53,8 @@ class Engine:
                  system_prompt_text=None,
                  genetic=False, genetic_budget=40,
                  build_chains=True, trials=1, seed=None, use_aakg=True,
-                 store_raw=False, impact_chain=True, surface=None):
+                 store_raw=False, impact_chain=True, surface=None,
+                 use_kb=True):
         self.target = target
         self.probes = selected_probes if selected_probes is not None else probes_mod.all_probes()
         self.mcp_manifest = mcp_manifest
@@ -74,6 +75,7 @@ class Engine:
         self.use_aakg = use_aakg
         self.store_raw = store_raw
         self.impact_chain = impact_chain
+        self.use_kb = use_kb
         # ADR 0002: optional Surface/ApplicationTarget to route probe traffic through.
         # None keeps the pre-existing single-target path exactly as it was.
         self.surface = surface
@@ -341,7 +343,8 @@ class Engine:
 
         # enrichment + custody + evidence
         remediation.apply_all(findings)
-        kb_mod.enrich_all(findings)
+        if self.use_kb:
+            kb_mod.enrich_all(findings)
         from . import taxonomy as taxonomy_mod
         taxonomy_mod.enrich_all(findings)   # D1: CWE/CAPEC/NIST mappings
         # ADR 0005/0011: each surface's findings cite the target that produced them.

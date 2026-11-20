@@ -216,7 +216,24 @@ succeed", **not** "the target is not vulnerable".
   strings, not target repeatability.
 
 
-## 7. Where to go next
+## 7. Knowledge base
+
+GLASSCAGE ships with an integrated knowledge base extracted from
+[Claude-BugHunter](https://github.com/elementalsouls/Claude-BugHunter)
+(CC BY 4.0 + MIT). Every assessment automatically enriches findings with
+real-world attack intelligence — no API keys or network calls required.
+
+Each finding may receive these enrichment fields in the JSON output:
+
+- **`web_attack_chains`** — how the AI-layer vuln chains to web-layer impact (SSRF, RCE, XSS via tool-use), grounded in disclosed bounty reports.
+- **`cbh_severity_calibration`** — severity calibrated against 94 real bounty payouts, as supplementary context alongside the computed severity.
+- **`cbh_disclosed_examples`** — up to 3 cited real-world disclosed reports relevant to the finding's vulnerability class.
+- **`cbh_hunt_hints`** — recommended next-step hunt strategies (vulnerable findings only, max 3).
+- **`cbh_risk_weight`** — a 0–1 prevalence weight from real-world bounty data indicating how commonly this class is exploited.
+
+Enrichment runs automatically during every assessment. No configuration needed.
+
+## 8. Where to go next
 
 | You are | Read |
 |---|---|

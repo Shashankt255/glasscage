@@ -51,7 +51,7 @@ def test_enrich_disclosed_examples_max_3():
 def test_enrich_no_disclosed_examples_for_unmapped_owasp():
     f = _make_finding(owasp_id="LLM10")
     enrich(f)
-    assert getattr(f, "cbh_disclosed_examples", None) is None
+    assert f.cbh_disclosed_examples == []
 
 
 def test_enrich_does_not_override_existing_severity():

@@ -165,6 +165,9 @@ def main(argv=None):
     ap.add_argument("--seed", type=int, help="seed for deterministic replay")
     ap.add_argument("--no-aakg", action="store_true",
                     help="disable the AI Attack Knowledge Graph (use legacy trust/chains)")
+    ap.add_argument("--no-kb", action="store_true",
+                    help="disable knowledge-base enrichment (severity calibration, "
+                         "disclosed reports, hunt hints, risk weights)")
     ap.add_argument("--no-chain", action="store_true",
                     help="disable impact-chaining (skip follow-up probes after injection success)")
     ap.add_argument("--views", nargs="+", metavar="AUDIENCE", default=[],
@@ -462,7 +465,7 @@ def main(argv=None):
                     system_prompt_text=system_prompt_text, genetic=args.genetic,
                     trials=args.trials, seed=args.seed, use_aakg=not args.no_aakg,
                     store_raw=args.store_raw, surface=surface,
-                    impact_chain=not args.no_chain)
+                    impact_chain=not args.no_chain, use_kb=not args.no_kb)
 
     # --retry-errors: filter engine probes to only those that errored in a previous run.
     if args.retry_errors:

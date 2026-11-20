@@ -171,7 +171,7 @@ class TestFindingShape(unittest.TestCase):
 
     def test_field_order_is_unchanged(self):
         names = [f.name for f in dataclasses.fields(Finding)]
-        self.assertEqual(len(names), 41)
+        self.assertEqual(len(names), 46)
         self.assertEqual(names[10:16], ["cwe_id", "capec_id", "nist_id",
                                         "source_framework", "source_rule_id", "raw_output"])
 

@@ -171,7 +171,7 @@ class TestRedactionLeavesNoDeadState(unittest.TestCase):
         self.assertEqual(redaction.redact_finding(f), 2)
 
     def test_finding_field_count_is_unchanged(self):
-        self.assertEqual(len(dataclasses.fields(Finding)), 41)
+        self.assertEqual(len(dataclasses.fields(Finding)), 46)
 
     def test_clean_finding_is_untouched(self):
         f = _finding(response_excerpt="nothing secret here")

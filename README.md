@@ -168,9 +168,14 @@ intelligence without external API calls:
 | **30 KEV CVE gaps** | Known-exploited vulnerability coverage gaps (91 indexed) |
 | **13 verification labs** | Ground-truth test scenarios with runnable Flask apps |
 | **7 MCP tool definitions** | HackerOne integration reference (public + authenticated) |
+| **OSINT references** | Dork templates, secret regex patterns, probe wordlists (Swagger, actuator, cloud) |
+| **9 engine modules** | Scope, recon, agent dispatch, memory ledger — autonomous assessment architecture |
+| **15 command definitions** | Full prompt templates for assessment workflows |
 
 All data is loaded lazily from bundled JSON — no network, no keys, no
-external dependencies.
+external dependencies. Findings are automatically enriched with severity
+calibration from real bounty payouts, cited disclosed report examples,
+hunt strategy recommendations, and risk weights from real-world prevalence data.
 
 ## Limitations
 

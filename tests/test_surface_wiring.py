@@ -268,10 +268,10 @@ class TestLegacyInvariance(unittest.TestCase):
         self.assertTrue(res["findings"])
         self.assertIn("posture_score", res["summary"])
 
-    def test_surface_parameter_is_keyword_defaulted_last(self):
+    def test_surface_parameter_is_keyword_defaulted(self):
         params = list(inspect.signature(Engine.__init__).parameters)
         self.assertEqual(params[1], "target")
-        self.assertEqual(params[-1], "surface")
+        self.assertIn("surface", params)
         self.assertIsNone(inspect.signature(Engine.__init__).parameters["surface"].default)
 
 

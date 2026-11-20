@@ -16,7 +16,7 @@ GLASSCAGE is an open-source Python AI security assessment platform built around 
   # or from source:
   git clone https://github.com/Shashankt255/glasscage.git
   cd glasscage && pip install -e .
-  pytest -q          # 1132 passed, 89 subtests in ~27s
+  pytest -q          # 1176 passed, 89 subtests in ~24s
   ```
 
 ## 3. Release history
@@ -76,8 +76,27 @@ Extracted complete knowledge base from Claude-BugHunter (elementalsouls, CC BY 4
 | `integration_reference.py` | `mcp_tools()`, `mcp_tool_for()`, `recon_manifest_schema()`, `engagement_example()`, `plugin_manifest()`, `design_docs()`, `design_doc_for()` |
 | `verification_labs.py` | `labs()`, `lab_for()`, `labs_for_class()`, `lab_apps()` |
 
+**CBH Tier 3 extraction + engine wiring (Nov 20, same session):**
+
+| Data File | Contents |
+|---|---|
+| `cbh_osint_references.json` | 15 OSINT reference files: dork corpus, 48 secret regex patterns, probe wordlists (Swagger, actuator, cloud), takeover fingerprints, IdP providers, sector notes |
+| `cbh_engine_modules.json` | 9 engine source modules: scope, recon, engine, agent, memory, closure, skill_map, state, osint (2522 lines) |
+| `cbh_commands.json` | 15 command definitions with full prompt templates (autopilot, chain, hunt, intel, recon, report, scope, surface, etc.) |
+
+| Loader Module | Functions |
+|---|---|
+| `engine_modules.py` | `modules()`, `module_for()`, `commands()`, `command_for()` |
+| `osint_references.py` | `references()`, `reference_for()`, `dork_templates()`, `secret_patterns()`, `probe_wordlists()` |
+
+**Engine wiring (`kb.py`):** Findings are now automatically enriched with:
+- `cbh_severity_calibration` — calibrated severity from 94 real bounty-payout mappings
+- `cbh_disclosed_examples` — up to 3 cited real-world disclosed reports per finding
+- `cbh_hunt_hints` — recommended hunt strategies for vulnerable findings (max 3)
+- `cbh_risk_weight` — 0-1 prevalence weight from real-world bounty data
+
 **CBH source:** `/home/kali/extraction-workspace/Claude-BugHunter/` (clone of elementalsouls/Claude-BugHunter)
-**CBH extraction status: COMPLETE** — All Tier 1 + Tier 2 assets extracted, tested, and pushed.
+**CBH extraction status: COMPLETE** — All Tier 1 + 2 + 3 assets extracted, tested, and pushed. Engine wiring live.
 
 ### v1.0.0rc4 — 5 Nov 2026
 - P0 coverage credibility: VERIFIED FIXED

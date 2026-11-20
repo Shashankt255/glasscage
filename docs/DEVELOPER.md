@@ -46,3 +46,11 @@ Subclass `glasscage.adapters.base.ExternalToolAdapter`; implement `available()`,
 ## Determinism
 Graph traversal is sorted; ids are deterministic; `to_dict/from_dict` round-trips.
 All randomized components (genetic engine, trials) take a seed. Keep it that way.
+
+## Knowledge base (CBH)
+Data files live in `glasscage/data/cbh_*.json` (extracted from Claude-BugHunter,
+CC BY 4.0 + MIT). Each file has a loader module in `glasscage/` that lazily loads
+and caches the JSON on first call. Enrichment runs in `kb.py`: the `enrich()`
+function attaches attack chains, severity calibrations, disclosed report examples,
+hunt strategy hints, and risk weights to each finding. All enrichment is additive —
+it never overrides computed fields.

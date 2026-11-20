@@ -118,6 +118,12 @@ class Finding:
     # (architecture) findings are never attributed to a surface - they are not
     # observations on one.
     surface_id: str = ""
+    # CBH knowledge-base enrichment (populated by kb.enrich)
+    web_attack_chains: list[dict] = field(default_factory=list)
+    cbh_severity_calibration: dict | None = None
+    cbh_disclosed_examples: list[dict] = field(default_factory=list)
+    cbh_hunt_hints: list[dict] = field(default_factory=list)
+    cbh_risk_weight: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)

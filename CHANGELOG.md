@@ -23,6 +23,14 @@ First stable release. All GA blockers resolved.
   plugin manifest, 4 design docs (autopilot ledger, H1 report body fetch).
 - Loader modules: `integration_reference.py`, `verification_labs.py`,
   `disclosed_reports.py`, `engine_reference.py`.
+- CBH Tier 3: OSINT references (dork corpus, 48 secret regex patterns,
+  probe wordlists), 9 engine modules (scope, recon, agent, memory, closure,
+  skill_map, state, osint), 15 command definitions with full prompt templates.
+- Loader modules: `engine_modules.py`, `osint_references.py`.
+- Engine wiring: `kb.py` now enriches findings with severity calibration
+  (94 bounty-payout mappings), cited disclosed report examples (up to 3
+  per finding), hunt strategy recommendations (vulnerable findings only),
+  and risk weights from real-world prevalence data.
 
 ### Fixed
 - Import sort in `engine.py` (ruff I001 — zero lint errors).
@@ -30,7 +38,9 @@ First stable release. All GA blockers resolved.
 ### Changed
 - VERSIONING.md: clarified that `coverage.py` functions are active on the default
   AAKG path (not deprecated as previously stated).
-- Test count: 997 → 1132 (25 new Tier 2 tests, 0 regressions).
+- Test count: 997 → 1176 (79 new CBH + enrichment tests, 0 regressions).
+- Full Apache-2.0 LICENSE (GitHub now detects correctly).
+- Added `.editorconfig`, PR template, secret scanning enabled, 13 GitHub topics.
 
 ## [1.0.0rc4] — 2026-11-05 — Engine surface wiring, coverage honesty, custody hardening
 Previous: 1.0.0rc3. Incorporates PRs 14–34.

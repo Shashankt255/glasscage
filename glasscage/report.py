@@ -230,6 +230,11 @@ def to_html(target_name: str, recon: ReconResult, findings: list[Finding],
                 "remediation": f.remediation, "verification": f.verification_steps,
                 "reproduction": f.reproduction_steps, "references": f.reference_links,
                 "evidence_svg": f.evidence_svg, "turns": f.turns,
+                "web_attack_chains": f.web_attack_chains,
+                "cbh_severity_calibration": f.cbh_severity_calibration,
+                "cbh_disclosed_examples": f.cbh_disclosed_examples,
+                "cbh_hunt_hints": f.cbh_hunt_hints,
+                "cbh_risk_weight": f.cbh_risk_weight,
             }
             for f in _sorted_findings(findings)
         ],
@@ -438,6 +443,13 @@ function tabs(f,idx){
   }
   if(f.verification&&f.verification.length) panes.push(["Verify (false-positive check)","<ul>"+f.verification.map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ul>"]);
   if(f.references&&f.references.length) panes.push(["References",'<div class="refs">'+f.references.map(function(r){return '<a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.label)+"</a>";}).join(" \u00b7 ")+"</div>"]);
+  var kb=[];
+  if(f.cbh_risk_weight) kb.push("<p><b>Real-world prevalence:</b> "+(f.cbh_risk_weight*100).toFixed(0)+"%</p>");
+  if(f.cbh_severity_calibration) kb.push("<p><b>Bounty-calibrated severity:</b> "+esc(f.cbh_severity_calibration.severity||"")+"</p>");
+  if(f.cbh_disclosed_examples&&f.cbh_disclosed_examples.length) kb.push("<p><b>Real-world examples:</b></p><ul>"+f.cbh_disclosed_examples.map(function(e){return "<li>"+esc(e.name||"")+" <small>("+esc(e.source||"")+", "+esc(e.vuln_class||"")+")</small></li>";}).join("")+"</ul>");
+  if(f.cbh_hunt_hints&&f.cbh_hunt_hints.length) kb.push("<p><b>Recommended investigation:</b></p><ul>"+f.cbh_hunt_hints.map(function(h){return "<li><b>"+esc(h.skill_name||"")+"</b> \u2014 "+esc((h.description||"").slice(0,200))+"</li>";}).join("")+"</ul>");
+  if(f.web_attack_chains&&f.web_attack_chains.length) kb.push("<p><b>Attack chains:</b></p><ul>"+f.web_attack_chains.map(function(c){return "<li>"+esc(c.chain||c.name||JSON.stringify(c).slice(0,120))+"</li>";}).join("")+"</ul>");
+  if(kb.length) panes.push(["Knowledge Base",kb.join("")]);
   const btns=panes.map(function(p,i){return '<div class="tab '+(i===0?"active":"")+'" data-t="'+idx+"-"+i+'">'+esc(p[0])+"</div>";}).join("");
   const bodies=panes.map(function(p,i){return '<div class="pane '+(i===0?"active":"")+'" id="pane-'+idx+"-"+i+'">'+p[1]+"</div>";}).join("");
   return '<div class="tabs">'+btns+"</div>"+bodies;
