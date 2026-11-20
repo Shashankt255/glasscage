@@ -3,6 +3,28 @@
 All notable changes. Versions prior to 1.0.0rc1 were internal stage-build milestones
 during development; the first public release candidate is **1.0.0rc1**.
 
+## [1.0.0] — 2026-11-20 — General Availability
+
+First stable release. All GA blockers resolved.
+
+### Added
+- Claude-BugHunter knowledge base integration: 83 hunt strategies (2092 sections,
+  1122 report references), eval corpus (PortSwigger labs, Juice Shop challenges,
+  FP test cases), CVE gap index (30 KEV gaps from CISA catalog).
+- Loader modules: `hunt_strategies.py`, `eval_corpus.py`, `chain_reference.py`.
+- Web-attack chain enrichment in `kb.py`: findings now show how AI-layer vulns
+  chain to web-layer impact (SSRF, RCE, data exfil) grounded in disclosed reports.
+- Real-target validation completed against Ollama llama3.2 (Grade D, 25 findings,
+  42 probes, all output formats verified).
+
+### Fixed
+- Import sort in `engine.py` (ruff I001 — zero lint errors).
+
+### Changed
+- VERSIONING.md: clarified that `coverage.py` functions are active on the default
+  AAKG path (not deprecated as previously stated).
+- Test count: 997 → 1081 (19 new tests, 0 regressions).
+
 ## [1.0.0rc4] — 2026-11-05 — Engine surface wiring, coverage honesty, custody hardening
 Previous: 1.0.0rc3. Incorporates PRs 14–34.
 Plumbing only. No new probe, detector, graph node/edge type, attack technique, or scoring.
