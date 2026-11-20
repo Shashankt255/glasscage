@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from . import agent_probes as _agent  # noqa: F401  (import registers agent probes)
 from . import architecture as arch_mod
-from . import system_prompt_review as spr_mod
 from . import audit as audit_mod
 from . import chain as chain_mod
 from . import coverage as coverage_mod
@@ -29,6 +28,7 @@ from . import posture as posture_mod
 from . import probes as probes_mod
 from . import recon as recon_mod
 from . import remediation, report, repro, scoring
+from . import system_prompt_review as spr_mod
 from . import trust as trust_mod
 from .models import Finding, ReconResult, Severity, Status
 
